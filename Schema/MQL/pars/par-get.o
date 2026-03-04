@@ -1,0 +1,15 @@
+[Main]
+Unit
+Name=ParGet
+Title=Извлечение
+Group=Параметры
+Size=4
+
+[Property]
+ParName=s,Param,имя параметра
+
+[Output]
+value=n,$ParName
+
+[Help]
+Извлекает значение параметра для использования.

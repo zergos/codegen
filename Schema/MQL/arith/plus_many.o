@@ -1,0 +1,34 @@
+[Main]
+Name=PlusMany
+Title=Сложение (множество)
+Group=Арифметика
+Size=4
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Prefix]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = 0;
+
+[Code]
+<lines>
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = $out[i]+$in[i];
+
+[Help]
+Последовательное сложение всех элементов входящих массивов
+<code>out = out + in</code>

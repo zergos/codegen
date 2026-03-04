@@ -1,0 +1,320 @@
+[Разрешите советнику торговать :(]
+Please, allow Exprert Advisor to auto-trade :(
+[Ошибка синхронизации данных ]
+Error at data sync 
+[Ошибки синхронизации данных!]
+Error at data sync!
+[ОЖИДАНИЕ]
+PENDING
+[ОТЛОЖЕН]
+DEFERRED
+[ВХОД]
+ENTRY
+[АКТИВЕН]
+ACTIVE
+[ПОТОК:]
+THREAD:
+[СОСТОЯНИЕ:]
+STATE:
+[, ПОТОК:]
+, THREAD:
+[, СОСТОЯНИЕ:]
+, STATE:
+[Торговый сервер занят. Пробуем ещё раз...]
+Trade server busy. Attempt again... 
+[Нет связи с торговым сервером. Попробуем снова...]
+No conncetion to broker server. Attempt again...
+[Истёк срок ожидания сделки. Пробуем снова...]
+Order operation expired. Attempt again...
+[Неправильная цена. Пробуем ещё раз...]
+Non correct price. Attempt again...
+[Цена изменилась. Пробуем ещё раз..]
+Price changed. Attepmt again...
+[Нет цен. Ждём новый тик..]
+No prices. Pending new tick...
+[Брокер занят. Пробуем ещё раз..]
+Broker busy. Attempt again...
+[Поступили новые цены. Повторяем...]
+New prices came. Rerieving...
+[Подсистема торговли занята. Пробуем ещё..]
+Trade subsystem busy. Attempt again...
+[Общая ошибка. Повторная попытка...]
+Common error. Attempt again...
+[Старая версия терминала.]
+Terminal update required.
+[Счет заблокирован.]
+Account blocked.
+[Неверные уровни SL/TP]
+Non correct SL/TP levels
+[Неправильный объём]
+Non correct lot volume
+[Торговля запрещена.]
+Trading denied.
+[Недостаточно денег для совершения операции.]
+Unavailable funds for trade order.
+[Возникла ошибка ]
+Error occuried
+[отложенник BUY STOP по ]
+pending BUY STOP by 
+[отложенник SELL STOP по ]
+pending SELL STOP by 
+[отложенник SELL LIMIT по ]
+pending SELL LIMIT by 
+[отложенник BUY LIMIT по ]
+pending BUY LIMIT by 
+[состояние изменилось]
+state changed
+[отложенник ]
+pending  
+[ по ]
+ by 
+[ордер по рынку ]
+market order 
+[тикет нового ордера ]
+new order ticket 
+[обновление отложенника #%d цена %f с/л %f т/п %f]
+pending update #%d price %f s/l %f t/p %f
+[ордер не изменён]
+order not changed
+[закрытие отложенника]
+closing pending
+[активных пунктов ]
+active points 
+[принудительное закрытие ]
+force close 
+[сокращение ордера на ]
+reduce order by 
+[полное закрытие ордера ]
+order total closing 
+[ остаток: ]
+ rest: 
+[частичное закрытие на ]
+partial closing by 
+[установка нового уровня tp ]
+setting new level tp 
+[ для #]
+ for #
+[ошибка установки tp]
+error setting tp
+[установка нового уровня ftp ]
+setting new level ftp
+[установка нового уровня sl ]
+setting new level sl
+[ошибка установки sl]
+error setting sl
+[установка нового уровня fsl ]
+setting new level fsl 
+[мин. лот: ]
+min lot: 
+[закрыт с профитом: ]
+closed with profit: 
+[ордер просрочен]
+order expired
+[активирован отложенник #]
+pending activated #
+[ордер #]
+order #
+[ открыт ]
+ opened 
+[открытие отложенника изменило состояние]
+opened pending changed state
+[проверка состояния закрытия потока ]
+checking thread close state 
+[ДА]
+YES
+[НЕТ]
+NO
+[обработка нового состояния]
+processing new state
+[запуск потоков от ]
+running threads at 
+[активация потока #]
+thread activating #
+[поток готов к работе #]
+thread ready to work #
+[истекает:]
+expires:
+[$ThreadTitle #%d %s %s %s изменён:%s]
+$ThreadTitle #%d %s %s %s changed:%s
+[Недостаточно средств для открытия ордера]
+Not enough money
+[обновление стопов #%d с/л %f т/п %f]
+refreshing stop levels #%d s/l %f t/p %f
+[установка стопов]
+setting stop levels
+[Вопрос]
+Question
+[Торговля приостановлена. Верните тайм-фрейм ]
+Trading disabled. Please return to timeframe 
+[ $Word вверх]
+ $Word up
+[: $Word вверх]
+: $Word up
+[ $Word вниз]
+ $Word down
+[: $Word вниз]
+: $Word down
+[ #%d %s %s %s изменён:%s]
+ #%d %s %s %s changed:%s
+[повтор обработки хаба]
+hub repeat execution
+[Файл $FileName не обнаружен, последняя ошибка ]
+File $FileName not found, last error is 
+[Файл $FileName подозрительно мал.]
+File $FileName is unexpected small.
+[Индикатор ]
+Indicator 
+[ не найден]
+ not found
+[позиция не изменена]
+position have not changed
+[Реквота. Пробуем снова]
+Requtes. Trying again.
+[Запрос отвергнут]
+Request rejected
+[Запрос отменен трейдером]
+Request cancelled by trader
+[Ошибка обработки запроса]
+Request error execution
+[Запрос отменен по истечению времени.]
+Request timeout.
+[Неправильный запрос]
+Invalid request
+[Неправильный объем в запросе]
+Invalid volume
+[Неправильная цена в запросе]
+Invalid price
+[Неправильные стопы в запросе]
+Invalid stops
+[Торговля запрещена]
+Trade disabled
+[Рынок закрыт]
+Market closed
+[Нет достаточных денежных средств для выполнения запроса]
+Not enough money
+[Цены изменились]
+Requotes
+[Отсутствуют котировки для обработки запроса]
+No quotes.
+[Неверная дата истечения ордера в запросе]
+Invalid expiration
+[Состояние ордера изменилось]
+Order state changed
+[Слишком частые запросы]
+Too many requests
+[В запросе нет изменений]
+Request unchanged
+[Автотрейдинг запрещен сервером]
+Autotrading disabled by server
+[Автотрейдинг запрещен клиентским терминалом]
+Autotrading disabled in client terminal
+[Запрос заблокирован для обработки]
+Request denied for execution
+[Ордер или позиция заморожены]
+Order or position is frozen
+[Указан неподдерживаемый тип исполнения ордера по остатку]
+Unsupported order fill type
+[Нет соединения с торговым сервером]
+No connection with broker
+[Операция разрешена только для реальных счетов]
+Operation allow on real accounts only
+[Достигнут лимит на количество отложенных ордеров]
+Out of orders count for current symbol
+[Достигнут лимит на объем ордеров и позиций для данного символа]
+Out of orders volume limit for current symbol
+[Неверный или запрещённый тип ордера]
+Invalid or denied order type
+[Позиция с указанным POSITION_IDENTIFIER уже закрыта]
+Position with defined POSITION_IDENTIFIER is closed already
+[ описание ]
+ description 
+[позиция закрыта]
+position closed
+[Файл]
+File
+[не обнаружен, последняя ошибка ]
+not found, last error is 
+[Файл ситуаций не найден (cases.lst). Сделок не будет.]
+
+[запуск скрипта %d %s tp %f sl %f]
+
+[скрипт запрещён %d]
+
+[точки 3-4 поменялись местами]
+
+[отмена модели по гэпу]
+
+[отмена МП по 1х2х3х4]
+
+[отмена модели по P2'<P3]
+
+[отмена модели по P3'>P2]
+
+[есть точка на ЛЦ]
+
+[есть точка на ЛТ]
+
+[отмена модели по повтору Базы]
+
+[зачатие широкой модели]
+
+[повторяется ЛЦ (]
+
+[отмена модели по совпадению конструкции]
+
+[новая модель победила по констукции (]
+
+[фильтрация после созревания (]
+
+[отмена после созревания (]
+
+[5-я точка сформирована на ]
+
+[отмена ГТ по пересечению тел 2х5]
+
+[отмена модели по попаданию т.5 внутрь бара т.4]
+
+[отмена модели по фильтру пропорций]
+
+[т.3' вышла за базу - отмена ГТ]
+
+[созревание по освобождению базы]
+
+[фиксация точки -> ]
+
+[начало отсчёта]
+
+[размер модели превышен]
+
+[пробита первая точка]
+
+[пробита т.3]
+
+[линии провести не удалось (]
+
+[модель не определена (]
+
+[модель не определена после выравнвания (]
+
+[после выравнивания поменялся тип модели (]
+
+[модель отфильтрована (]
+
+[Цель 1]
+
+[Цель 3]
+
+[Цель 4]
+
+[Цель 5]
+
+[Цель 4x]
+
+[Пробой трендовой]
+
+[профитных пунктов ]
+
+[проверка отложки на обновление]
+
+[Советник ]
+

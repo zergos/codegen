@@ -1,0 +1,35 @@
+[Main]
+Name=Complex
+Group=Преобразования
+Title=В комплексные
+
+[Input]
+in=row
+
+[Output]
+cout=row
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=0
+Size=($Size*2)
+
+[Code]
+<gvars>
+double $cout[];
+
+<lines>
+  ArrayInit($cout, $Size*2);
+
+  if ($Start==0) ArrayInitialize($cout, 0);
+  for (int @n=0; @n<$Size; @n++)
+    $cout[@n<<1] = $in[@n];
+
+[Help]
+Предобразует к комплексному формату,
+  - cout[2n] - вещественная часть
+  - cout[2n+1] - мнимая часть
+Размер при этом увеличивается в два раза

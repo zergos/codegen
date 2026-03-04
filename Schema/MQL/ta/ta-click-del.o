@@ -1,0 +1,17 @@
+[Main]
+Name=TAClickDel
+Title=Ind Обработка "удаление"
+Group=ТА
+
+[Input]
+code=s
+
+[Code]
+<lines>
+  if ($code!="")
+  {
+    ObjectDelete("trend"+$code);
+    ObjectDelete("target"+$code);
+    ObjectDelete("hypo"+$code);
+    ObjectDelete("hypo-target"+$code);
+  }

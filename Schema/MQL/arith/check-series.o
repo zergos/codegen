@@ -1,0 +1,42 @@
+[Main]
+Name=CheckSeries
+Title=Проверка серии
+Group=Арифметика
+
+[Property]
+Shift=n,1,с какого элемента в прошлом проверять
+Depth=n,4,глубина проверки
+Condition=s,>0,выражение проверки
+Value=n,1,результат проверки
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    $out[@i] = $Value;
+    for (int @k=@i-$Shift-$Depth+1; @k<=@i-$Shift; @k++)
+      if (@k>=0 && !($in[@k]$Condition))
+      {
+        $out[@i] = 0;
+        break;
+      }
+  }
+
+[Help]
+Проверяет предыдущие элементы серии и устанавливает флаг.

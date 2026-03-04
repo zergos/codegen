@@ -1,0 +1,23 @@
+[Main]
+Name=Inline
+Title=Вставка кода
+Group=Советник
+
+[Property]
+scope=inline,lines,положение кода
+
+[Code]
+<gvars>
+  <?scope=gvars>$comments</>
+
+<init>
+  <?scope=init>$comments</>
+
+<lines>
+  <?scope=lines>$comments</>
+  
+<deinit>
+  <?scope=deinit>$comments</>
+  
+[Help]
+Вставляет строки кода из комментариев к блоку.

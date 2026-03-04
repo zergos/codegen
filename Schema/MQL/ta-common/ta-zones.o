@@ -1,0 +1,341 @@
+[Main]
+Usable
+Name=TAZones
+Title=Зоны
+Group=ТА
+
+[Code]
+<top>
+#include "ta-zones.mqh"
+
+<attach>
+=ta-zones.mqh
+enum TAZoneMode
+{
+  ZM_All, // все модели
+  ZM_Displace, // замещение
+  ZM_Append  // доливка
+};
+
+input TAZoneMode taZoneMode = ZM_All; // ZoneMode: реж. проторговки зон
+
+class TAModel;
+class TAScript;
+class TAZone
+{
+  public:
+  int trend;
+  int code;
+  double open, tp, sl;
+  int plan;
+  TAModel *M;
+  
+  bool empty;
+  
+  string name;
+  
+  static TAZone *A, *B;
+  static TAScript *S;
+  
+  static int Rules[32];
+
+  TAZone(string _name):empty(true), name(_name) {}
+  
+  <?debug>
+  void Log(string s)
+  {
+    FileWrite(Logger, StringFormat("Z%s: %s", name, s));
+    FileFlush(Logger);
+  }
+  </>
+  
+  static string rule_names;
+  
+  static void loadRules(string name)
+  {
+    int f = FileOpen(name, FILE_READ|FILE_TXT|FILE_SHARE_READ);
+    if (f==INVALID_HANDLE)
+    {
+      Print("Файл ситуаций не найден ("+name+"). Сделок не будет.");
+    }
+    else
+    {
+      FileReadString(f);
+      while(!FileIsEnding(f))
+      {
+        string s = FileReadString(f);
+        int i = StringSubstr(s,0,1)==">"?1:0;
+        i = i*2 + (StringSubstr(s,1,1)=="+"?1:0);
+        i = i*2 + (StringSubstr(s,2,1)=="+"?1:0);
+        i = i*2 + (StringSubstr(s,3,1)=="+"?1:0);
+        
+        s = StringSubstr(s, 5);
+        int p = StringFind(s, "|");
+        string act1 = StringSubstr(s, 0, p);
+        string act2 = StringSubstr(s, p+1);
+        Rules[i*2] = StrToInteger(StringSubstr(rule_names, StringFind(rule_names, act1)-2, 2));
+        Rules[i*2+1] = StrToInteger(StringSubstr(rule_names, StringFind(rule_names, act2)-2, 2));
+      }
+    }
+    FileClose(f);
+  }
+  
+  static void Process(TAModel &M, int trend, int code, double tp, double sl)
+  {
+    M.active = true;
+    double open = trend>0?Ask:Bid;
+    
+    <?debug>
+    A.Log(StringFormat("M#%d t:%d c:%d p:%d o:%f tp:%f sl:%f", M.id, trend, code, M.EstimatePlan(), open, tp, sl));
+    </>
+    
+    ProcessZone(A, M, trend, code, open, tp, sl);
+  }
+
+  static void ProcessZone(TAZone &Z, TAModel &M, int trend, int code, double open, double tp, double sl)
+  {
+    int plan = M.EstimatePlan();
+   
+    if (Z.empty)
+    {
+        <?debug>Z.Log("новая зона");</>
+        Z.M = GetPointer(M);
+        Z.trend = trend;
+        Z.code = code;
+        Z.open = open;
+        Z.tp = tp;
+        Z.sl = sl;
+        Z.plan = plan;
+        
+        if (Z.name=="A")
+          S = new TAScript(GetPointer(M), trend, code, 0, tp, sl);
+          
+        if (taZoneMode!=ZM_All) Z.empty = false;
+        return;
+    }
+    
+      // расчёт кода правила
+      int i = plan>=Z.plan?1:0;
+      i = i*2 + (Z.trend>0 && open>Z.open || Z.trend<0 && open<Z.open?1:0);
+      i = i*2 + (Z.trend==trend?1:0);
+      i = i*2 + (Z.name=="A" && RefObject::HasRef(S)?1:0);
+       
+      // применение правила зоны
+      int rule = Rules[i*2];
+      switch (rule)
+      {
+        case 00: // nope
+          break;
+        case 10: // expand_tp
+          if (trend>0 && tp>Z.tp || trend<0 && tp<Z.tp)
+          {
+            <?debug>Z.Log("расширение зоны младшим планом");</>
+            Z.tp = tp;
+          }
+          break;
+        case 15: // expand
+          <?debug>Z.Log("расширение зоны старшим планом");</>
+          Z.open = open;
+          Z.tp = trend>0?fmax(tp, Z.tp):fmin(tp, Z.tp);
+          Z.sl = trend>0?fmax(sl, Z.sl):fmin(sl, Z.sl);
+          Z.plan = plan;
+          Z.M = GetPointer(M);
+          break;
+        case 30: // shadow
+          if (Z.name=="A")
+            ProcessZone(B, M, trend, code, open, tp, sl);
+          break;
+        case 40: // displace
+          <?debug>Z.Log("замещение целей старшим или равным планом");</>
+          Z.trend = trend;
+          Z.open = open;
+          Z.tp = tp;
+          Z.sl = sl;
+          Z.plan = plan;
+          Z.code = code;
+          Z.M = GetPointer(M);
+          break;
+      }
+
+      if (Z.name!="A") return;
+      // применение правила сделки
+      rule = Rules[i*2+1];
+      switch (rule)
+      {
+        case 00: // nope
+          break;
+        case 10: // expand_tp
+          if (trend>0 && tp>S.tp || trend<0 && tp<S.tp)
+          {
+            S.tp = tp;
+          }
+          break;
+        case 15: // expand
+          S.tp = A.tp;
+          S.sl = A.sl;
+          break;
+        case 20: // open_mix
+          S = new TAScript(GetPointer(M), trend, code, 0, A.tp, trend>0?fmax(sl, A.sl):fmin(sl, A.sl));
+          break;
+        case 26: // open_big
+          S = new TAScript(GetPointer(M), trend, code, 0, trend>0?fmax(tp, A.tp):fmin(tp, A.tp), trend>0?fmax(sl, A.sl):fmin(sl, A.sl));
+          break;
+        case 25: // open
+          S = new TAScript(GetPointer(M), trend, code, 0, tp, sl);
+          break;
+        case 50: // hedge
+          S.sl = S.price;
+          break;
+        case 60: // append
+          new TAScript(GetPointer(M), trend, code, 0, Z.tp, Z.sl);
+          break;
+      }
+  }
+  
+  static void ProcessTick()
+  {
+    if (!B.empty)
+      if (B.trend>0 && (Ask>=B.tp || Bid<=B.sl) || B.trend<0 && (Ask>=B.sl || Bid<=B.tp))
+      {
+        // теневая зона пройдена
+        <?debug>B.Log("зона пройдена");</>
+        B.empty = true;
+      }
+        
+    if (!A.empty)
+    {
+      /*if (RefObject::HasRef(S))
+      {
+        A.tp = S.tp;
+        A.sl = S.sl;
+      }*/
+      if (A.trend>0 && (Ask()>=A.tp || Bid()<=A.sl-A.M.BP) || A.trend<0 && (Ask()>=A.sl+A.M.BP || Bid()<=A.tp))
+      {
+        // активная зона пройдена
+        A.empty = true;
+        <?debug>A.Log("зона пройдена");</>
+        if (!B.empty)
+        {
+          <?debug>A.Log("активация теневой");</>
+          B.empty = true;
+          ProcessZone(A, B.M, B.trend, B.code, B.open, B.tp, B.sl);
+        }
+      }
+      else if (!RefObject::HasRef(S))
+      {
+        if (!B.empty && B.plan>=A.plan)
+        {
+          <?debug>A.Log("перехват зоны по закрытию сделки");</>
+          A.empty = true;
+          B.empty = true;
+          ProcessZone(A, B.M, B.trend, B.code, B.open, B.tp, B.sl);
+        }
+        else if (RefObject::HasRef(A.M) && A.M.sCount==0)
+        {
+          <?debug>A.Log("реактивация зоны");</>
+          A.empty = true;
+          ProcessZone(A, A.M, A.trend, A.code, A.open, A.tp, A.sl);
+        }
+      }
+    }
+  }
+  
+  static void DrawZone(string name, TAZone &z, int shift, double price1, int trend)
+  {
+    int visual = !z.empty?OBJ_ALL_PERIODS:OBJ_NO_PERIODS;
+    ObjectCreate(name, OBJ_RECTANGLE, 0, 0, 0);
+    ObjectSet(name, OBJPROP_TIMEFRAMES, visual);
+    if (!z.empty)
+    {
+      ObjectSet(name, OBJPROP_PRICE1, price1);
+      ObjectSet(name, OBJPROP_PRICE2, z.open);
+      ObjectSet(name, OBJPROP_TIME1, Time[0]+shift*PeriodSeconds());
+      ObjectSet(name, OBJPROP_TIME2, Time[0]+(shift+2)*PeriodSeconds());
+      ObjectSet(name, OBJPROP_COLOR, trend>0?Green:Red);
+    }
+  }
+  
+  static void DrawZoneID(string name, TAZone &z, int shift)
+  {
+    int visual = !z.empty?OBJ_ALL_PERIODS:OBJ_NO_PERIODS;
+    ObjectCreate(name, OBJ_TEXT, 0, 0, 0);
+    ObjectSet(name, OBJPROP_TIMEFRAMES, visual);
+    if (!z.empty)
+    {
+      ObjectSet(name, OBJPROP_PRICE1, z.open);
+      ObjectSet(name, OBJPROP_TIME1, Time[0]+shift*PeriodSeconds());
+      ObjectSet(name, OBJPROP_COLOR, Honeydew);
+      ObjectSet(name, OBJPROP_FONTSIZE, 8);
+      ObjectSet(name, OBJPROP_ANCHOR, ANCHOR_LEFT_LOWER);
+      if (RefObject::HasRef(z.M))
+        ObjectSetString(0, name, OBJPROP_TEXT, z.M.id);
+    }
+  }
+  
+  static void DrawZonePlan(string name, TAZone &z, int shift)
+  {
+    int visual = !z.empty?OBJ_ALL_PERIODS:OBJ_NO_PERIODS;
+    ObjectCreate(name, OBJ_TEXT, 0, 0, 0);
+    ObjectSet(name, OBJPROP_TIMEFRAMES, visual);
+    if (!z.empty)
+    {
+      ObjectSet(name, OBJPROP_PRICE1, z.open);
+      ObjectSet(name, OBJPROP_TIME1, Time[0]+shift*PeriodSeconds());
+      ObjectSet(name, OBJPROP_COLOR, Honeydew);
+      ObjectSet(name, OBJPROP_FONTSIZE, 8);
+      ObjectSet(name, OBJPROP_ANCHOR, ANCHOR_LEFT_UPPER);
+      if (RefObject::HasRef(z.M))
+        ObjectSetString(0, name, OBJPROP_TEXT, z.plan);
+    }
+  }
+  
+  static void Draw()
+  {
+    if (taDraw)
+    {
+      DrawZone("ZA+", A, 20, fmax(A.sl,A.tp), A.trend);
+      DrawZone("ZA-", A, 20, fmin(A.sl,A.tp), -A.trend);
+      DrawZoneID("ZAID", A, 20);
+      DrawZonePlan("ZAIDP", A, 20);
+      DrawZone("ZB+", B, 23, fmax(B.sl,B.tp), B.trend);
+      DrawZone("ZB-", B, 23, fmin(B.sl,B.tp), -B.trend);
+      DrawZoneID("ZBID", B, 23);
+      DrawZonePlan("ZBIDP", B, 23);
+    }
+  }
+};
+
+TAZone *TAZone::A;
+TAZone *TAZone::B;
+TAScript *TAZone::S;
+
+int TAZone::Rules[32];
+string TAZone::rule_names = "00nope+10expand_tp+20open_mix+30shadow+40displace+25open+26open_big+15expand+50hedge+60append";
+
+<init>
+  TAZone::A = new TAZone("A");
+  TAZone::B = new TAZone("B");
+  switch (taZoneMode)
+  {
+    case ZM_Displace:
+      TAZone::loadRules("displace.lst");
+      break;
+    case ZM_Append:
+      TAZone::loadRules("append.lst");
+      break;
+  }
+  
+<deinit>
+  delete TAZone::A;
+  delete TAZone::B;
+  if (taDraw)
+  {  
+    ObjectDelete("ZA+");
+    ObjectDelete("ZA-");
+    ObjectDelete("ZB+");
+    ObjectDelete("ZB-");
+    ObjectDelete("ZAID");
+    ObjectDelete("ZBID");
+    ObjectDelete("ZAIDP");
+    ObjectDelete("ZBIDP");
+  }

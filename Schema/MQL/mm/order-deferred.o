@@ -1,0 +1,111 @@
+[Main]
+Name=OrderDeferred
+Title=Отложенники
+Group=Сделки
+
+[Property]
+Index=n,0,индекс сигнальной серии\, если на входе серия
+Level=n,0,уровень срабатывания
+Step=n,20,расстояние в пунктах для отложенного ордера
+Type=cmdtype,PT_LIMIT,тип отложенных ордеров
+WaitSideClosed=t,,ждать истечения только одной стороны ордеров (иначе истечения всей серии)
+Price=f
+ReversePrice=t
+Lots=n,0.1,количество лотов
+ByMarket=bool,false
+Signal=t,,уст. тренд потока при открытии
+SL=n,0,стоп-лосс в пунктах
+TP=n,0,тейк-профик в пунктах
+Expire=n,0,время истечения в секундах
+AddCount=n,,количество доп. ордеров
+AddStep=n,50,расстояние между доп. ордерами
+AddMode=n,1,режим увеличения лотов (0 - повторить лот\, 1 - увеличить на единицу\, 2 - в два раза)
+
+[Input]
+up=row
+down=row
+
+[Code]
+<gvars>
+bool @defInitUp, @defInitDown;
+
+<init>
+  <?!WaitSideClosed>
+  @defInitUp = false;
+  @defInitDown = false;
+  </>
+
+<lines>
+  int @i;
+  <?WaitSideClosed>
+  @defInitUp = false;
+  ForEachL(CHubOrder, ho, firstOrder)
+    if (ho.state == HUB_INITIAL && (ho.cmd == OP_BUYSTOP || ho.cmd == OP_VBUYSTOP || ho.cmd == OP_SELLLIMIT || ho.cmd == OP_VSELLLIMIT))
+    {
+      @defInitUp = true;
+      break;
+    }
+  @defInitDown = false;
+  ForEachL(CHubOrder, ho, firstOrder)
+    if (ho.state == HUB_INITIAL && (ho.cmd == OP_SELLSTOP || ho.cmd == OP_VSELLSTOP || ho.cmd == OP_BUYLIMIT || ho.cmd == OP_VBUYLIMIT))
+    {
+      @defInitDown = true;
+      break;
+    }
+  </>
+  
+  if (!@defInitUp)
+    <?up>if ($up<?Index>[$Index]</>>$Level)</>
+    {
+      <?debug>Print($up<?Index>[$Index]</>," > ",$Level);</>
+      CHubOrder *ho = OrderPending(<?Price>$Price+Spread()<~><?!ReversePrice>Ask<~>Bid</></>+$Step*Point, $Type, $Lots, $SL, $TP, $Expire, HUB_INITIAL, $ByMarket);
+      <?Signal>ho.signal = true;</>
+      <?AddCount>
+      double @lot = $Lots;
+      for (@i=1; @i<=$AddCount; @i++)
+      {
+        <?AddMode=1>
+        @lot += $Lots;
+        </>
+        <?AddMode=2>
+        @lot *= 2;
+        </>
+        ho = OrderPending(<?Price>$Price+Spread()<~><?!ReversePrice>Ask<~>Bid</></>+($Step+@i*$AddStep)*Point, $Type, @lot, $SL, $TP, $Expire, HUB_INITIAL, $ByMarket);
+        <?Signal>ho.signal = true;</>
+      }
+      </>
+      <?!WaitSideClosed>
+      @defInitUp = true;
+      </>
+    }
+  if (!@defInitDown)
+    <?down>
+    if ($down<?Index>[$Index]</><-$Level)
+    <~>
+    <?up>if ($up<?Index>[$Index]</><-$Level)</>    
+    </>
+    {
+      <?debug>Print(<?down>$down<?Index>[$Index]</><~>$up<?Index>[$Index]</></>," < ",-$Level);</>
+      CHubOrder *ho = OrderPending(<?Price>$Price<~><?!ReversePrice>Bid<~>Ask</></>-$Step*Point, $Type, $Lots, $SL, $TP, $Expire, HUB_INITIAL, $ByMarket);
+      <?Signal>ho.signal = true;</>
+      <?AddCount>
+      double @lot = $Lots;
+      for (@i=1; @i<=$AddCount; @i++)
+      {
+        <?AddMode=1>
+        @lot += $Lots;
+        </>
+        <?AddMode=2>
+        @lot *= 2;
+        </>
+        ho = OrderPending(<?Price>$Price<~><?!ReversePrice>Bid<~>Ask</></>-($Step+@i*$AddStep)*Point, $Type, @lot, $SL, $TP, $Expire, HUB_INITIAL, $ByMarket);
+        <?Signal>ho.signal = true;</>
+      }
+      </>
+      <?!WaitSideClosed>
+      @defInitDown = true;
+      </>
+    }
+
+[Help]
+Инициатор ордеров по входящим сигналам.

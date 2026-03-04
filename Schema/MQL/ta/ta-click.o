@@ -1,0 +1,145 @@
+[Main]
+Name=TAClick
+Title=Ind Обработка "нажатия"
+Group=ТА
+
+[Output]
+code=s
+
+[Code]
+<gvars>
+string $name;
+string TAmarks;
+double Gamma;
+
+<init>
+  $name = "";
+  TAmarks = "";
+  
+<lines>
+  if ($name=="")
+  {
+    $name = "";
+    if (StringSubstr(sparam, 0, 5)=="trend") $name = StringSubstr(sparam, 5);
+    else if (StringSubstr(sparam, 0, 6)=="target") $name = StringSubstr(sparam, 6);
+    else if (StringSubstr(sparam, 0, 11)=="hypo-target") $name = StringSubstr(sparam, 11);
+    else if (StringSubstr(sparam, 0, 4)=="hypo") $name = StringSubstr(sparam, 4);
+    
+    if ($name!="")
+    {
+      for (int i=0; i<ArraySize(taModels); i++)
+      {
+        if ((string)i!=$name)
+        {
+          TABaseModel::DrawShow(i,RefObject::HasRef(taModels[i])?taModels[i].fixed:false);
+        }
+        else
+        {
+          //ObjectSet("trend"+i, OBJPROP_RAY, 1);
+          //ObjectSet("target"+i, OBJPROP_RAY, 1);
+          
+          if (RefObject::HasRef(taModels[i]))
+          {
+            TABaseModel *M = taModels[i];
+            EventButtonFix.Pressed(M.fixed);
+            
+            Gamma = M.gamma;
+            
+            markTime("P1", M.F.Q.T[M.B1]);
+            markTime("P2", M.F.Q.T[M.B2]);
+            markTime("P3", M.F.Q.T[M.B3]);
+            markTime("P4", M.F.Q.T[M.B4]);
+            
+            if (M.is5)
+            {
+              markTime("P5", M.F.Q.T[M.B5], Gray);
+              markTime("P6", M.F.Q.T[M.B6], Gray);
+            }
+            
+            if (M.isH)
+            {
+              if (M.BH<ArraySize(M.F.Q.T))
+                markTime("PH", M.F.Q.T[M.BH], Orange);
+              markPrice("HP", "", M.PH, Orange, STYLE_DOT);
+            }
+            else if (M.type==M_ATTR)
+            {
+              if (M.BC<ArraySize(M.F.Q.T))
+                markTime("PH", M.F.Q.T[M.BC], Orange);
+              markPrice("HP", "", M.PC, Orange, STYLE_DOT);
+            }
+            
+            if (M.trOut)
+            {
+              markPrice("T1", "Цель 1", M.PT1);
+
+              if (M.type == M_EXP)
+              {
+                markPrice("T3", "Цель 3", 2*M.P1-M.P4);
+              
+                if (M.is5)
+                {
+                  markPrice("T4", "Цель 4", 2*M.P1-M.P6);
+                  markPrice("T5", "Цель 5", 2*M.PC-M.P6);
+                }
+              
+                if (M.P7!=M.P1)
+                  markPrice("T4x", "Цель 4x", 2*M.P7-M.P6);
+              }
+
+              markPrice("BT", "Пробой трендовой", M.PTX, Gray);
+            }
+            
+            //if (M.type!=M_ATTR)
+            {
+              if (M.isH)
+              {
+                markPrice("T100h", "100% HP", 2*M.PH-M.P1);
+                markPrice("T200h", "200% HP", 3*M.PH-2*M.P1);
+              }
+              if (M.is6)
+              {
+                markPrice("T1006", "100% 6", 2*M.P6-M.P1);
+                markPrice("T2006", "200% 6", 3*M.P6-2*M.P1);
+              }
+            }
+            
+            if (M.type==M_ATTR)
+                markPrice("T100c", "100% CP", 2*M.PC-M.P1);
+          } // if hasref
+        } // if i
+      } // for
+    } // if name
+  } // if name
+
+<procs>
+void markPrice(string name, string title, double price, color clr = LimeGreen, int style = STYLE_DASHDOT)
+{
+  ObjectCreate(name, OBJ_HLINE, 0, 0, price);
+  ObjectSetString(0, name, OBJPROP_TEXT, title);
+  ObjectSet(name, OBJPROP_COLOR, clr);
+  ObjectSet(name, OBJPROP_STYLE, style);
+  ObjectSet(name, OBJPROP_BACK, false);
+  TAmarks += name + "/";
+}
+
+void markTime(string name, datetime t, color clr = Red, int style = STYLE_DOT)
+{
+  ObjectCreate(name, OBJ_VLINE, 0, t, 0);
+  ObjectSet(name, OBJPROP_COLOR, clr);
+  ObjectSet(name, OBJPROP_STYLE, style);
+  ObjectSet(name, OBJPROP_BACK, true);
+  TAmarks += name + "/";
+}
+
+void TAClearMarks()
+{
+  string all[];
+  StringSplit(TAmarks, '/', all);
+  for (int i=0; i<ArraySize(all); i++)
+    ObjectDelete(all[i]);
+}
+
+<deinit>
+  TAClearMarks();
+  

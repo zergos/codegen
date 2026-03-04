@@ -1,0 +1,115 @@
+[Main]
+Name=VolCandles
+Title=Сумма свечей
+Group=Объёмы
+
+[Property]
+Fade=n,15,стоимость цены при затухании
+Filler=n,30,стоимость цены при заполнении пробела
+PeaksMode=n,5,коэффициет усиления вершин
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+ghigh=row
+glow=row
+
+[Output]
+V=row
+
+[InputPars]
+Start
+Size
+BoxStart
+
+[Code]
+<gvars>
+int plus$V[], minus$V[];
+int start$V;
+int size$V;
+
+<init>
+  start$V = 0;
+
+<lines>
+  int @istart, @isize;
+
+  HrMeasure($high, @istart, @isize);
+  HrMix(plus$V, minus$V, @istart, @isize, start$V, size$V);
+  HrMeasure($low, @istart, @isize);
+  HrMix(plus$V, minus$V, @istart, @isize, start$V, size$V);
+  
+  ArrayInitialize(plus$V, 0);
+  ArrayInitialize(minus$V, 0);
+  
+  for (int i=0; i<$Size; i++)
+  {
+    <?!PeaksMode>
+    double top = MathMax($open[i], $close[i]);
+    double bottom = MathMin($open[i], $close[i]);
+    <?!Fade>
+    double price = $low[i];
+    while (price<=$high[i])
+    {
+      int cell = HrIdx(start$V, price);
+      if (price<bottom || price>top) plus$V[cell] += 1;
+      else plus$V[cell] += 2;
+      price += Point;
+    }
+    <~>
+    double price = $low[ArrayMinimum($low)];
+    double max = $high[ArrayMaximum($high)];
+    while (price<=max)
+    {
+      int cell = HrIdx(start$V, price);
+      if (price<$low[i] || price>$high[i])
+      {
+        if (plus$V[cell]>0) plus$V[cell]--;
+      }
+      else
+      <?Filler>
+      if (plus$V[cell]==0) plus$V[cell] += $Filler;
+      else
+      </>
+      {
+        if (price<bottom || price>top) plus$V[cell] += $Fade;
+        else plus$V[cell] += 2*$Fade;
+      }
+      price += Point;
+    }
+    </>
+    <~>
+    // уменьшение актуальности уровней
+    double price = $low[i];
+    double max = $high[i];
+    while (price<=max)
+    {
+      int cell = HrIdx(start$V, price);
+      if (plus$V[cell]>0) plus$V[cell]--;
+      price += Point;
+    }
+    // вычисление величины хая
+    int left = i+$BoxStart;
+    while (left>0 && $ghigh[left]<=$ghigh[i]) left--;
+    int right = i+$BoxStart;
+    while (right<$BoxStart+$Size && $ghigh[right]<=$ghigh[i]) right++;
+    int volhigh = MathMin(i+$BoxStart-left, right-i-$BoxStart)-1;
+    // вычисление величины лоу
+    left = i+$BoxStart;
+    while (left>0 && $glow[left]>=$glow[i]) left--;
+    right = i+$BoxStart;
+    while (right<$BoxStart+$Size && $glow[right]>=$glow[i]) right++;
+    int vollow = MathMin(i+$BoxStart-left, right-i-$BoxStart)-1;
+    // фиксация
+    int idx = HrIdx(start$V, $high[i]);
+    plus$V[idx] += volhigh*$PeaksMode+$Fade;
+    idx = HrIdx(start$V, $low[i]);
+    plus$V[idx] += vollow*$PeaksMode+$Fade;
+    </>
+  }
+
+[Help]
+Собирает статистику прохода цены.
+  

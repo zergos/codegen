@@ -1,0 +1,75 @@
+[Main]
+Choice
+Name=SigOrder
+Title=Сигнальный ордер
+Group=Сделки
+
+[Property]
+Lots=f,0.1,размер лота
+CmdType=cmdtype,DT_STOP
+SL=n,,стоп-лосс уровней
+TP=n,,тейк-профит уровней
+ByMarket=t,1
+StopsByPrice=t
+
+[Input]
+sl=n
+tp=n
+
+[Output]
+CTRL=c
+
+[InputPars]
+Size
+
+[Code]
+<lines>
+  CHubOrder *@ho = NewOrder();
+  <?CmdType=DT_STOP>
+  if (trend>0)
+  {
+    @ho.cmd = OP_VBUYSTOP;
+    <?sl>@ho.fsl = down$sl;</>
+    <?tp>@ho.ftp = up$tp;</>
+  }
+  else
+  {
+    @ho.cmd = OP_VSELLSTOP;
+    <?sl>@ho.fsl = up$sl;</>
+    <?tp>@ho.ftp = down$tp;</>
+  }
+  </>
+  <?CmdType=DT_LIMIT>
+  if (trend>0)
+  {
+    @ho.cmd = OP_VSELLLIMIT;
+    <?sl>@ho.fsl = up$sl;</>
+    <?tp>@ho.ftp = down$tp;</>
+  }
+  else
+  {
+    @ho.cmd = OP_VBUYLIMIT;
+    <?sl>@ho.fsl = down$sl;</>
+    <?tp>@ho.ftp = up$tp;</>
+  }
+  </>
+  @ho.lots = <?ByMarket>MarketLot</>($Lots);
+  <?!StopsByPrice>
+  <?SL>@ho.sl = $SL;</>
+  <?TP>@ho.tp = $TP;</>
+  <~>
+  <?SL>@ho.fsl = $SL;</>
+  <?TP>@ho.ftp = $TP;</>
+  </>
+  @ho.ToMarket();
+  
+<?CTRL>
+  if (!order_error)
+  {
+$CTRL.lines
+  }
+</>
+
+[Help]
+Открывает ордер по рынку.\\
+Можно передавать уровни в **sl** и **tp** (lvl).

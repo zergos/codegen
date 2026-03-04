@@ -1,0 +1,52 @@
+[Main]
+Name=TACheckDir
+Title=EA Контроль направления
+Group=ТА
+
+[InputPars]
+Threads
+
+[Code]
+<gvars>
+input bool taDirFilter = true; // DirFilter: использовать фильтр по направлению
+input bool taCorrectLevels = true; // CorrectLevels: коррект. уровни по старшей модели
+input bool taAppendOrders = true; // AppendOrders: доливать сделки
+
+int taDir;
+TAScript *taPrimaScript;
+
+<init>
+  taDir = 0;
+  taPrimaScript = NULL;
+
+<lines>
+  if (!taDirFilter)
+  {
+    taDir = 0;
+    taPrimaScript = NULL;
+  }
+  else
+  {
+    if (ActiveThreads(threads)==0)
+    {
+      taDir = 0;
+      taPrimaScript = NULL;
+    }
+  }
+  /*else
+  {
+    bool check = true;
+    for (int i=0; i<ArraySize($Threads); i++)
+      if ($Threads[i].hub_state!=HUB_CLOSED && $Threads[i].taCur.M.type==M_EXP)
+      {
+        check = false;
+        break;
+      }
+      
+    if (check)
+      taDir = 0;
+  }*/  
+
+[Help]
+Сбрасывает переменную направления тенденции.
+

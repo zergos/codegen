@@ -1,0 +1,82 @@
+[Main]
+Name=FlashBar
+Title=ѕодсветка свечи
+Group=‘игуры
+
+[Property]
+Color=color,Violet
+BarIndex=n,1,номер бара от конца дл€ подсветки
+FromNull=n,,индекс бара от нул€ (слева)
+LeaveBar=t,,оставить бар при деинициализации
+NamePinned=t,,им€ бара прив€зано ко времени
+
+[Input]
+high=row
+low=row
+time=row
+sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?sig>int @count;</>
+
+<init>
+  <?sig>@count = 0;</>
+  
+<lines>
+  <?sig>
+  if ($Start==0)
+  {
+    for (int i=1; i<=@count; i++)
+      ObjectDelete("$name"+i);
+    @count = 0;
+  }
+  
+  <?BarIndex>
+  if ($Size-$Start>1) //check bar shifted
+  for (int i=MathMax($Start, $Start-$BarIndex); i<$Size-$BarIndex; i++)
+    if ($sig[i]>0)
+    {
+      @count++;
+      ObjectCreate("$name"+@count, OBJ_RECTANGLE, 0, $time[i], $high[i], $time[i+1], $low[i]);
+      ObjectSet("$name"+@count, OBJPROP_COLOR, $Color);
+    }
+  <~>
+  for (int i=$Start; i<$Size; i++)
+    if ($sig[i]>0)
+    {
+      @count++;
+      ObjectCreate("$name"+@count, OBJ_RECTANGLE, 0, $time[i], $high[i], $time[i]+PeriodSeconds(), $low[i]);
+      ObjectSet("$name"+@count, OBJPROP_COLOR, $Color);
+    }
+  </>
+  <~>
+  <?FromNull>
+  if (ObjectFind("$name"<?NamePinned>+$time[$BarIndex]</>)>=0) ObjectDelete("$name");
+  ObjectCreate("$name"<?NamePinned>+$time[$BarIndex]</>, OBJ_RECTANGLE, 0, $time[$BarIndex], $high[$BarIndex], $time[$BarIndex]+PeriodSeconds(), $low[$BarIndex]);
+  ObjectSet("$name"<?NamePinned>+$time[$BarIndex]</>, OBJPROP_COLOR, $Color);
+  <~>
+  if (ObjectFind("$name"<?NamePinned>+$time[$Size-1-$BarIndex]</>)>=0) ObjectDelete("$name");
+  ObjectCreate("$name"<?NamePinned>+$time[$Size-1-$BarIndex]</>, OBJ_RECTANGLE, 0, $time[$Size-1-$BarIndex], $high[$Size-1-$BarIndex], $time[$Size-1-$BarIndex]+PeriodSeconds(), $low[$Size-1-$BarIndex]);
+  ObjectSet("$name"<?NamePinned>+$time[$Size-1-$BarIndex]</>, OBJPROP_COLOR, $Color);
+  </>
+  ObjectSet("$name"<?NamePinned>+$time[$Size-1-$BarIndex]</>, OBJPROP_BACK, true);
+  <?mql5>ObjectSet("$name"<?NamePinned>+$time[$Size-1-$BarIndex]</>, OBJPROP_FILL, true);</>
+  </>
+  
+<deinit>
+<?!LeaveBar>
+  <?sig>
+  for (int i=1; i<=@count; i++)
+    ObjectDelete("$name"+i);
+  <~>
+  ObjectDelete("$name"<?NamePinned>+$time[$Size-1-$BarIndex]</>);
+  </>
+</>
+
+[Help]
+ѕодсветка сигнального бара нужным цветом.

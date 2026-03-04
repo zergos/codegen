@@ -1,0 +1,109 @@
+[Main]
+Name=FlowGraphics
+Title=Кластер дельта
+Group=Лента
+
+[Property]
+Color1=color,LightGreen
+Color2=color,Pink
+ColorGray=color,LightGray
+ColorX1=color,DarkGreen
+ColorX2=color,Brown
+ColorX=color,White
+Mode=n,1,режим работы (1 - Ask x Bid\, 2 - Ask-Bid\, 3 - Volume\, 4 - Volume x Delta)
+Threshold=n,100,барьер отображения цвета
+FontSize=n,6,размер шрифта
+
+[Input]
+tick=row
+time=row
+
+[InputPars]
+Start
+Size
+bar
+
+[Code]
+<gvars>
+string @names[];
+
+<flow_init>
+  if ($Start==0)
+  {
+    for (int @ii=0; @ii<ArraySize(@names); @ii++)
+    {
+      ObjectDelete(@names[@ii]);
+      ObjectDelete(@names[@ii]+"x");
+    }
+  }
+ 
+<flow_tick>
+    string @name = "$name"+$tick.time+"_"+$tick.price;
+    if (ObjectFind(@name)==-1)
+    {
+      double @right;
+      if ($tick.idx<$Size-1) @right = $time[$tick.idx+1];
+      else @right = $bar.time+PeriodSeconds();
+      
+      ObjectCreate(@name+"x", OBJ_RECTANGLE, 0, $bar.time, $tick.price, @right, $tick.price+$tick.size);
+      ObjectCreate(@name, OBJ_TEXT, 0, @right, $tick.price+$tick.size);
+      
+      ObjectSet(@name, OBJPROP_COLOR, Black);
+      ObjectSet(@name, OBJPROP_ANCHOR, ANCHOR_RIGHT_UPPER);
+      
+      ArrayResize(@names, ArraySize(@names)+1);
+      @names[ArraySize(@names)-1] = @name;
+    }
+    
+    <?Mode=1>
+    ObjectSetText(@name, ""+$bar.ask[$bar.idx]+"x"+$bar.bid[$bar.idx], $FontSize, "Courier New");
+    </>
+    <?Mode=2>
+    ObjectSetText(@name, ""+($bar.ask[$bar.idx]-$bar.bid[$bar.idx])+" ", $FontSize);//, "Courier New");
+    </>
+    <?Mode=3>
+    ObjectSetText(@name, ""+($bar.ask[$bar.idx]+$bar.bid[$bar.idx])+" ", $FontSize);
+    </>
+    <?Mode=4>
+    ObjectSetText(@name, ""+($bar.ask[$bar.idx]+$bar.bid[$bar.idx])+" x "+($bar.ask[$bar.idx]-$bar.bid[$bar.idx]), $FontSize);
+    </>
+    <?Threshold>
+    <?Mode=1>
+    if (MathAbs($bar.bid[$bar.idx]-$bar.ask[$bar.idx])>=$Threshold)
+    </>
+    <?Mode=2>
+    if (MathAbs($bar.bid[$bar.idx]-$bar.ask[$bar.idx])>=$Threshold)
+    </>
+    <?Mode=3>
+    if ($bar.bid[$bar.idx]+$bar.ask[$bar.idx]>=$Threshold)
+    </>
+    <?Mode=4>
+    if (MathAbs($bar.bid[$bar.idx]-$bar.ask[$bar.idx])>=$Threshold)
+    </>
+    {
+      if ($bar.bid[$bar.idx]<=$bar.ask[$bar.idx])
+        ObjectSet(@name+"x", OBJPROP_COLOR, $Color1);
+      else
+        ObjectSet(@name+"x", OBJPROP_COLOR, $Color2);
+      ObjectSet(@name, OBJPROP_COLOR, $ColorX);
+    }
+    else
+    </>
+    {
+        ObjectSet(@name+"x", OBJPROP_COLOR, $ColorGray);
+        if ($bar.bid[$bar.idx]<=$bar.ask[$bar.idx])
+          ObjectSet(@name, OBJPROP_COLOR, $ColorX1);
+        else
+          ObjectSet(@name, OBJPROP_COLOR, $ColorX2);
+    }
+
+<deinit>
+  for (int @i=0; @i<ArraySize(@names); @i++)
+  {
+    ObjectDelete(@names[@i]);
+    ObjectDelete(@names[@i]+"x");
+  }
+    
+[Help]
+Рисование котировочных кластеров.
+

@@ -1,0 +1,56 @@
+[Main]
+Title=Генератор баров
+Group=Генераторы
+Name=BarsGen
+
+[Property]
+Symbol=null,NULL,инструмент
+StartTime=d,,начальное время извлечения буфера
+TimeFrame=period,0,период
+OutMode=series,Close,серия для извлечения
+
+[Input]
+time=row
+
+[InputPars]
+Start
+Size
+
+[Output]
+Out=row
+
+[Code]
+<gvars>
+double $Out[];
+
+<lines>
+  ArrayInit($Out, $Size);
+  CheckShift($Out);
+
+  int @shift;
+  <?StartTime>@shift = iBarShift($Symbol, $TimeFrame, D'$StartTime');
+  <~>
+  //if ($Start==0 || @shift==0)
+    @shift = iBarShift($Symbol, $TimeFrame, $time[$Size-1]);
+  //else
+    //@shift += $Size-$Start-1;
+  </>
+  //Print("$name =="+GetLastError());
+  if (@shift+$Size>iBars($Symbol, $TimeFrame))
+  {
+    Print("Not enought Bars for timeframe: ",@shift+$Size," > ",iBars($Symbol, $TimeFrame));
+    return(0);
+  }
+
+  //ArraySetAsSeries($Out, true);
+  //ArrayCopySeries($Out, MODE_$OutMode, $Symbol, $TimeFrame);
+  int @i;
+  for (@i=0; @i<$Size-$Start; @i++)
+    $Out[$Size-@i-1] = i$OutMode($Symbol, $TimeFrame, @i+@shift);
+    
+    //Print("$name  == "+@shift+" == "+TimeToStr(iTime($Symbol, $TimeFrame, @shift))+" == "+$Out[$Size-1]);
+
+  //ArraySetAsSeries($Out, false);
+
+[Help]
+Подготавливает буфер с любой серией за любой период

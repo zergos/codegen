@@ -1,0 +1,20 @@
+[Main]
+Choice
+Name=OnNewBar
+Title=На новом баре
+Group=Управление
+Size=4
+
+[Output]
+CTRL=c
+
+[Code]
+<lines>
+  if (newbar)
+  {
+$CTRL.lines
+  }
+  
+[Help]
+Выполняет код при наступлении нового бара.
+

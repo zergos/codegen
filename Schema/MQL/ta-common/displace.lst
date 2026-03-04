@@ -1,0 +1,17 @@
+Zone|Polus|Trend|Order->Zone|Order
+<++- expand_tp|open_mix
+<+++ expand_tp|expand_tp
+<+-- shadow|nope
+<+-+ shadow|nope
+<-+- nope|nope
+<-++ expand_tp|expand_tp
+<--- shadow|nope
+<--+ shadow|nope
+>++- displace|open_big
+>+++ expand|expand
+>+-- displace|open
+>+-+ shadow|hedge
+>-+- displace|open
+>-++ expand|expand
+>--- displace|open
+>--+ shadow|nope

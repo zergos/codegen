@@ -1,0 +1,30 @@
+[Main]
+Name=IEnvelopes
+Title=Envelopes
+Group=јлгоритмы (ген)
+
+[Property]
+period=n,15,период усреднени€ дл€ вычислени€ скольз€щего среднего
+method=ima,MODE_SMA,метод усреднени€
+applied_price=applied_price,PRICE_CLOSE,тип цены 
+deviation=f,0.1,отклонение в процентах
+mode=line_index,MODE_MAIN,индекс линии
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out);
+  CheckShift($out);
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = iEnvelopes(NULL, 0, $period, $method, 0, $applied_price, $deviation, $mode, $Size-1-i);
+    
+

@@ -1,0 +1,201 @@
+[Main]
+Deprecated
+Unit
+Name=VirtualOrders
+Title=Виртуальные ордера
+Group=Советник
+
+[Property]
+Count=n,2
+Slippage=n,3,максимально допустимое отклонение цены
+Color=color,CLR_NONE,цвет открывающей стрелки на графике
+OpenLevel=n,5,уровень подтверждения для открытия
+StopLess=t,,открывать по инерции сразу после закрытия
+Reverse=t,,реверсивная логика
+
+[Code]
+<gvars>
+int virtualMode[$Count]; //-1, OP_BUY, OP_SELL
+int virtualSL[$Count];
+int virtualTP[$Count];
+double virtualVol[$Count];
+double virtualLim[$Count];
+int virtualTicket[$Count];
+
+<procs>
+void vOrderOpen(int idx, int Mode, double Vol, int SL, int TP)
+{
+  virtualMode[idx] = Mode;
+  virtualVol[idx] = Vol;
+  virtualSL[idx] = SL;
+  virtualTP[idx] = TP;
+  if (Mode==OP_BUY)
+    virtualLim[idx] = Ask;
+  else
+    virtualLim[idx] = Bid;
+}
+
+void vOrderClose(int idx)
+{
+  virtualMode[idx] = -1;
+  virtualTicket[idx] = 0;
+}
+
+bool vOrderOpened(int idx)
+{
+  return (virtualMode[idx]!=-1);
+}
+
+<init>
+  for (int @k=0; @k<$Count; @k++)
+  {
+    virtualMode[@k] = -1;
+    virtualTicket[@k] = 0;
+  }
+
+<endlines>
+<?!Reverse>
+  // Check close
+  for (int @i=0; @i<$Count; @i++)
+  {
+    if (virtualTicket[@i]==0) continue;
+    OrderSelect(virtualTicket[@i], SELECT_BY_TICKET);
+    if (OrderCloseTime()>0)
+    {
+      virtualTicket[@i] = 0;
+      <?StopLess>
+      if (virtualMode[@i] == OP_BUY) // зачем это?
+        virtualLim[@i] = Ask;
+      else
+        virtualLim[@i] = Bid;
+      <~>
+      virtualMode[@i] = -1;
+      </>
+    }
+  }
+
+  // Check open
+  int @Ticket;
+  double @SL, @TP;
+  for (@i=0; @i<$Count; @i++)
+  {
+    if (virtualTicket[@i]!=0) continue;
+    if (virtualMode[@i]==OP_BUY)
+    {
+      if (Ask<virtualLim[@i])
+        virtualLim[@i] = Ask;
+      else
+      if (Ask-virtualLim[@i]>=$OpenLevel.0*Point)
+      while (true)
+      {
+        if (virtualSL[@i]==0) @SL = 0;
+        else @SL = Ask-virtualSL[@i]*Point;
+        if (virtualTP[@i]==0) @TP = 0;
+        else @TP = Ask+virtualTP[@i]*Point;
+        @Ticket = OrderSend(Symbol(), OP_BUY, virtualVol[@i], NormalizeDouble(Ask, Digits), $Slippage, @SL, @TP, NULL, MAGIC, 0, $Color);
+	if (@Ticket>0)
+	{
+	  virtualTicket[@i] = @Ticket;
+	  break;
+	}
+	if (Fun_Error(GetLastError())!=1) break;
+      }
+    }
+    else if (virtualMode[@i]==OP_SELL)
+    {
+      if (Bid>virtualLim[@i])
+        virtualLim[@i] = Bid;
+      else
+      if (virtualLim[@i]-Bid>=$OpenLevel.0*Point)
+      while (true)
+      {
+        if (virtualSL[@i]==0) @SL = 0;
+        else @SL = Bid+virtualSL[@i]*Point;
+        if (virtualTP[@i]==0) @TP = 0;
+        else @TP = Bid-virtualTP[@i]*Point;
+        @Ticket = OrderSend(Symbol(), OP_SELL, virtualVol[@i], NormalizeDouble(Bid, Digits), $Slippage, @SL, @TP, NULL, MAGIC, 0, $Color);
+	if (@Ticket>0)
+	{
+	  virtualTicket[@i] = @Ticket;
+	  break;
+	}
+	if (Fun_Error(GetLastError())!=1) break;
+      }
+    }
+  }
+<~>
+  // Check close
+  for (int @i=0; @i<$Count; @i++)
+  {
+    if (virtualTicket[@i]==0) continue;
+    OrderSelect(virtualTicket[@i], SELECT_BY_TICKET);
+    if (OrderCloseTime()>0)
+    {
+      virtualTicket[@i] = 0;
+      <?StopLess>
+      if (virtualMode[@i] == OP_BUY)
+        virtualLim[@i] = Ask;
+      else
+        virtualLim[@i] = Bid;
+      <~>
+      virtualMode[@i] = -1;
+      </>
+    }
+  }
+
+  // Check open
+  int @Ticket;
+  double @SL, @TP;
+  for (@i=0; @i<$Count; @i++)
+  {
+    if (virtualTicket[@i]!=0) continue;
+    if (virtualMode[@i]==OP_BUY)
+    {
+      if (Ask<=virtualLim[@i])
+        virtualLim[@i] = Ask;
+      else
+      if (Ask-virtualLim[@i]>=$OpenLevel.0*Point)
+      while (true)
+      {
+        if (virtualSL[@i]==0) @SL = 0;
+        else @SL = Bid+virtualSL[@i]*Point;
+        if (virtualTP[@i]==0) @TP = 0;
+        else @TP = Bid-virtualTP[@i]*Point;
+        @Ticket = OrderSend(Symbol(), OP_SELL, virtualVol[@i], NormalizeDouble(Ask, Digits), $Slippage, @SL, @TP, NULL, MAGIC, 0, $Color);
+	if (@Ticket>0)
+	{
+	  virtualTicket[@i] = @Ticket;
+	  break;
+	}
+	if (Fun_Error(GetLastError())!=1) break;
+      }
+    }
+    else if (virtualMode[@i]==OP_SELL)
+    {
+      if (Bid>=virtualLim[@i])
+        virtualLim[@i] = Bid;
+      else
+      if (virtualLim[@i]-Bid>=$OpenLevel.0*Point)
+      while (true)
+      {
+        if (virtualSL[@i]==0) @SL = 0;
+        else @SL = Ask-virtualSL[@i]*Point;
+        if (virtualTP[@i]==0) @TP = 0;
+        else @TP = Ask+virtualTP[@i]*Point;
+        @Ticket = OrderSend(Symbol(), OP_BUY, virtualVol[@i], NormalizeDouble(Bid, Digits), $Slippage, @SL, @TP, NULL, MAGIC, 0, $Color);
+	if (@Ticket>0)
+	{
+	  virtualTicket[@i] = @Ticket;
+	  break;
+	}
+	if (Fun_Error(GetLastError())!=1) break;
+      }
+    }
+  }
+</>
+
+[Help]
+Подсистема обработки виртуальных ордеров.\\
+Виртуальный ордер превращается в фактический только после подтверждения движения цены на **OpenLevel** пунктов в выбранном направлении.\\
+При реверсивной логике алгоритм покупает, когда надо продавать и наоборот.\\
+//Это сделано для тех, кто верит в то, что убыточную ТС легко превратить в прибыльную//;-)

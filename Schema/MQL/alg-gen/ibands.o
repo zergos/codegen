@@ -1,0 +1,32 @@
+[Main]
+Name=IBands
+Title=Bollinger Bands
+Group=Алгоритмы (ген)
+
+[Property]
+period=n,20,период 
+deviation=f,2.0,кол-во стандартных отклонений 
+bands_shift=n,0,сдвиг относительно цены 
+applied_price=applied_price,PRICE_CLOSE,тип цены 
+mode=line_index,MODE_MAIN,индекс линии
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out);
+  CheckShift($out);
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = iBands(NULL, 0, $period, $deviation, $bands_shift, $applied_price, $mode, $Size-1-i);
+    
+[Help]
+Генератор линий канала Боллинжера.
+

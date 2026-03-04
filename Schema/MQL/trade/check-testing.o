@@ -1,0 +1,24 @@
+[Main]
+Choice
+Name=CheckTesting
+Title=Проверка тестера
+Group=Советник
+
+[Output]
+Normal=c
+Testing=c
+
+[Code]
+<lines>
+  if (!IsTesting())
+  {
+$Normal.lines
+  }
+  else
+  {
+$Testing.lines
+  }
+  
+[Help]
+Проверка запуска советника в режиме тестера.
+

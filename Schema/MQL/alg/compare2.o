@@ -1,0 +1,104 @@
+[Main]
+Title=Сравнение графиков
+Group=Преобразования
+Name=Compare
+
+[Property]
+MinDistance=f,10.0,% разницы уровней для медленного срабатывания
+MaxDistance=f,50.0,% разницы уровней для быстрого срабатывания
+WaitTicks=n,3,ждать тиков до закрытия
+Tail=n,,предыдущих баров для расчёта максимума
+
+[Input]
+in1=row
+in2=row
+
+[Output]
+Up=row,@OutUp
+Down=row,@OutDown
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+extern double @MinDist = $MinDistance;
+extern double @MaxDist = $MaxDistance;
+extern int @Wait = $WaitTicks;
+<?Tail>extern int @TailTicks = $Tail;</>
+
+double @OutUp[];
+double @OutDown[];
+
+// номер бара отклонения
+int @UpModeBarIndex;
+int @DownModeBarIndex;
+
+<lines>
+  ArrayInit(@OutUp, $Size);
+  ArrayInit(@OutDown, $Size);
+
+  <?Tail>int @Limit;</>
+
+  int @HighVal1;
+  int @HighVal2;
+  int @HighVal;
+
+  @UpModeBarIndex = 0;
+  @DownModeBarIndex = 0;
+
+  ArrayInitialize(@OutUp, 0.0);
+  ArrayInitialize(@OutDown, 0.0);
+
+  <?!Tail>
+  @HighVal1 = $in1[ArrayMaximum($in1)] - $in1[ArrayMinimum($in1)];
+  @HighVal2 = $in2[ArrayMaximum($in2)] - $in2[ArrayMinimum($in2)];
+  @HighVal = MathMax(@HighVal1, @HighVal2);
+  </>
+  
+  Print(@HighVal);
+
+  for (int @i=0; @i<$Size; @i++)
+  {
+    <?Tail>
+    if (@i>0)
+    {
+      @Limit = MathMin(@TailTicks, @i);
+      @HighVal1 = $in1[ArrayMaximum($in1,@Limit,@i-@Limit)] - $in1[ArrayMinimum($in1,@Limit,@i-@Limit)];
+      @HighVal2 = $in2[ArrayMaximum($in2,@Limit,@i-@Limit)] - $in2[ArrayMinimum($in2,@Limit,@i-@Limit)];
+      @HighVal = MathMax(@HighVal1, @HighVal2);
+    }
+    if (@HighVal==0) continue;
+    </>
+
+    // process bar
+    double @Status = MathAbs($in1[@i]-$in2[@i]) * 100/@HighVal;
+    if (@Status >= @MinDist)
+    {
+      if ($in1[@i] < $in2[@i]) // gen up
+      {
+        @UpModeBarIndex++;
+	@DownModeBarIndex = 0;
+      }
+      else
+      {
+        @DownModeBarIndex++;
+	@UpModeBarIndex = 0;
+      }
+
+      if (@UpModeBarIndex >= @Wait || (@UpModeBarIndex>0 && @Status>@MaxDist))
+      {
+        @OutUp[@i] = $in2[@i];
+        @UpModeBarIndex = 0;
+      }
+      else if (@DownModeBarIndex >= @Wait || (@DownModeBarIndex>0 && @Status>@MaxDist))
+      {
+        @OutDown[@i] = $in1[@i];
+        @DownModeBarIndex = 0;
+      }
+    }
+  }
+
+[Help]
+Генерация результатов в виде двух индикаторных буферов

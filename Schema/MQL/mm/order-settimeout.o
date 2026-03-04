@@ -1,0 +1,57 @@
+[Main]
+Name=OrderSetTimeout
+Title=Тайм-аут
+Group=Сделки
+
+[Property]
+Expire=n,60,количество минут для таймаута
+HubState=hubstate,HUB_ACTIVE,состояние ордера для фильтрации
+FromMode=n,0,начало отсчёта (0 - от текущего ордера\, 1 - от первого в серии\, 2 - от последнего)
+SkipWeekends=t,1,пропускать выходные
+SkipHours=n,,пропускать утренние часы
+
+[Code]
+<lines>
+  <?FromMode=1>
+    if (HasRef(initial) && OrderSelect(initial.ticket, SELECT_BY_TICKET))
+  </>
+  <?FromMode=2>
+    if (HasRef(last_order && OrderSelect(last_order.ticket, SELECT_BY_TICKET))
+  </>
+  ForEachL(CHubOrder, ho, firstOrder)
+    <?HubState>
+    if (ho.state == $HubState)
+    <~>
+    if (ho.state != HUB_CLOSED)
+    </>
+    <?FromMode=0>
+      if (OrderSelect(ho.ticket, SELECT_BY_TICKET))
+    </>
+    {
+      ho.expire = OrderOpenTime()+$Expire*60;
+      <?SkipWeekends>
+      if (TimeDayOfWeek(ho.expire)==6) ho.expire += 86400*2;
+      </>
+      <?SkipHours>
+      if (TimeHour(ho.expire)<$SkipHours)
+      {
+        MqlDateTime @dt;
+        TimeToStruct(ho.expire, @dt);
+        @dt.hour = $SkipHours;
+        @dt.min = 0;
+        @dt.sec = 0;
+        ho.expire = StructToTime(@dt);
+      }
+      </>
+      /*
+      if (hub[@i].cmd < OP_VIRTUAL && hub[@i].cmd > OP_SELL)
+        if (OrderSelect(hub[@i].ticket, SELECT_BY_TICKET))
+        {
+          Print("try to change "+OrderTicket()+" "+TimeToStr(OrderExpiration())+" to "+TimeToStr(hub[@i].expire));
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), OrderStopLoss(), OrderTakeProfit(), hub[@i].expire))
+            Print("order "+hub[@i].ticket+" modify error");
+        }*/
+    }
+  
+[Help]
+Устанавливает время действия всем ордерам.

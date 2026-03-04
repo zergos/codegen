@@ -1,0 +1,30 @@
+[Main]
+Title=Запись буфера
+Group=Файлы
+Name=FileWrite
+
+[Property]
+BufSize=n,,размер буфера
+Window=n,1,глубина окна
+
+[Input]
+in=row
+File=n
+
+[InputPars]
+Size
+
+[OutputPars]
+Size=($Size-$Window+1)
+
+[Code]
+<lines>
+  for (int @i=0; @i<$Window; @i++)
+<?BufSize>
+    FileWriteArray($File, $in, @i, $BufSize-$Window+1);
+<~>
+    FileWriteArray($File, $in, @i, $Size-$Window+1);
+</>
+
+[Help]
+Запись буфера в файл

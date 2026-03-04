@@ -1,0 +1,36 @@
+[Main]
+Name=HrPlusMany
+Title=Сложение
+Group=Объёмы
+
+[Input]
+in=row
+
+[Output]
+V=row
+
+[Prefix]
+<gvars>
+int plus$V[], minus$V[];
+int start$V=0;
+int size$V;
+
+<lines>
+  ArrayInitialize(plus$V, 0);
+  ArrayInitialize(minus$V, 0);
+  int @shift, @i;
+
+[Code]
+<lines>
+  HrMix(plus$V, minus$V, start$in, size$in, start$V, size$V);
+  
+  @shift = start$V-start$in;
+  for (@i=0; @i<size$V-1; @i++)
+  {
+    plus$V[@i] += plus$in[@i+@shift];
+    minus$V[@i] += minus$in[@i+@shift];
+  }
+
+[Help]
+Сложение нескольких горозонтальных массивов.
+

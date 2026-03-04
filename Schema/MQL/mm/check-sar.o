@@ -1,0 +1,27 @@
+[Main]
+Choice
+Name=HCheckSAR
+Title=Пробитие SAR
+Group=Сделки
+
+[Property]
+Step=n,0.02,шаг
+Maximum=n,0.2,максимум
+
+[Output]
+Break=c
+
+[Code]
+<lines>
+  double @sar = iSAR(NULL,0,$Step,$Maximum,0);
+  if ((hub[initial].cmd==OP_BUY && @sar>Bid) || (hub[initial].cmd==OP_SELL && @sar<Ask))
+  {
+  <?debug>
+  if (hub[initial].cmd==OP_BUY) Print("SAR break "+@sar+" > "+Bid);
+  else Print("SAR break "+@sar+" < "+Ask);
+  </>
+$Break.lines
+  }
+  
+[Help]
+Выполняет проверку на на пробитие текущей ценой индикатора SAR.

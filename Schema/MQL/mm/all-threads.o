@@ -1,0 +1,64 @@
+[Main]
+Choice
+Name=AllThreadsSet
+Title=Обход потоков
+Group=Сделки
+
+[Property]
+Condition=s
+SkipSelf=t,,пропустить текущий поток при обработке
+Debug=s,,выражения для отладочного вывода
+
+[Output]
+work=c
+
+[InputPars]
+Threads
+
+[Code]
+<gvars>
+bool @invade;
+
+<init>
+  @invade = false;
+
+<procs>
+<?Condition>
+bool @check_invade($Threads &thread)
+{
+  return $Condition;
+}
+</>
+<?Debug>
+string @test_invade($Threads &thread)
+{
+  return $Debug;
+}
+</>
+
+<lines>
+  if (!@invade)
+  ForEach($Threads, th)
+  if (th.hub_state != HUB_CLOSED)
+  {
+  <?debug>
+  <?Debug>Print("#",thread_index," : ",@test_invade(th));</>
+  </>
+  <?SkipSelf>if (th != GetPointer(this))</>
+  <?Condition>if (@check_invade(th))</>
+      th.@invade = true;
+  }
+      
+<invade>
+  if (@invade)
+  {
+    @invade = false;
+$work.lines
+  }
+
+<sync>
+  sync("$name", @invade);
+
+[Help]
+Обход всех активных потоков с выполнением кода **work** по условию **Condition**.\\
+В условии допускается использование параметра **thread**.

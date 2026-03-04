@@ -1,0 +1,40 @@
+[Main]
+Name=OrderCloseAll
+Title=Закрытие всех
+Group=Сделки
+
+[Property]
+HubState=hubstate,HUB_ACTIVE
+ProfitFirst=t,1
+CloseHub=t
+Magic=n
+Trend=n
+ExceptLast=t,,кроме последнего открытого ордера
+Condition=s,,выражение фильрации (ho)
+
+[Code]
+<procs>
+<?Condition>
+bool @CloseCondition(CHubOrder &ho)
+{
+  return $Condition;
+}
+</>
+
+<lines>
+  <?ProfitFirst>
+  ForEachL(CHubOrder, ho, firstOrder)
+    if (<?HubState>ho.state == $HubState<~>ho.state != HUB_CLOSED</> && OrderSelect(ho.ticket, SELECT_BY_TICKET) && OrderProfit()>0)
+      ho.ForceClose();
+  </>
+  ForEachL(CHubOrder, ho, firstOrder)
+    if (<?HubState>ho.state == $HubState<~>ho.state != HUB_CLOSED</><?Magic>&& OrderSelect(ho.ticket, SELECT_BY_TICKET) && OrderMagicNumber()==$Magic</><?Trend>&& ($Trend>0 && ho.cmd==OP_BUY || $Trend<0 && ho.cmd==OP_SELL)</><?ExceptLast> && ho!=last_order</><?Condition>&& @CloseCondition(ho)</>)
+      ho.ForceClose();
+  <?CloseHub>
+  hub_state = HUB_CLOSED;
+  hub_activated = true;
+  </>
+
+[Help]
+Закрыть все ордера (сначала прибыльные, потом остальные).
+

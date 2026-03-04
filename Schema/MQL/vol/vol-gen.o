@@ -1,0 +1,51 @@
+[Main]
+Name=HrVolume
+Title=Генератор
+Group=Объёмы
+
+[Input]
+in=row
+vol=row
+sign=row
+
+[Output]
+V=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+int plus$V[], minus$V[];
+int start$V=0;
+int size$V;
+
+<lines>
+  int @insize, @instart;
+  HrMeasure($in, @instart, @insize);
+  HrMix(plus$V, minus$V, @instart, @insize, start$V, size$V);
+  
+  if ($Start==0)
+  {
+    ArrayInitialize(plus$V, 0);
+    ArrayInitialize(minus$V, 0);
+  }
+  
+  for (int @i=$Start; @i<$Size-1; @i++) // последний (рабочий) тик не учитываем
+  {
+    int @cell = start$V - floor($in[@i]/Point/HrVolStep);
+    <?!sign>
+    plus$V[@cell] += <?vol>$vol[@i]<~>1</>;
+    <~>
+    if ($sign[@i]>0) plus$V[@cell] += <?vol>$vol[@i]<~>1</>;
+    else minus$V[@cell] += <?vol>$vol[@i]<~>1</>;
+    </>
+  }
+
+[Help]
+Генератор горизонтальных массивов по аккумуляции входящих тиков.\\
+Если объёмовый вход присутствует - объёмы учавствуют в суммировании.\\
+Если присутствует сигнал направления, то суммируются и положительный вектор и отрицательный отдельно.\\
+//Требуется модуль математики.//
+

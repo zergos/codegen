@@ -1,0 +1,96 @@
+[Main]
+Choice
+Name=Switch
+Title=Автомат
+Group=Управление
+
+[Property]
+StartMode=n,1,начальное состояние
+HubInitOnce=t,,присваивать начальное состояние единожды при создании хаба
+SaveChanged=t,,сохраняться при изменении состояния
+
+[Output]
+mode1=c
+mode2=c
+mode3=c
+mode4=c
+mode5=c
+code=n
+
+[OutputPars]
+Switch=$name
+
+[Code]
+<gvars>
+int mode$name;
+bool repeat$name;
+<?SaveChanged>int @last_mode;</>
+
+<hub_init>
+  <?HubInitOnce>mode$name = $StartMode;</>
+
+<init>
+  <?!HubInitOnce>mode$name = $StartMode;</>
+
+<lines>
+  <?SaveChanged>
+  if (@last_mode<0) @last_mode = mode$name;
+  </>
+  repeat$name = true;
+  while (repeat$name)
+  {
+    <?SaveChanged>
+    if (@last_mode!=mode$name)
+    {
+      syncSave();
+      @last_mode = mode$name;
+    }
+    </>
+    repeat$name = false;
+    switch (mode$name)
+    {
+<?mode1>
+      case 1:
+      {
+$mode1.lines
+        break;
+      }
+</>
+<?mode2>
+      case 2:
+      {
+$mode2.lines
+        break;
+      }
+</>
+<?mode3>
+      case 3:
+      {
+$mode3.lines
+        break;
+      }
+</>
+<?mode4>
+      case 4:
+      {
+$mode4.lines
+        break;
+      }
+</>
+<?mode5>
+      case 5:
+      {
+$mode5.lines
+        break;
+      }
+</>
+    }
+  }
+
+<sync>
+  syncTitle("$name");
+  sync("mode", mode$name);
+  sync("repeat", repeat$name);
+  
+[Help]
+Автомат (развилка) выполнения.

@@ -1,0 +1,15 @@
+[Main]
+Name=TAClose
+Title=CSV Закрытие формы
+Group=ТА
+
+[InputPars]
+active
+
+[Code]
+<lines>
+  modelStop($active);
+  
+[Help]
+Помечает текущую форму как отработанную.
+

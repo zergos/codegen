@@ -1,0 +1,22 @@
+[Main]
+Choice
+Name=ChartKeyDown
+Title=Нажатие клавиши
+Group=События
+
+[Property]
+KeyCode=keycode,13,код клавиши
+
+[Output]
+run=c
+
+[Code]
+<lines>
+  if (event_id == CHARTEVENT_KEYDOWN && lparam == $KeyCode)
+  {
+$run.lines
+  }
+  
+[Help]
+Проверяет нажатие клавиши на графике.
+

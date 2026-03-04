@@ -1,0 +1,38 @@
+[Main]
+Usable
+Name=RefObject
+Title=Ссылочный объект
+Group=Общие
+
+[Code]
+<top>
+#include "ref-object.mqh"
+
+<attach>
+=ref-object.mqh
+class RefObject
+{
+  public:
+  int mRef;
+  
+  RefObject() : mRef(1) { };
+  RefObject *AddRef()
+  {
+    mRef++;
+    return GetPointer(this);
+  }
+  void Release()
+  {
+    mRef--;
+    if (mRef==0) delete GetPointer(this);
+  }
+  
+  static bool HasRef(RefObject *ptr)
+  {
+    return CheckPointer(ptr) != POINTER_INVALID;
+  }
+};
+
+[Help]
+Класс ссылочных объектов.
+

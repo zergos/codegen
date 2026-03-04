@@ -1,0 +1,138 @@
+[Main]
+Name=TAZig
+Title=ЗигЗаг
+Group=ТА
+
+[Input]
+close=row
+high=row
+low=row
+time=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  static int @mode;
+  static int @last;
+  static int @prev_h, @prev_l;
+  static bool @rolled;
+  
+  if ($Start==0)
+  {
+    @mode = 0;
+    @last = 0;
+    @prev_h = -1;
+    @prev_l = -1;
+    @rolled = false;
+  }
+  else if (Shifted)
+  {
+    @last--;
+    @prev_h--;
+    @prev_l--;
+  }
+  
+  for (int i=MathMax(1,$Start); i<$Size-1; i++)
+  {
+    switch (@mode)
+    {
+      case 0:
+        if ($close[i]>$close[i-1] && $low[i]>$low[i-1])
+        {
+          @mode = 1;
+          $out[i] = $close[i];
+          @last = i;
+        }
+        if ($close[i]<$close[i-1] && $high[i]<$high[i-1])
+        {
+          @mode = -1;
+          $out[i] = $close[i];
+          @last = i;
+        }
+        break;
+        
+      case 1:
+        if ($close[i]<$close[@last])
+        {
+          if ($high[i]<$high[@last])
+          {
+            @mode = -1;
+            
+            if (@prev_h>=0 && $close[@last]>$close[@prev_h]) @rolled = true;
+            else @rolled = false;
+            
+            @prev_h = @last;
+            i = @last+1;
+            @last = i;
+            $out[i] = $close[i];
+          }
+          else if (!@rolled && @prev_l>=0 && $close[i]<$close[@prev_l])
+          {
+            @mode = -1;
+            $out[i] = $close[i];
+            $out[@prev_l] = 0;
+            @prev_l = i;
+            $out[@last] = 0;
+            @last = i;
+          }
+        }
+        else
+        {
+          if (@prev_h>=0 && $close[i]>$close[@prev_h]) @rolled = true;
+          $out[@last] = 0;
+          $out[i] = $close[i];
+          @last = i;
+        }
+        break;
+        
+      case -1:
+        if ($close[i]>$close[@last])
+        {
+          if ($low[i]>$low[@last])
+          {
+            @mode = 1;
+            
+            if (@prev_l>=0 && $close[@last]<$close[@prev_l]) @rolled = true;
+            else @rolled = false;
+            
+            @prev_l = @last;
+            i = @last+1;
+            @last = i;
+            $out[i] = $close[i];
+          }
+          else if (!@rolled && @prev_h>=0 && $close[i]>$close[@prev_h])
+          {
+            @mode = 1;
+            $out[i] = $close[i];
+            $out[@prev_h] = 0;
+            @prev_h = i;
+            $out[@last] = 0;
+            @last = i;
+          }
+          
+        }
+        else
+        {
+          if (@prev_l>=0 && $close[i]<$close[@prev_l]) @rolled = true;
+          $out[@last] = 0;
+          $out[i] = $close[i];
+          @last = i;
+        }
+    }
+  }
+  
+[Help]
+Рисует зигзаг по правилам ТА.
+

@@ -1,0 +1,33 @@
+[Main]
+Usable
+Name=Unicode
+Title=Unicode
+Group=Common
+
+[Code]
+<top>
+#include "unicode.mqh"
+
+<attach>
+=unicode.mqh
+#import "kernel32.dll"
+int WideCharToMultiByte(
+  uint    CodePage,
+  ushort  dwFlags,
+  string  lpWideCharStr,
+  int     cchWideChar,
+  uchar   &lpMultiByteStr[],
+  int     cbMultiByte,
+  int     lpDefaultChar,
+  int     lpUsedDefaultChar
+);
+#import
+
+int unicode2win1251(string in, uchar &out[])
+{
+  static uchar buffer[1028];
+  bool res = WideCharToMultiByte(1251, 0, in, StringLen(in), buffer, StringLen(in), 0, 0);
+  ArrayResize(out, StringLen(in));
+  ArrayCopy(out, buffer, 0, 0, StringLen(in));
+  return res;
+}

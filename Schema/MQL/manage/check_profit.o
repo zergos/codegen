@@ -1,0 +1,20 @@
+[Main]
+Name=CheckProfit
+Title=Проверка профита
+Group=Управление
+
+[Property]
+Expression=s,>=0,выражение сравнения
+
+[Input]
+Ticket=n
+
+[Code]
+<lines>
+  if (OrderSelect($Ticket, SELECT_BY_TICKET, MODE_TRADES) && OrderCloseTime()==0 && OrderProfit()$Expression)
+  {
+$CTRL.lines
+  }
+  
+[Help]
+Проверка профита ордера.

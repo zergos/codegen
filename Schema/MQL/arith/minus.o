@@ -1,0 +1,37 @@
+[Main]
+Name=Minus
+Title=Вычитание
+Group=Арифметика
+Size=4
+
+[Property]
+Abs=t,,использовать модуль
+
+[Input]
+in1=row
+in2=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int i=$Start; i<$Size; i++)
+  <?!Abs>
+    $out[i] = $in1[i]-$in2[i];
+  <~>
+    $out[i] = MathAbs($in1[i]-$in2[i]);
+  </>
+
+[Help]
+Последовательное вычитание между элементами массивов
+<code>out = in1 - in2</code>

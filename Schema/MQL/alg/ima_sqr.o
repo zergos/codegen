@@ -1,0 +1,47 @@
+[Main]
+Name=ImaSqr
+Title=Среднеквадр. отклонение
+Group=Алгоритмы
+
+[Property]
+Period=n,15
+Shift=n
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+Start
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    double @mx=0, @mxx=0;
+    for (int @k=@i-$Period+1<?Shift>+$Shift</>; @k<=@i<?Shift>+$Shift</>; @k++)
+    {
+      @mx += $in[@k];
+      @mxx += $in[@k]*$in[@k];
+    }
+    $out[@i] = MathSqrt(@mxx/$Period - @mx*@mx/$Period/$Period);
+    //if ($in[@i]<@mx/$Period) $out[@i] = -$out[@i];
+  }
+  if ($Start==0)
+  {
+    for (@i=0; @i<$Period<?Shift>+$Shift</>-1; @i++)
+      $out[@i] = $out[$Period<?Shift>+$Shift</>-1];
+  }
+
+[Help]
+Вычисление среднеквадратичного отклонения.
+<code>out = Sqrt ( M^2[x] - (M[x])^2)</code>

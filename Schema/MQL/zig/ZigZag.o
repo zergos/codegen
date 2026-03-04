@@ -1,0 +1,174 @@
+[Main]
+Title=Зигзаг
+Group=Алгоритмы
+Name=ZigZag
+
+[Property]
+ExtDepthVal=n,12
+ExtDeviationVal=n,5
+ExtBackstepVal=n,3
+
+[Input]
+iHigh=row
+iLow=row
+
+[Output]
+Zigzag=row,@Zig
+
+[InputPars]
+Size
+Start
+
+[Global]
+<top>
+#define ZigMax  100000000000000000000.0
+#define ZigMin -100000000000000000000.0
+
+[Code]
+<gvars>
+extern int @ExtDepth = $ExtDepthVal;
+extern int @ExtDeviation = $ExtDeviationVal;
+extern int @ExtBackstep = $ExtBackstepVal;
+
+double @TempMap[];
+double @Zig[];
+
+int @level=3; // recounting's depth 
+
+<lines>
+  ArrayInit(@TempMap, $Size);
+  ArrayInit(@Zig, $Size);
+
+  int @curpos, @i;
+  double @cur;
+
+  if ($Start==0)
+    ArrayInitialize(@Zig, 0);
+  else
+  {
+    CheckShift(@Zig);
+    CheckShift(@TempMap);
+    for (@i=$Start; @i<$Size; @i++)
+      @Zig[@i] = 0;
+  }
+  
+  ArrayCopy(@TempMap, $iLow, $Start, $Start, $Size-$Start);
+
+  @curpos = ArrayMinimum(@TempMap, $Size-$Start, $Start);
+  @cur = @TempMap[@curpos];
+  while (@cur<ZigMax)
+  {
+    @Zig[@curpos] = @cur;
+    for (@i=@curpos-@ExtDepth; @i<=@curpos+@ExtDepth; @i++)
+    if (@i>=0 && @i<$Size)
+      @TempMap[@i] = ZigMax;
+    @curpos = ArrayMinimum(@TempMap, $Size-$Start, $Start);
+    @cur = @TempMap[@curpos];
+  }
+
+  ArrayCopy(@TempMap, $iHigh, $Start, $Start, $Size);
+
+  @curpos = ArrayMaximum(@TempMap, $Size-$Start, $Start);
+  @cur = @TempMap[@curpos];
+  while (@cur>ZigMin)
+  {
+    if (@Zig[@curpos]==0)
+    {
+      @Zig[@curpos] = @cur;
+      for (@i=@curpos-@ExtDepth; @i<=@curpos+@ExtDepth; @i++)
+      if (@i>=0 && @i<$Size)
+        @TempMap[@i] = ZigMin;
+    }
+    else
+      @TempMap[@curpos] = ZigMin;
+    @curpos = ArrayMaximum(@TempMap, $Size-$Start, $Start);
+    @cur = @TempMap[@curpos];
+  }
+
+  int @mode; //look for 0 - any, 1 - up, -1 - down
+//  if ($Start==0)
+//  {
+    @mode = 0;
+    @curpos = -1;
+//  }
+//  else @mode = -@mode;
+
+  for (@i=0; @i<$Size; @i++)
+  {
+    if (@Zig[@i]!=0)
+    {
+    //if (@i<500) Print(@Zig[@i], " ", @mode, " ", @cur);
+    switch (@mode)
+    {
+      case 0:
+      {
+	if (@curpos==-1)
+	{
+	  @cur = @Zig[@i];
+	  @curpos = @i;
+	}
+	else
+	if (@i-@curpos>=@ExtBackstep)
+	{
+	  if (@cur > @Zig[@i])
+	    @mode = 1;
+	  else @mode = -1;
+
+	  @cur = @Zig[@i];
+	  @curpos = @i;
+	}
+	else
+	{
+	  @Zig[@i] = 0;
+	}
+	break;
+      }
+      case 1:
+      {
+        if (@Zig[@i] < @cur)
+	{
+	  @Zig[@curpos] = 0;
+	  @cur = @Zig[@i];
+	  @curpos = @i;
+	}
+	else if ($Zig[@i]-@cur > @ExtDeviation*Point && @i-@curpos>=@ExtBackstep)
+	{
+	  @cur = @Zig[@i];
+	  @curpos = @i;
+	  @mode = -1;
+	}
+	else
+	{
+	  @Zig[@i] = 0;
+	}
+	break;
+      }
+      case -1:
+      {
+        if (@Zig[@i] > @cur)
+	{
+	  @Zig[@curpos] = 0;
+	  @cur = @Zig[@i];
+	  @curpos = @i;
+	}
+	else if (@cur-$Zig[@i] > @ExtDeviation*Point && @i-@curpos>=@ExtBackstep)
+	{
+	  @cur = @Zig[@i];
+	  @curpos = @i;
+	  @mode = 1;
+	}
+	else
+	{
+	  @Zig[@i] = 0;
+	}
+	break;
+      }
+    }
+    }
+  }
+
+
+[Help]
+Для отображения буфера рекомендуется:
+  - **Style** = DRAW_SECTION
+  - **IndexEmptyValue** = 0.0

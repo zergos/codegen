@@ -1,0 +1,30 @@
+[Main]
+Custom
+Name=CSVAdd
+Title=CSV добавление
+Group=Файлы
+Size=5
+
+[Property]
+Header=s,Name,наименование колонки
+
+[Input]
+CTRL=c,,d
+in=row
+
+[InputPars]
+CSVHeader
+CSVVals
+Size
+
+[Code]
+<lines>
+  int @p = ArraySize($CSVHeader);
+  ArrayResize($CSVHeader, @p+1);
+  $CSVHeader[@p] = "$Header";
+  ArrayResize($CSVVals, (@p+1)*$Size);
+  for (int i=0; i<$Size; i++)
+    $CSVVals[@p*$Size+i] = $in[i];
+
+[Help]
+Добавляет колонку в CSV файл.

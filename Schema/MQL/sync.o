@@ -1,0 +1,153 @@
+[Main]
+Usable
+Name=Sync
+Title=Синхронизатор
+Group=Common
+
+[Property]
+SaveState=t,,сохранять состояние советника
+StateID=n,,локальный код состояния
+
+[Code]
+<top0>
+<?SaveState>
+#include "sync.mqh"
+</>
+
+<init*>
+  <?SaveState>syncLoad();</>
+  
+<deinit>
+  <?SaveState>
+  switch (_UninitReason)
+  {
+    case REASON_PROGRAM:
+    case REASON_REMOVE:
+    case REASON_CHARTCLOSE:
+      if (GlobalVariableGet("KeepSync")==0)
+        syncDel();
+      else
+        syncSave();
+      break;
+    case REASON_CLOSE:
+    case REASON_ACCOUNT:
+      syncSave();
+  }
+  </>
+
+
+<attach>
+<?SaveState>
+=sync.mqh
+bool save = false;
+int syncFile;
+string syncErrorMes = "Ошибка синхронизации данных ";
+bool syncError;
+
+void syncTitle(string title)
+{
+  if (save)
+    FileWrite(syncFile, title);
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      syncError = true;
+    }
+  }
+}
+
+template<typename T>
+void syncWrite(string title, T datas)
+{
+  if (typename(T)!="datetime")
+    FileWrite(syncFile, title, datas);
+  else
+    FileWrite(syncFile, title, TimeToStr(datas));
+}
+
+template<typename T>
+void syncRead(string title, T &datas)
+{
+  string s = FileReadString(syncFile);
+  if (s!=title)
+  {
+    Print(syncErrorMes, title, " <> ", s);
+    syncError = true;
+  }
+
+  if (typename(datas)=="string")
+    datas = FileReadString(syncFile);
+  else if (typename(datas)=="datetime")
+    datas = FileReadDatetime(syncFile);
+  else
+    datas = FileReadNumber(syncFile);
+}
+
+template<typename T>
+void sync(string title, T &datas)
+{
+  if (save)
+    syncWrite(title, datas);
+  else
+    syncRead(title, datas);
+}
+
+template<typename T>
+void sync(string title, T &datas[])
+{
+  if (save)
+  {
+    FileWrite(syncFile, title, ArraySize(datas));
+    for (int k=0; k<ArraySize(datas); k++)
+      FileWrite(syncFile, datas[k]);
+  }
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+    ArrayResize(datas, FileReadNumber(syncFile));
+    for (int k=0; k<ArraySize(datas); k++)
+      datas[k] = FileReadNumber(syncFile);
+  }
+}
+
+string syncName()
+{
+  return WindowExpertName()<?StateID>+$StateID</>+"."+Symbol()+"."+Period()+".save";
+}
+
+bool syncSave()
+{
+  if (IsTesting()) return true;
+  syncFile = FileOpen(syncName(), FILE_CSV|FILE_ANSI|FILE_WRITE|FILE_SHARE_READ|FILE_SHARE_WRITE, "=");
+  if (syncFile < 0) return false;
+  save = true;
+  syncAll();
+  FileClose(syncFile);
+  return true;
+}
+bool syncLoad()
+{
+  if (IsTesting()) return true;
+  syncFile = FileOpen(syncName(), FILE_CSV|FILE_ANSI|FILE_READ|FILE_SHARE_READ|FILE_SHARE_WRITE, "=");
+  if (syncFile < 0) return false;
+  save = false;
+  syncError = false;
+  syncAll();
+  FileClose(syncFile);
+  if (syncError) Alert("Ошибки синхронизации данных!");
+  return !syncError;
+}
+void syncDel()
+{
+  FileDelete(syncName());
+}
+</>
+

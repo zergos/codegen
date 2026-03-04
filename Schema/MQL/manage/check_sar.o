@@ -1,0 +1,23 @@
+[Main]
+Name=CheckSAR
+Title=Пробитие SAR
+Group=Управление
+
+[Property]
+Step=n,0.02,шаг
+Maximum=n,0.2,максимум
+
+[Output]
+Break=c
+
+[Code]
+<lines>
+  double @sar = iSAR(NULL,0,$Step,$Maximum,0);
+  if ((OrderType()==OP_BUY && @sar>Bid) || (OrderType()==OP_SELL && @sar<Bid))
+  {
+$Break.lines
+  }
+  
+[Help]
+Выполняет проверку на пробитие текущей ценой индикатора SAR.
+

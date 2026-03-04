@@ -1,0 +1,65 @@
+[Main]
+Name=FixGen
+Title=Генератор фикс. тиков
+Group=Генераторы
+
+[Property]
+Shift=n,0,сдвиг
+Fixed=n,Param,имя параметра с номером фикс. бара
+
+[Output]
+open=row,@open
+close=row,@close
+high=row,@high
+low=row,@low
+time=row,@time
+
+[InputPars]
+Size
+Trace
+
+[OutputPars]
+Start=0
+Size=@fix_size
+
+[Code]
+<gvars>
+int @fix_size;
+<?open>double @open[];</>
+<?close>double @close[];</>
+<?high>double @high[];</>
+<?low>double @low[];</>
+<?time>datetime @time[];</>
+
+<lines>
+  @fix_size = $Shift<?Trace>+trace_index</>+iBarShift(NULL,0,$Fixed)+1;
+  <?open>ArrayInit(@open, @fix_size);</>
+  <?close>ArrayInit(@close, @fix_size);</>
+  <?high>ArrayInit(@high, @fix_size);</>
+  <?low>ArrayInit(@low, @fix_size);</>
+  <?time>ArrayInit(@time, @fix_size);</>
+  
+  <?open>
+  for (int i=0; i<@fix_size; i++)
+    @open[i] = Open[@fix_size-1-i+$Shift<?Trace>+trace_index</>];
+  </>  
+  <?close>
+  for (int i=0; i<@fix_size; i++)
+    @close[i] = Close[@fix_size-1-i+$Shift<?Trace>+trace_index</>];
+  </>  
+  <?high>
+  for (int i=0; i<@fix_size; i++)
+    @high[i] = High[@fix_size-1-i+$Shift<?Trace>+trace_index</>];
+  </>  
+  <?low>
+  for (int i=0; i<@fix_size; i++)
+    @low[i] = Low[@fix_size-1-i+$Shift<?Trace>+trace_index</>];
+  </>  
+  <?time>
+  for (int i=0; i<@fix_size; i++)
+    @time[i] = Time[@fix_size-1-i+$Shift<?Trace>+trace_index</>];
+  </>  
+  
+[Help]
+Генерирует серию баров, начиная с заданного параметром.
+  

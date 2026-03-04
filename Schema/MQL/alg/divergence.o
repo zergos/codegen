@@ -1,0 +1,190 @@
+[Main]
+Name=Divergence
+Title=Дивергенция
+Group=Алгоритмы
+
+[Uses]
+common\obj-counter
+
+[Property]
+Align=t,1
+MinBars=n,5
+MaxBars=n,100
+AlignBars=n,10
+Draw=t
+Color=color,Orange
+
+[Input]
+high=row
+low=row
+time=row
+sup=row
+sdown=row
+sigup=row
+sigdown=row
+
+[Output]
+up=row,@divUp
+down=row,@divDown
+
+[InputPars]
+Start
+Size
+
+[Global]
+<procs>
+bool divPriceOver(int side, double &in[], int a, int b)
+{
+  double k = (in[b]-in[a])/(b-a);
+  double price = in[a]+k;
+  for (int i = a+1; i<b; i++, price+=k)
+    if (side==1 && in[i]>price || side==-1 && in[i]<price) return false;
+    
+  return true;
+}
+
+<?Align>
+bool calcDivTrend(int side, double &in[], int a, int b, int &xa, int &xb)
+{
+  // calc left
+  bool found = false;
+  xa = a;
+  while (xa>a-$AlignBars && xa>0)
+  {
+    if (in[xa]!=0) { found = true; break; }
+    xa--;
+  }
+  
+  if (!found)
+  {
+    xa = a+1;
+    while (xa<a+$AlignBars&& xa<b-$MinBars && xa<$Size)
+    {
+      if (in[xa]!=0) { found = true; break; }
+      xa++;
+    }
+    if (!found) return false;
+  }
+  
+  // calc right
+  found = false;
+  xb = b;
+  while (xb<b+$AlignBars && xb<$Size)
+  {
+    if (in[xb]!=0) { found = true; break; }
+    xb++;
+  }
+  
+  if (!found)
+  {
+    xb = b-1;
+    while (xb>b-$AlignBars && xb>a+$MinBars)
+    {
+      if (in[xb]!=0) { found = true; break; }
+      xb--;
+    }
+    if (!found) return false;
+  }
+  
+  return true;
+}
+</>
+[Code]
+<gvars>
+<?up>double @divUp[], @divDown[];</>
+<?Draw>ObjCounter *$name;</>
+
+<init>
+  <?Draw>$name = new ObjCounter("$name");</>
+  
+<lines>
+  <?up>
+  ArrayInit(@divUp, $Size);
+  CheckShift(@divUp);
+  ArrayInit(@divDown, $Size);
+  CheckShift(@divDown);
+  </>
+  
+  <?Draw>
+  if ($Start==0)
+  {
+    $name.Clear("s$name", false);
+    $name.Clear();
+  }
+  </>
+  
+  for (int i=$Start; i<$Size-1; i++)
+  {
+    int xa, xb;
+    
+    // up side
+    if ($sup[i]>0)
+    {
+      int b = i-$sup[i]+1;
+      for (int k = b-1; k>0 && b-k<$MaxBars; k--)
+      if ($sup[k]!=0)
+      {
+        int a = k-$sup[k]+1;
+        if (b-a<$MinBars) continue;
+        if (!divPriceOver(1, $high, a, b)) continue;
+        <?Align>if (!calcDivTrend(1, $sigup, a, b, xa, xb)) continue;<~>xa=a; xb=b;</>
+        if ($high[a]>$high[b] && $sigup[xa]<$sigup[xb] || $high[a]<$high[b] && $sigup[xa]>$sigup[xb])
+        {
+          <?up>
+          if ($high[a]<$high[b]) @divUp[i] = $high[i];
+          else @divDown[i] = $low[i];
+          </>
+          <?Draw>
+          string name = $name.NextName();
+          ObjectCreate(name, OBJ_TREND, 0, $time[a], $high[a], $time[b], $high[b]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          name = "s"+name;
+          ObjectCreate(name, OBJ_TREND, ChartWindowFind(), $time[xa], $sigup[xa], $time[xb], $sigup[xb]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          </>
+        }
+      }
+    }
+    
+    // down side
+    if ($sdown[i]>0)
+    {
+      int b = i-$down[i]+1;
+      for (int k = b-1; k>0 && b-k<$MaxBars; k--)
+      if ($sdown[k]!=0)
+      {
+        int a = k-$sdown[k]+1;
+        if (b-a<$MinBars) continue;
+        if (!divPriceOver(-1, $low, a, b)) continue;
+        <?Align>if (!calcDivTrend(-1, $sigdown, a, b, xa, xb)) continue;<~>xa=a; xb=b;</>
+        if ($low[a]>$low[b] && $sigdown[xa]<$sigdown[xb] || $low[a]<$low[b] && $sigdown[xa]>$sigdown[xb])
+        {
+          <?up>
+          if ($low[a]<$low[b]) @divUp[i] = $high[i];
+          else @divDown[i] = $low[i];
+          </>
+          <?Draw>
+          string name = $name.NextName();
+          ObjectCreate(name, OBJ_TREND, 0, $time[a], $low[a], $time[b], $low[b]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          name = "s"+name;
+          ObjectCreate(name, OBJ_TREND, ChartWindowFind(), $time[xa], $sigdown[xa], $time[xb], $sigdown[xb]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          </>
+        }
+      }
+    }
+  }
+
+<deinit>
+<?Draw>
+  $name.Clear("s$name", false);
+  delete $name;
+</>  
+  
+[Help]
+Находит дивергенцию между графиком цены и заданным индикатором.

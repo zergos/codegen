@@ -1,0 +1,64 @@
+[Main]
+Name=FlowGen
+Title=Генератор
+Group=Лента
+
+[Input]
+tick=row
+
+[Output]
+delta=row,@cum
+vol=row,@acc
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?delta>
+  double @cum[];
+</>
+<?vol>
+  double @acc[];
+</>
+
+<flow_init>
+<?delta>
+  ArrayInit(@cum, $Size);
+  CheckShift(@cum);
+</>
+<?vol>
+  ArrayInit(@acc, $Size);
+  CheckShift(@acc);
+</>
+
+  if ($Start==0)
+  {
+    <?delta>ArrayInitialize(@cum, 0);</>
+    <?vol>ArrayInitialize(@acc, 0);</>
+  }
+  else if (Shifted)
+  {
+    //for (int @l=$Start+1; @l<$Size; @l++)
+    {
+    <?delta>@cum[$Size-1] = 0;</>
+    <?vol>@acc[$Size-1] = 0;</>
+    }
+  }
+
+<flow_bar>  
+  <?delta>@cum[$tick.idx] = 0;</>
+  <?vol>@acc[$tick.idx] = 0;</>
+    
+<flow_tick>
+  <?delta>
+  if ($tick.mode==1)
+    @cum[$tick.idx] += $tick.volume;
+  else
+    @cum[$tick.idx] -= $tick.volume;
+  </>
+  <?vol>@acc[$tick.idx] += $tick.volume;</>
+  
+[Help]
+Генератор тиковых объёмов и дельты.

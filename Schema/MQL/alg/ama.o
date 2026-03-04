@@ -1,0 +1,80 @@
+[Main]
+Title=AMA (Кауфман)
+Group=Алгоритмы (тех)
+Name=AMA
+
+[Property]
+WindowSize=n,10,окно вычисления коэффициента эффективности
+FastPeriodSize=n,2,период для быстрой средней скользящей
+SlowPeriodSize=n,30,период для медленной скользящей средней
+DeltaWindowSize=n,10,окно для вычиления отклонения
+FilterCoeff=n,0.1,значение коэффициента канала фильтрации
+#Shift=n,0,cдвиг индикатора относительно ценового графика
+
+[Input]
+in=row
+
+[Output]
+out=row
+up=row,@up
+down=row,@down
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+input int @Window = $WindowSize;
+input int @FastPeriod = $FastPeriodSize;
+input int @SlowPeriod = $SlowPeriodSize;
+input int @DeltaWindow = $DeltaWindowSize;
+input double @FilterCoef = $FilterCoeff;
+//input int @AMAShift = $Shift;
+double $out[];
+<?up>
+double @up[];
+double @down[];
+</>
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  <?up>
+  ArrayInit(@up, $Size);
+  CheckShift(@up);
+  ArrayInit(@down, $Size);
+  CheckShift(@down);
+  </>
+  
+  double @fastest = 2.0/(@FastPeriod+1);
+  double @slowest = 2.0/(@SlowPeriod+1);
+  
+  for (int @i=MathMax(@Window,$Start); @i<$Size; @i++)
+  {
+    double @dir = $in[@i] - $in[@i-@Window+1];
+    double @vol = 0;
+    for (int @n=0; @n<@Window; @n++)
+      @vol += MathAbs($in[@i-@n] - $in[@i-@n-1]);
+    double @eff = @dir/@vol;
+    double @smooth = @eff*(@fastest-@slowest)+@slowest;
+    double @c = @smooth*@smooth;
+    $out[@i] = @c*$in[@i] + (1-@c)*$out[@i-1];
+    
+    <?up>
+    double @sdelta = 0;
+    for (@n=0; @n<@DeltaWindow; @n++)
+      @sdelta += $out[@i-@n];
+    @sdelta = @sdelta / @DeltaWindow;
+    double @sigma = 0;
+    for (@n=0; @n<@DeltaWindow; @n++)
+      @sigma += ($out[@i-@n]-@sdelta)*($out[@i-@n]-@sdelta);
+    @sigma = MathSqrt(@sigma/@DeltaWindow);
+    @up[@i] = $out[@i]+@FilterCoef*@sigma;
+    @down[@i] = $out[@i]-@FilterCoef*@sigma;
+    </>
+  }
+
+[Help]
+Скользящее среднее Кауфмана.\\
+Описание алгоритма на ВикиПедии [[https://ru.wikipedia.org/wiki/Адаптивная_скользящая_средняя_Кауфмана]]

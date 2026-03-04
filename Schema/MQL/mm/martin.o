@@ -1,0 +1,16 @@
+[Main]
+Name=MartinNet
+Title=Мартин. сеть
+Group=Сделки
+
+[Code]
+<lines>
+  {
+    double mlots = HubActiveLots();
+    double mlevel = Bid-HubActivePoints()/mlots*min_lot*Point;
+    double lots;
+$mlines
+  }
+
+[Help]
+Иницуиирующий блок для сети усредняющих ордеров Мартингейла.

@@ -1,0 +1,54 @@
+[Main]
+Choice
+Name=TARecheck
+Title=CSV Повторная проверка
+Group=ТА
+
+[Property]
+Target=n,3,номер цели (1 или 3)
+CrossLevel=s,price5,точка второго переворота (trend или price5)
+
+[Output]
+work=c
+
+[InputPars]
+active
+Sell
+TakeCoef
+
+[Code]
+<lines>
+  <?CrossLevel=trend>
+  if (trend>0 && Close[1]<models[$active].trendprice || trend<0 && Close[1]>models[$active].trendprice)
+  </>
+  <?CrossLevel=price5>
+  double @price = models[$active].price5==0?models[$active].price3:models[$active].price5;
+  if (trend>0 && Close[1]<@price || trend<0 && Close[1]>@price || HubOpenCount()==0)
+  </>
+  {
+    if (trend>0)
+    {
+      up$Sell = models[$active].price6stop;
+      <?Target=1>
+      down$Sell = models[$active].trendprice-(models[$active].price6-models[$active].trendprice)*(1-$TakeCoef);
+      </>
+      <?Target=3>
+      down$Sell = models[$active].price1-(models[$active].price6-models[$active].price1)*(1-$TakeCoef);
+      </>
+    }
+    else
+    {
+      down$Sell = models[$active].price6stop;
+      <?Target=1>
+      up$Sell = models[$active].trendprice+(models[$active].trendprice-models[$active].price6)*(1-$TakeCoef);
+      </>
+      <?Target=3>
+      up$Sell = models[$active].price1+(models[$active].price1-models[$active].price6)*(1-$TakeCoef);
+      </>
+    }
+$work.lines
+  }
+  
+[Help]
+Повторная проверка формы для входа против тренда.
+

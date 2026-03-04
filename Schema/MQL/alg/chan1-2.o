@@ -1,0 +1,154 @@
+[Main]
+Name=Chan12
+Title=Канал 1-2
+Group=Алгоритмы
+
+[Property]
+MinHeight=n,500,мин. высота канала
+Draw=t,,рисовать каналы
+DrawLength=n,30,длина каналов
+Color=color,Orange,цвет каналов
+
+[Input]
+top=row
+bot=row
+time=row
+
+[InputPars]
+Start
+Size
+
+[Global]
+<procs>
+void ClearChans(string &objs[])
+{
+  for (int i=0; i<ArraySize(objs); i++)
+    ObjectDelete(objs[i]);
+}
+
+[Code]
+<procs>
+int @getChanExtrem(int start, int &mode)
+{
+  for (int i=start+1; i<$Size; i++)
+    if (mode>=0)
+    {
+      if ($top[i]>0) { mode = 1; return i; }
+      //if (mode>0 && $bot[i]>0) return -1;
+    }
+    else if (mode<=0)
+    {
+      if ($bot[i]>0) { mode = -1; return i; }
+      //if (mode<0 && $top[i]>0) return -1;
+    }
+  return -1;
+}
+
+int @getChanExtremMax(int index, int size, int mode)
+{
+  int res = -1;
+  for (int i=index+1; i<size; i++)
+    if (mode>0 && $top[i]>0) { res = i; break; }
+    else if (mode<0 && $bot[i]>0) { res = i; break; }
+  if (res>=0)
+    for (int i=res+1; i<size; i++)
+      if (mode>0 && $top[i]>$top[res]) res = i;
+      else if (mode<0 && $bot[i]>0 && $bot[i]<$bot[res]) res = i;
+  
+  return res;
+}
+<gvars>
+string @objs[];
+int @cur_start, @cur_search;
+int @bmode;
+
+<lines>
+  if ($Start==0)
+  {
+    ClearChans(@objs);
+    ArrayResize(@objs, 0);
+    
+    // определение первоначального режима
+    @bmode = 0;
+    @cur_start = @getChanExtrem(-1, @bmode);
+    @cur_search = @cur_start;
+  }
+  
+  do
+  {
+    if (@cur_start<0) break;
+    
+    // получить третью точку (такого же экстремума)
+    int third = @getChanExtrem(@cur_search, @bmode);
+    if (third<0) break;
+    int second = @getChanExtremMax(@cur_search-1, third, -@bmode);
+    if (second<0)
+    {
+      if (@bmode>0 && $top[third]>$top[@cur_start]
+        || @bmode<0 && $bot[third]<$bot[@cur_start]) @cur_start = third;
+      @cur_search = third;
+      continue;
+    }
+    
+    if (@bmode<0)
+    {
+      double b1 = ($bot[third]-$bot[@cur_start])/(third-@cur_start);
+      double b0 = ($bot[@cur_start]*third-$bot[third]*@cur_start)/(third-@cur_start);
+      double bx = $top[second]-b1*second;
+      if (MathAbs(bx-b0)>=$MinHeight*Point && b1>=0)
+      {
+      <?Draw>
+      string name = "Chan12_"+@cur_start;
+      ObjectCreate(name, OBJ_CHANNEL, 0,
+        $time[@cur_start],
+        $bot[@cur_start],
+        @cur_start<$Size-$DrawLength?$time[@cur_start+$DrawLength]:$time[@cur_start]+$DrawLength*PeriodSeconds(),
+        b1*(@cur_start+$DrawLength)+b0,
+        $time[@cur_start],
+        b1*@cur_start+bx);
+      ObjectSet(name, OBJPROP_COLOR, $Color);
+      ObjectSet(name, OBJPROP_RAY, false);
+      
+      ArrayResize(objs, ArraySize(objs)+1);
+      objs[ArraySize(objs)-1] = name;
+      </>
+      }
+    }
+    else
+    {
+      double b1 = ($top[third]-$top[@cur_start])/(third-@cur_start);
+      double b0 = ($top[@cur_start]*third-$top[third]*@cur_start)/(third-@cur_start);
+      double bx = $bot[second]-b1*second;
+      if (MathAbs(bx-b0)>=$MinHeight*Point && b1<=0)
+      {
+      <?Draw>
+      string name = "Chan12_"+@cur_start;
+      ObjectCreate(name, OBJ_CHANNEL, 0,
+        $time[@cur_start],
+        $top[@cur_start],
+        @cur_start<$Size-$DrawLength?$time[@cur_start+$DrawLength]:$time[@cur_start]+$DrawLength*PeriodSeconds(),
+        b1*(@cur_start+$DrawLength)+b0,
+        $time[@cur_start],
+        b1*@cur_start+bx
+        );
+      ObjectSet(name, OBJPROP_COLOR, $Color);
+      ObjectSet(name, OBJPROP_RAY, false);
+      
+      ArrayResize(objs, ArraySize(objs)+1);
+      objs[ArraySize(objs)-1] = name;
+      </>
+      }
+    }
+    
+    @cur_search = second==@cur_start?second+1:second;
+    @cur_start = second;
+    @bmode = -@bmode;
+  } 
+  while (true);
+
+<deinit>
+  ClearChans(@objs);
+  
+[Help]
+Рисует каналы по трём точкам (1 сверху и 2 снизу).\\
+На вход подаётся результат отработки блока "экстремумы".

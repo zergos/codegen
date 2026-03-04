@@ -1,0 +1,55 @@
+[Main]
+Name=Unpack
+Title=–азвертка
+Group=јлгоритмы
+
+[Property]
+BufSize=n,1000,размер буфера дл€ развертки
+Step=n,1,порог формировани€ развертки
+Offset=n,0,номер начального смещени€
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Size=$BufSize
+Start=0
+
+[Code]
+<gvars>
+double $out[];
+extern int @UnpackOffset = $Offset;
+
+<lines>
+  ArrayInit($out, $BufSize);
+
+  ArrayInitialize($out, 0);
+  ArraySetAsSeries($in, true);
+  ArraySetAsSeries($out, true);
+  double @val = 0, @cury = $in[@UnpackOffset];
+  int @curx = @UnpackOffset+1;
+  $out[@UnpackOffset] = @cury;
+  for (int @i=0; @i<$Size-1; @i++)
+  {
+    @val += ($in[@i+1]-$in[@i])/Point;
+    while (MathAbs(@val)>$Step)
+    {
+      $out[@curx] = @cury;
+      @curx++;
+      @cury += $Step*MathSign(@val)*Point;
+      @val -= $Step*MathSign(@val);
+    }
+  }
+  ArraySetAsSeries($in, false);
+  ArraySetAsSeries($out, false);
+
+[Help]
+ѕреобразует резкие изменени€ курса в продолжительные плавные. ÷ель: попытка создать статистически равномерную по времени выборку.\\
+//“ребует подключение модул€ **математики**.//

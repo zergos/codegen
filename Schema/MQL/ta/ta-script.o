@@ -1,0 +1,189 @@
+[Main]
+Choice
+Name=TAScript
+Title=EA Торг. сценарий
+Group=ТА
+
+[Property]
+Lots=f
+MarketLot=t
+UseSL=t
+
+[Output]
+work=c
+
+[Code]
+<gvars>
+TAScript *taCur;
+int hid;
+bool taDirPrima;
+double up@lvl, down@lvl;
+
+<init>
+  taDirPrima = false;
+
+<lines>
+  for (int i=0; i<ArraySize(taScripts); i++)
+  if (RefObject::HasRef(taScripts[i])&& !taScripts[i].active)
+  {  
+    taCur = taScripts[i];
+    taCur.active = true;
+    taCur.thread_index = thread_index;
+    
+    if (taCur.denied)
+    {
+      taCur.Release();
+      continue;
+    }
+    
+    if (taCur.trend>0 && (Ask>=taCur.tp || Ask<=taCur.sl)
+     || taCur.trend<0 && (Bid<=taCur.tp || Bid>=taCur.sl))
+    {
+      <?debug>taCur.M.Log("цена вышла за диапозон");</>
+      taCur.Release();
+      continue;
+    }
+    
+    double profit = (taCur.trend>0?taCur.tp-Ask:Bid-taCur.tp)/Point;
+    double loss = (taCur.trend>0?Bid-taCur.sl:taCur.sl-Ask)/Point;
+    if (profit<taMinProfit)
+    {
+      <?debug>taCur.M.Log("малый профит "+profit);</>
+      taCur.Release();
+      continue;
+    }
+    else
+    if (loss>taMaxLoss)
+    {
+      <?debug>taCur.M.Log("большой убыток "+loss);</>
+      taCur.Release();
+      continue;
+    }
+    else if ((((TAModel*)taCur.M).state==TA_5Crossed
+      || ((TAModel*)taCur.M).state==TA_HPUp
+      || ((TAModel*)taCur.M).state==TA_TRCrossed)
+      && profit<loss*taMaxLossCoef)
+    {
+      <?debug>taCur.M.Log("профит меньше убытка "+NormalizeDouble(profit/loss,2));</>
+      taCur.Release();
+      continue;
+    }
+    
+    bool need_trade = false;
+    if (RefObject::HasRef(taPrimaScript)) // модель уже в работе, оценка ситуации
+    {
+      int activePlan = taPrimaScript.M.EstimatePlan();
+      int curPlan = taCur.M.EstimatePlan();
+      
+      if (taCur.trend!=taDir) // смена тренда
+      {
+        if (curPlan<activePlan) // младший план - пропускаем
+        {
+          <?debug>taCur.M.Log("текущий план меньше активного");</>
+          taCur.Release();
+          continue;
+        }
+        else if (taCur.M.type == M_EXP)// тот же план или старший - закрываем актив - новый открываем
+        {
+          <?debug>taCur.M.Log("смена тренда старшим или таким же планом");</>
+          taPrimaScript.stop = true;
+          need_trade = true;
+          taPrimaScript = taCur;
+          hub_repeat = true;
+          
+          taDir = taCur.trend;
+          taDirPrima = true;
+        }
+      }
+      else // трейд по тренду
+      {
+        if (taCur.M.type == M_EXP) // для моделей расширения
+        {
+          if (curPlan>=activePlan && taCorrectLevels) // повышение плана - перехват сделки с новыми целями
+          {
+            <?debug>taCur.M.Log("перехват цели новым планом ("+taPrimaScript.M.id+")");</>
+            COrderHub *t = GetPointer(threads[taPrimaScript.thread_index]);
+            
+            hid = HubFreeIndex();
+            hub[hid] = t.hub[t.hid];
+            hub_state = HUB_ACTIVE;
+            hub_activated = true;
+            
+            t.hub[t.hid].state = HUB_CLOSED;
+            t.taCur.Release();
+            t.hub_state = HUB_CLOSED;
+            t.hub_activated = true;
+            
+            taPrimaScript = taCur;
+            taDirPrima = true;
+            
+            hub_repeat = true;
+          }
+          else if (taAppendOrders) // младший план - доливка
+          {
+            <?debug>taCur.M.Log("доливка");</>
+            need_trade = true;
+          }
+          else // отбой
+          {
+            <?debug>taCur.M.Log("отмена младшего плана");</>
+            taCur.Release();
+            continue;
+          }
+        } // M_EXP
+        else // для коррекционных моделей
+          if (taAppendOrders)
+          {
+            <?debug>taCur.M.Log("доливка по коррекции");</>
+            need_trade = true;
+          }
+      }
+    }
+    else
+      need_trade = true;
+    
+    if (need_trade)
+    {																
+      hid = HubFreeIndex();
+      hub[hid].cmd = taCur.trend==1?OP_VBUYSTOP:OP_VSELLSTOP;
+      hub[hid].lots = <?ByMarket>MarketLot</>($Lots);
+      hub[hid].ftp = taCur.tp;
+      <?UseSL>hub[hid].fsl = taCur.sl;</>
+      OrderToMarket(hid);
+    
+      if (order_error)
+      {
+        order_error = false;
+        taCur.Release();
+        continue;
+      }
+      
+      if (taDir==0 && taCur.M.type == M_EXP)
+      {
+        <?debug>taCur.M.Log("ведущая модель");</>
+        taDir = taCur.trend;
+        taDirPrima = true;
+        taPrimaScript = taCur;
+        
+        // остановить все корректировочные потоки
+        if (taDirFilter)
+        {
+          for (int k=0; k<ArraySize(threads); k++)
+            if (threads[k].hub_state!=HUB_CLOSED && threads[k].taCur.M.type!=M_EXP && threads[k].taCur.trend!=taDir)
+            {
+              threads[k].taCur.stop = true;
+            }
+        }
+      }
+    }
+    
+    trend = taCur.trend;
+    state_mark = taCur.M.id;
+        
+$work.lines
+    break;
+  }
+  
+[Help]
+Извлекает скрипт для работы.
+

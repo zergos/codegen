@@ -1,0 +1,215 @@
+[Main]
+Name=FlowRange
+Title=Рэндж бары
+Group=Лента
+
+[Property]
+ReverseCount=n,3,количество клеток для разворота
+BoxSize=n,10,количество пунктов в клетке
+
+[Input]
+tick=row
+
+[Output]
+time=row,@time
+open=row,@open
+close=row,@close
+high=row,@high
+low=row,@low
+ask=row,@ask
+bid=row,@bid
+
+[InputPars]
+Start
+Size
+bar
+
+[OutputPars]
+Start=@start
+Size=@idx
+
+[Global]
+<gvars>
+/*struct RangeBar
+{
+  double prices[], newprices[];
+  int ask[], bid[], newask[], newbid[];
+}*/
+
+[Code]
+<gvars>
+//RangeBar @bars[];
+int @idx, @start;
+<?time>double @time[];</>
+<?open>double @open[];</>
+<?close>double @close[];</>
+<?high>double @high[];</>
+<?low>double @low[];</>
+<?ask>int @ask[];</>
+<?bid>int @bid[];</>
+
+<flow_init>
+  // force redraw
+  // clear previous bars
+  /*ArrayResize(@bars, 1);
+  ArrayResize(@bars[0].prices, 0);
+  ArrayResize(@bars[0].ask, 0);
+  ArrayResize(@bars[0].bid, 0);*/
+  
+  if ($Start==0)
+  {
+  <?time>
+  ArrayResize(@time, 1);
+  @time[0] = 0;
+  </>
+  <?open>
+  ArrayResize(@open, 1);
+  @open[0] = 0;
+  </>
+  <?close>
+  ArrayResize(@close, 1);
+  @close[0] = 0;
+  </>
+  <?high>
+  ArrayResize(@high, 1);
+  @high[0] = 0;
+  </>
+  <?low>
+  ArrayResize(@low, 1);
+  @low[0] = 0;
+  </>
+  <?ask>
+  ArrayResize(@ask, 1);
+  @ask[0] = 0;
+  </>
+  <?bid>
+  ArrayResize(@bid, 1);
+  @bid[0] = 0;
+  </>
+  
+  <?debug>int @deb = FileOpen("hist.csv", FILE_CSV|FILE_WRITE|FILE_SHARE_WRITE|FILE_SHARE_READ);</>
+  
+  int @trend = 0;
+  datetime @new_time;
+  @idx = 0;
+  @start = 0;
+  double @fix = 0, @newfix;
+  int @cur_ask = 0, @cur_bid = 0;
+  double @reverse = $ReverseCount*$BoxSize*Point;
+  double @box_size = $BoxSize*Point;
+  int @mode = 1; // 1 - on top, 2 - middle
+  }
+  else
+  {
+    @idx--;
+    @start = @idx;
+  }
+  
+<flow_tick>
+  if (@fix == 0) @fix = $tick.price;
+  if (@trend==0)
+  {
+    if ($tick.price>@fix) @trend = 1;
+    else if ($tick.price<@fix) @trend = -1;
+  }
+  
+  <?time>if (@time[@idx] == 0) @time[@idx] = $tick.rawtime;</>
+  <?open>if (@open[@idx] == 0) @open[@idx] = $tick.price;</>
+  
+  if ($tick.mode==1) @cur_ask += $tick.volume;
+  else @cur_bid += $tick.volume;
+  
+  switch (@mode)
+  {
+    case 1:
+      if ((@trend>0 && $tick.price>=@fix) || (@trend<0 && $tick.price<@fix) || @trend==0) // going with trend
+      {
+        if (@trend>0) @fix = $tick.price + @box_size;
+        else @fix = $tick.price;
+        <?high>if (@trend>=0) @high[@idx] = @fix;</>
+        <?low>if (@trend<=0) @low[@idx] = @fix;</>
+        <?ask>@ask[@idx] += @cur_ask;</>
+        <?bid>@bid[@idx] += @cur_bid;</>
+        @cur_ask = 0; @cur_bid = 0;
+        break;
+      }
+      else if ((@trend>0 && $tick.price<@fix-@box_size) || (@trend<0 && $tick.price>@fix+@box_size)) // step back, prepare for inverse
+      {
+        if (@trend>0) @newfix = @fix-@box_size;//$tick.price;
+        else @newfix = @fix+@box_size;
+        @new_time = $tick.rawtime;
+        <?close>
+        //if (@trend>0) @close[@idx] = //$tick.price+@box_size;
+        //else @close[@idx] = $tick.price;
+        @close[@idx] = @newfix;
+        </>
+        @mode = 2;
+      }
+      else // stay here
+      {
+        <?ask>@ask[@idx] += @cur_ask;</>
+        <?bid>@bid[@idx] += @cur_bid;</>
+        @cur_ask = 0; @cur_bid = 0;
+        break;
+      }
+    case 2:
+      if ((@trend>0 && $tick.price>=@newfix) || (@trend<0 && $tick.price<@newfix)) // return to top block
+      {
+        <?ask>@ask[@idx] += @cur_ask;</>
+        <?bid>@bid[@idx] += @cur_bid;</>
+        @cur_ask = 0; @cur_bid = 0;
+        @mode = 1;
+      }
+      else if ((@trend>0 && $tick.price<=@fix-@reverse) || (@trend<0 && $tick.price>@fix+@reverse)) // new bar
+      {
+        @idx++;
+        <?time>
+          ArrayResize(@time, @idx+1);
+          @time[@idx] = @new_time;
+        </>
+        <?open>
+          ArrayResize(@open, @idx+1);
+          @open[@idx] = @newfix;
+        </>
+        <?close>
+          ArrayResize(@close, @idx+1);
+          @close[@idx] = $tick.price;
+        </>
+        <?high>
+          ArrayResize(@high, @idx+1);
+          if (@trend>0) @high[@idx] = @newfix;
+          else @high[@idx] = $tick.price+@box_size;
+        </>
+        <?low>
+          ArrayResize(@low, @idx+1);
+          if (@trend<0) @low[@idx] = @newfix;
+          else @low[@idx] = $tick.price;
+        </>
+        <?ask>
+          ArrayResize(@ask, @idx+1);
+          @ask[@idx] = @cur_ask;
+        </>
+        <?bid>
+          ArrayResize(@bid, @idx+1);
+          @bid[@idx] = @cur_bid;
+        </>
+        @cur_ask = 0; @cur_bid = 0;
+        @trend = -@trend;
+        @mode = 1;
+        if (@trend>0) @fix = $tick.price + @box_size;
+        else @fix = $tick.price;
+      }
+      // else keep accumulate ask/bid
+  }
+  
+  <?debug>
+  FileWrite(@deb, "idx",@idx,"price",$tick.price,"time",TimeToStr(@time[@idx], TIME_DATE|TIME_MINUTES|TIME_SECONDS),"high",@high[@idx],"low",@low[@idx],"mode",@mode,"fix",@fix,"newtime",TimeToStr(@new_time, TIME_DATE|TIME_MINUTES|TIME_SECONDS),"trend",@trend);
+  </>
+
+<flow_deinit>
+  @idx++;
+  <?debug>FileClose(@deb);</>
+
+[Help]
+Строит по котировкам рендж бары.
+

@@ -1,0 +1,25 @@
+[Main]
+Name=xMA
+Title=Мувинг
+Group=Алгоритмы (сов)
+
+[Property]
+Period=n,18
+MaShift=n,0
+Method=ima,MODE_SMA
+Mode=applied_price,0
+Shift=n,0
+
+[Output]
+value=n
+
+[Code]
+<gvars>
+double $value;
+
+<lines>
+  $value = iMA(NULL, 0, $Period, $MaShift, $Method, $Mode, $Shift);
+  <?debug>Print("$name =",$value);</>
+  
+[Help]
+Возвращает значение технического индикатора Moving Average

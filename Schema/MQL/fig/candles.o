@@ -1,0 +1,65 @@
+[Main]
+Name=FigCandles
+Title=Свечи
+Group=Фигуры
+
+[Property]
+ColorUp=color,Green,цвет бычьей свечи
+ColorDown=color,Red,цвет медвежьей свечи
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+time=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+datetime @candleStart;
+
+<init>
+  @candleStart = 0;
+
+<lines>
+  if ($Start==0)
+  {
+    if (@candleStart!=0)
+    {
+      datetime @cur = @candleStart;
+      while (@cur<=$time[$Size-1])
+      {
+        ObjectDelete("$name"+@cur);
+        @cur += PeriodSeconds();
+      }
+    }
+    @candleStart = $time[0];
+  }
+  
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    string @name = "$name"+(@i<$Size-1?$time[@i]:$time[@i-1]+PeriodSeconds());
+    if (ObjectFind(@name)<0) ObjectCreate(@name, OBJ_RECTANGLE, 0, @i<$Size-1?$time[@i]:$time[@i-1]+PeriodSeconds(), 0, @i<$Size-1?$time[@i+1]:$time[@i]+PeriodSeconds(), 0);
+    ObjectSet(@name, OBJPROP_PRICE1, $low[@i]);
+    ObjectSet(@name, OBJPROP_PRICE2, $high[@i]);
+    if ($close[@i]>$open[@i]) ObjectSet(@name, OBJPROP_COLOR, $ColorUp);
+    else ObjectSet(@name, OBJPROP_COLOR, $ColorDown);
+  }  
+  
+<deinit>
+  if ($Size>0)
+  {
+    datetime @cur = @candleStart;
+    while (@cur<=$time[$Size-1])
+    {
+      ObjectDelete("$name"+@cur);
+      @cur += PeriodSeconds();
+    }
+  }
+
+[Help]
+Рисует свечи по входящим параметрам

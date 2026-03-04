@@ -1,0 +1,84 @@
+[Main]
+Name=ZigBend
+Title=Поворотный Зиг
+Group=Алгоритмы
+
+[Property]
+NoShiftB=t
+
+[Input]
+in=row
+
+[Output]
+out=row
+b1=row,@k
+b0=row,@b
+
+[InputPars]
+Size
+Start
+
+[OutputPars]
+Start=0
+
+[Code]
+<gvars>
+<?out>
+double $out[];
+</>
+<?b1>
+double @k[], @b[];
+</>
+
+<lines>
+  <?out>
+  ArrayInit($out, $Size);
+  ArrayInitialize($out, 0);
+  </>
+  
+  <?b1>
+  ArrayInit(@k, $Size); ArrayInit(@b, $Size);
+  ArrayInitialize(@k, 0); ArrayInitialize(@b, 0);
+  </>
+  
+  // recount all
+  int @mode = 0; // choose mode (1 is up, -1 is down)
+  double @h[3], @tk;
+  int @shift = <?NoShiftB>0<~>2</>;
+  
+  for (int @i=3; @i<$Size; @i++) // every 4 points
+  {
+    if (@mode!=-1 && $in[@i-3]<$in[@i-2] && $in[@i-2]<=$in[@i-1] && $in[@i-1]<$in[@i])
+    {
+      // down trend
+      @h[0] = $in[@i-2]-$in[@i-3]; @h[1] = $in[@i-1] - $in[@i-2]; @h[2] = $in[@i] - $in[@i-1];
+      if (@h[0]>@h[1] && @h[2]>@h[1])
+      {
+        <?out>$out[@i-1] = $in[@i-1];</>
+        <?b1>
+        //@tk = $in[@i-1]-$in[@i-2];
+        //if (MathAbs(@tk)<2)
+          @k[@i-@shift] = $in[@i-1]-$in[@i-2];
+          @b[@i-@shift] = $in[@i-2]-(@i-2)*(@k[@i-2]);
+        </>
+        //@mode = -1;
+      }
+    }
+    else if (@mode!=1 && $in[@i-3]>$in[@i-2] && $in[@i-2]>=$in[@i-1] && $in[@i-1]>$in[@i])
+    {
+      // up trend
+      @h[0] = $in[@i-3]-$in[@i-2]; @h[1] = $in[@i-2] - $in[@i-1]; @h[2] = $in[@i-1] - $in[@i];
+      if (@h[0]>@h[1] && @h[2]>@h[1])
+      {
+        <?out>$out[@i-1] = $in[@i-1];</>
+        <?b1>
+          @k[@i-@shift] = $in[@i-1]-$in[@i-2];
+          @b[@i-@shift] = $in[@i-2]-(@i-2)*(@k[@i-2]);
+        </>
+        //@mode = 1;
+      }
+    }
+  }
+  
+[Help]
+Строит зиг заг по промежуткам перегиба

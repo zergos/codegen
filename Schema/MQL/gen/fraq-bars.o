@@ -1,0 +1,66 @@
+[Main]
+Name=FractionalBars
+Title=Дробные бары
+Group=Генераторы
+
+[Property]
+MinCount=n,10,количество минут для извлечения баров
+
+[Input]
+time=row
+
+[Output]
+open=row,@open
+close=row,@close
+high=row,@high
+low=row,@low
+volume=row,@volume
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?open>double @open[];</>
+<?close>double @close[];</>
+<?high>double @high[];</>
+<?low>double @low[];</>
+<?volume>double @volume[];</>
+
+<lines>
+  <?open>ArrayInit(@open, $Size);</>
+  <?close>ArrayInit(@close, $Size);</>
+  <?high>ArrayInit(@high, $Size);</>
+  <?low>ArrayInit(@low, $Size);</>
+  <?volume>ArrayInit(@volume, $Size);</>
+  
+  int @shift;
+  int @bars = iBars(NULL, PERIOD_M1);
+
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    @shift = iBarShift(NULL, PERIOD_M1, @i<$Size-1?$time[@i]:$time[@i-1]+PeriodSeconds());
+    if (@shift>@bars)
+    {
+      Print("Недостаточно баров истории. Требуется ",@shift);
+      return (0);
+    }
+    <?debug>if (@shift<100) Print(@shift);</>
+    <?open>@open[@i] = iOpen(NULL, PERIOD_M1, @shift);</>
+    <?close>@close[@i] = iOpen(NULL, PERIOD_M1, @shift);</>
+    <?high>@high[@i] = iOpen(NULL, PERIOD_M1, @shift);</>
+    <?low>@low[@i] = iOpen(NULL, PERIOD_M1, @shift);</>
+    <?volume>@volume[@i] = 0;</>
+   
+    for (int @k=0; @k<MathMin($MinCount,@shift+1); @k++)
+    {
+      <?close>if (@k==$MinCount-1) @close[@i] = iClose(NULL, PERIOD_M1, @shift-@k);</>
+      <?high>@high[@i] = MathMax(iHigh(NULL, PERIOD_M1, @shift-@k), @high[@i]);</>
+      <?low>@low[@i] = MathMin(iLow(NULL, PERIOD_M1, @shift-@k), @low[@i]);</>
+      <?volume>@volume[@i] += iVolume(NULL, PERIOD_M1, @shift-@k);</>
+    }
+  }
+
+[Help]
+Извлекает первые **MinCount** минут каждого бара.

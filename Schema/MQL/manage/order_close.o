@@ -1,0 +1,33 @@
+[Main]
+Deprecated
+Name=OrderClose
+Title=Закрытие ордера
+Group=Управление
+
+[Property]
+Lots=n,,количество лотов для закрытия
+Slippage=n,3,максимальное проскальзывание
+RaiseError=t,1,сообщать об ошибке закрытия
+
+[Input]
+Ticket=n
+
+[Code]
+<lines>
+  if (OrderSelect($Ticket, SELECT_BY_TICKET, MODE_TRADES) && OrderCloseTime()==0)
+  {
+    double @price=0;
+    if (OrderType()==OP_BUY) @price = Bid;
+    else if (OrderType()==OP_SELL) @price = Ask;
+    
+    if (!OrderClose($Ticket, <?Lots>$Lots<~>OrderLots()</>, @price, $Slippage))
+    {
+      <?RaiseError>
+      Print("OrderClose завершилась с ошибкой #",GetLastError());
+      </>
+      return (0);
+    }
+  }
+
+[Help]
+Закрывает открытый ордер.

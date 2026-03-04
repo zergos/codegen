@@ -1,0 +1,151 @@
+[Main]
+Name=Divergence
+Title=Дивергенция
+Group=Алгоритмы
+
+[Uses]
+common\obj-counter
+
+[Property]
+Align=t
+Coef=f,0.5
+MinBars=n,5
+MaxBars=n,100
+Draw=t
+Color=color,Orange
+
+[Input]
+high=row
+low=row
+time=row
+sup=row
+sdown=row
+sigup=row
+sigdown=row
+
+[Output]
+up=row,@divUp
+down=row,@divDown
+
+[InputPars]
+Start
+Size
+
+[Global]
+<procs>
+<?Align>
+void calcDivTrend(int side, double &in[], int a, int b, int &xa, int &xb)
+{
+  // calc left
+  xa = a;
+  while (xa>0 && (side==1 && in[xa-1]>in[xa] || side==-1 && in[xa-1]<in[xa])) xa--;
+  int xa2 = a;
+  while (xa2<b && (side==1 && in[xa2+1]>in[xa2] || side==-1 && in[xa2+1]<in[xa2])) xa2++;
+  if (side==1 && in[xa2]>in[xa] || side==-1 && in[xa2]<in[xa]) xa = xa2;
+  
+  // calc right
+  bool ok = false;
+  xb = b;
+  while (!ok && xa!=xb)
+  {
+    double k = (in[xb]-in[xa])/(xb-xa);
+    double x = in[xb]-k;
+    ok = true;
+    for (int i=xb-1; i>xa+1; i--, x-=k)
+      if (side==1 && in[i]>x || side==-1 && in[i]<x)
+      {
+        xb = i;
+        ok = false;
+        break;
+      }
+  }
+}
+</>
+[Code]
+<gvars>
+double @divUp[], @divDown[];
+<?Draw>ObjCounter $name;</>
+
+<init>
+  <?Draw>$name.Set("$name");</>
+  
+<lines>
+  ArrayInit(@divUp, $Size);
+  CheckShift(@divUp);
+  ArrayInit(@divDown, $Size);
+  CheckShift(@divDown);
+  
+  <?Draw>
+  if ($Start==0)
+  {
+    $name.Clear("s$name", false);
+    $name.Clear();
+  }
+  </>
+  
+  for (int i=$Start; i<$Size-1; i++)
+  {
+    int xa, xb;
+    
+    // up side
+    if ($sup[i]>0)
+    {
+      int b = i-$sup[i]+1;
+      for (int a = b-1; a>0 && b-a<$MaxBars; a--)
+      if ($sup[a]!=0)
+      {
+        if (b-a<$MinBars) continue;
+        <?Align>calcDivTrend(1, $sigup, a, b, xa, xb);<~>xa=a; xb=b;</>
+        if ($high[a]>$high[b] && $sigup[xa]<$sigup[xb] || $high[a]<$high[b] && $sigup[xa]>$sigup[xb])
+        {
+          if ($high[a]<$high[b]) @divUp[i] = $high[i];
+          else @divDown[i] = $low[i];
+          <?Draw>
+          string name = $name.NextName();
+          ObjectCreate(name, OBJ_TREND, 0, $time[a], $high[a], $time[b], $high[b]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          name = "s"+name;
+          ObjectCreate(name, OBJ_TREND, 1, $time[xa], $sigup[xa], $time[xb], $sigup[xb]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          </>
+        }
+      }
+    }
+    
+    // down side
+    if ($sdown[i]>0)
+    {
+      int b = i-$down[i]+1;
+      for (int a = b-1; a>0 && b-a<$MaxBars; a--)
+      if ($sdown[a]!=0)
+      {
+        if (b-a<$MinBars) continue;
+        <?Align>calcDivTrend(-1, $sigdown, a, b, xa, xb);<~>xa=a; xb=b;</>
+        if ($low[a]>$low[b] && $sigdown[xa]<$sigdown[xb] || $low[a]<$low[b] && $sigdown[xa]>$sigdown[xb])
+        {
+          if ($low[a]<$low[b]) @divUp[i] = $high[i];
+          else @divDown[i] = $low[i];
+          <?Draw>
+          string name = $name.NextName();
+          ObjectCreate(name, OBJ_TREND, 0, $time[a], $low[a], $time[b], $low[b]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          name = "s"+name;
+          ObjectCreate(name, OBJ_TREND, ChartWindowFind(), $time[xa], $sigdown[xa], $time[xb], $sigdown[xb]);
+          ObjectSet(name, OBJPROP_COLOR, $Color);
+          ObjectSet(name, OBJPROP_RAY, false);
+          </>
+        }
+      }
+    }
+  }
+
+<deinit>
+<?Draw>
+  $name.Clear("s$name", false);
+</>  
+  
+[Help]
+Находит дивергенцию между графиком цены и заданным индикатором.

@@ -1,0 +1,25 @@
+[Main]
+Name=FiboLevel
+Title=Фибо уровень
+Group=Фигуры
+
+[Property]
+Level=n,1,уровень цены
+Color=color
+Style=line_style
+Width=n
+
+[Code]
+<lines>
+  ObjectSetInteger(0, "$CTRL", OBJPROP_LEVELS, level$CTRL+1);
+  ObjectSetDouble(0, "$CTRL", OBJPROP_LEVELVALUE, level$CTRL, $Level);
+  ObjectSetString(0, "$CTRL", OBJPROP_LEVELTEXT, level$CTRL, DoubleToString(($Level)*100, 1));
+  <?Color>ObjectSetInteger(0, "$CTRL", OBJPROP_LEVELCOLOR, level$CTRL, $Color);</>
+  <?Style>ObjectSetInteger(0, "$CTRL", OBJPROP_LEVELCOLOR, level$CTRL, $Style);</>
+  <?Width>ObjectSetInteger(0, "$CTRL", OBJPROP_LEVELCOLOR, level$CTRL, $Width);</>
+  level$CTRL++;
+
+[Help]
+Задаёт фибо уровень для фигуры Фибо.\\
+Установка персональных стилей для уровней пока что не поддерживается MT4.
+

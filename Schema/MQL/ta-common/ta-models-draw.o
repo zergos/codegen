@@ -1,0 +1,202 @@
+[Main]
+Usable
+Name=TADraw
+Title=Рисование
+Group=ТА
+
+[Code]
+<top>
+#include "ta-models-draw.mqh"
+
+<attach>
+=ta-models-draw.mqh
+  color TABaseModel::Color()
+  {
+    if (F.trend>0) return Yellow;
+    else return Thistle;
+  }
+  
+  void TABaseModel::Draw()
+  {
+    <?debug>
+    FileWrite(Logger, "M#", id, "F#", F.id, "TYPE", taModelNames[type]);
+    /*TABaseField *f = F.parent;
+    while (HasRef(f))
+    {
+      FileWrite(Logger, " P", f.id);
+      f = f.parent;
+    }*/
+    if (!isH)
+    {
+      FileWrite(Logger, "T1:", F.Q.T[0]);
+      FileWrite(Logger, "T2:", F.Q.T[B2]);
+      FileWrite(Logger, "T3:", F.Q.T[B3]);
+      FileWrite(Logger, "T4:", F.Q.T[B4]);
+      FileWrite(Logger, "T1o:", F.Q.T[B1o]);
+      FileWrite(Logger, "T2o:", F.Q.T[B2o]);
+      FileWrite(Logger, "T3o:", F.Q.T[B3o]);
+      FileWrite(Logger, "T4o:", F.Q.T[B4o]);
+    }
+    else
+    {
+      FileWrite(Logger, "T2h:", F.Q.T[B2h]);
+      FileWrite(Logger, "T3h:", F.Q.T[B3h]);
+      FileWrite(Logger, "T5:", F.Q.T[B5]);
+    }
+    FileFlush(Logger);
+    </>
+  
+    if (!taDraw) return;
+    string name1 = "target"+id;
+    string name2 = "trend"+id;
+    int i;
+    switch (type)
+    {
+      case M_DB:
+        i = iBarShift(NULL, 0, T(0), true);
+        if (i>Limit)
+        {
+          ObjectCreate(name1, OBJ_TREND, 0, T(B2o), HO(B2o), Time[i-Limit], HO(B2o)+KR*(Limit-B2o));
+          ObjectCreate(name2, OBJ_TREND, 0, T(B1o), LO(B1o), Time[i-Limit], LO(B1o)+KT*(Limit-B1o));
+        }
+        else
+        {
+          <?expert>TACorrector::Add(name1, Limit-i+1); TACorrector::Add(name2, Limit-i+1);</>
+          ObjectCreate(name1, OBJ_TREND, 0, T(B2o), HO(B2o), Time[1]+PeriodSeconds()*(Limit-i+1), HO(B2o)+KR*(Limit-B2o));
+          ObjectCreate(name2, OBJ_TREND, 0, T(B1o), LO(B1o), Time[1]+PeriodSeconds()*(Limit-i+1), LO(B1o)+KT*(Limit-B1o));
+        }
+        ObjectSet(name1, OBJPROP_COLOR, Color());
+        ObjectSet(name1, OBJPROP_RAY, 0);
+        ObjectSet(name2, OBJPROP_COLOR, Color());
+        ObjectSet(name2, OBJPROP_RAY, 0);
+        break;
+      case M_EXP:
+        i = iBarShift(NULL, 0, T(0), true);
+        if (i==-1 || i-BC>=Bars)
+        {
+          ObjectCreate(name1, OBJ_TREND, 0, T(B2o), HO(B2o), T(B4o), HO(B4o));
+          ObjectCreate(name2, OBJ_TREND, 0, T(B1o), LO(B1o), T(B3o), LO(B3o));
+        }
+        else if (i>Limit)
+        {
+          ObjectCreate(name1, OBJ_TREND, 0, Time[i-BC], HO(B2o)-KR*(B2o-BC), Time[i-Limit], HO(B4o)+KR*(Limit-B4o));
+          ObjectCreate(name2, OBJ_TREND, 0, Time[i-BC], LO(B1o)-KT*(B1o-BC), Time[i-Limit], LO(B3o)+KT*(Limit-B3o));
+        }
+        else
+        {
+          <?expert>TACorrector::Add(name1, Limit-i+1); TACorrector::Add(name2, Limit-i+1);</>
+          ObjectCreate(name1, OBJ_TREND, 0, Time[i-BC], HO(B2o)-KR*(B2o-BC), Time[1]+PeriodSeconds()*(Limit-i+1), HO(B4o)+KR*(Limit-B4o));
+          ObjectCreate(name2, OBJ_TREND, 0, Time[i-BC], LO(B1o)-KT*(B1o-BC), Time[1]+PeriodSeconds()*(Limit-i+1), LO(B3o)+KT*(Limit-B3o));
+        }
+        ObjectSet(name1, OBJPROP_COLOR, Color());
+        ObjectSet(name1, OBJPROP_RAY, 0);
+        ObjectSet(name2, OBJPROP_COLOR, Color());
+        ObjectSet(name2, OBJPROP_RAY, 0);
+        break;
+      case M_ATTR:
+        i = iBarShift(NULL, 0, T(0), true);
+        if (i<BC+1)
+        {
+          <?expert>TACorrector::Add(name1, BC-i+2); TACorrector::Add(name2, BC-i+2);</>
+          ObjectCreate(name1, OBJ_TREND, 0, T(B2o), HO(B2o), Time[1]+PeriodSeconds()*(BC-i+2), HO(B2o)+KR*(BC-B2o+1));
+          ObjectCreate(name2, OBJ_TREND, 0, T(B1o), LO(B1o), Time[1]+PeriodSeconds()*(BC-i+2), LO(B1o)+KT*(BC-B1o+1));
+        }
+        else
+        {
+          ObjectCreate(name1, OBJ_TREND, 0, T(B2o), HO(B2o), Time[i-(BC+1)], HO(B2o)+KR*(BC-B2o+1));
+          ObjectCreate(name2, OBJ_TREND, 0, T(B1o), LO(B1o), Time[i-(BC+1)], LO(B1o)+KT*(BC-B1o+1));
+        }
+        //ObjectCreate(name1, OBJ_TREND, 0, T(B2o), HO(B2o), T(B4)+PeriodSeconds()*(BC-B4+1), HO(B2o)+KR*(BC-B2o+1));
+        //ObjectCreate(name2, OBJ_TREND, 0, T(B1o), LO(B1o), T(B4)+PeriodSeconds()*(BC-B4+1), LO(B1o)+KT*(BC-B1o+1));
+        ObjectSet(name1, OBJPROP_COLOR, Color());
+        ObjectSet(name1, OBJPROP_RAY, 0);
+        ObjectSet(name2, OBJPROP_COLOR, Color());
+        ObjectSet(name2, OBJPROP_RAY, 0);
+        break;
+    }
+    
+    if (isH)
+    {
+      string name = "hypo"+id;
+      if (i<BH)
+      {
+        <?expert>TACorrector::Add(name, (BH)-i+1);</>
+        ObjectCreate(name, OBJ_TREND, 0, T(B3h), LO(B3h), Time[1]+PeriodSeconds()*((BH)-i+1), LO(B5)+KH*(BH-B5));
+      }
+      else
+        ObjectCreate(name, OBJ_TREND, 0, T(B3h), LO(B3h), Time[i-(BH)], LO(B5)+KH*(BH-B5));
+      ObjectSet(name, OBJPROP_COLOR, Color());
+      ObjectSet(name, OBJPROP_STYLE, STYLE_DASH);
+      ObjectSet(name, OBJPROP_RAY, 0);
+      
+      if (B2h!=B2o || B4h!=B4o)
+        {
+        string name = "hypo-target"+id;
+        if (i<BH)
+        {
+          <?expert>TACorrector::Add(name, (BH)-i+1);</>
+          ObjectCreate(name, OBJ_TREND, 0, T(B2h), HO(B2h), Time[1]+PeriodSeconds()*((BH)-i+1), HO(B4h)+KHR*(BH-B4h));
+        }
+        else
+          ObjectCreate(name, OBJ_TREND, 0, T(B2h), HO(B2h), Time[i-(BH)], HO(B4h)+KHR*(BH-B4h));
+        ObjectSet(name, OBJPROP_COLOR, Color());
+        ObjectSet(name, OBJPROP_STYLE, STYLE_DASH);
+        ObjectSet(name, OBJPROP_RAY, 0);
+      }
+    }
+  }
+  
+  static void TABaseModel::DrawKill(int id)
+  {
+    if (taDraw)
+    {
+      <?expert2>
+      ObjectSet("trend"+id, OBJPROP_COLOR, MidnightBlue);
+      ObjectSet("target"+id, OBJPROP_COLOR, MidnightBlue);
+      ObjectSet("hypo"+id, OBJPROP_COLOR, MidnightBlue);
+      ObjectSet("hypo-target"+id, OBJPROP_COLOR, MidnightBlue);
+      <~>
+      ObjectDelete("trend"+id);
+      ObjectDelete("target"+id);
+      ObjectDelete("hypo"+id);
+      ObjectDelete("hypo-target"+id);
+      </>
+    }
+  }
+  
+  <?!expert>
+  static void TABaseModel::DrawShow(int i, bool show)
+  {
+    int visual = show?OBJ_ALL_PERIODS:OBJ_NO_PERIODS;
+    ObjectSet("trend"+i, OBJPROP_TIMEFRAMES, visual);
+    ObjectSet("target"+i, OBJPROP_TIMEFRAMES, visual);
+    ObjectSet("hypo"+i, OBJPROP_TIMEFRAMES, visual);
+    ObjectSet("hypo-target"+i, OBJPROP_TIMEFRAMES, visual);
+  }
+  
+  static void TABaseModel::ShowFiltered()
+  {
+    for (int i=0; i<ArraySize(taModels); i++)
+    {
+      if (HasRef(taModels[i]))
+        if (taModels[i].fixed ||
+            ((filter_type==-1 || taModels[i].type==filter_type) && 
+             (!filter_h || taModels[i].isH) && 
+             (!filter_4 || taModels[i].is5) &&
+             (!filter_56 || !taModels[i].is5) &&
+             (!filter_strong || taModels[i].strong) &&
+             (!filter_start || taModels[i].trend_start) &&
+             (!filter_plain || taModels[i].gamma<10))
+           )
+          DrawShow(i, true);
+        else
+          DrawShow(i, false);
+    }
+  }
+  </>
+
+<?!expert>
+int TABaseModel::filter_type = -1;
+bool TABaseModel::filter_h, TABaseModel::filter_4, TABaseModel::filter_56, TABaseModel::filter_strong, TABaseModel::filter_start, TABaseModel::filter_plain;
+</>
+

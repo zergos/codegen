@@ -1,0 +1,12 @@
+[Main]
+BlockIn
+Name=IC
+Title=Вход (управление)
+Group=Слои
+Size=3
+
+[Output]
+CTRL=c
+
+[Help]
+Служебный блок для построения слоя.

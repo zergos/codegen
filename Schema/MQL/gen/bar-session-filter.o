@@ -1,0 +1,105 @@
+[Main]
+Name=BarSessionFilter
+Title=Фильтр сессии
+Group=Генераторы
+
+[Property]
+Period=period,PERIOD_D1,период новых баров
+StartHour=n,0,начальный час фильтрации
+EndHour=n,10,конечный час фильтрации
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+volume=row
+time=row,,d
+
+[Output]
+fopen=row,@fopen
+fclose=row,@fclose
+fhigh=row,@fhigh
+flow=row,@flow
+fvolume=row,@fvolume
+ftime=row,@ftime
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=@fstart
+Size=@fsize
+
+[Code]
+<gvars>
+<?fopen>double @fopen[];</>
+<?fclose>double @fclose[];</>
+<?fhigh>double @fhigh[];</>
+<?flow>double @flow[];</>
+<?fvolume>double @fvolume[];</>
+datetime @ftime[];
+int @fstart, @fsize;
+  
+<lines>
+  if ($Start==0)
+  {
+    <?fopen>ArrayResize(@fopen, 1);</>
+    <?fclose>ArrayResize(@fclose, 1);</>
+    <?fhigh>ArrayResize(@fhigh, 1);</>
+    <?flow>ArrayResize(@flow, 1);</>
+    <?fvolume>ArrayResize(@fvolume, 1);</>
+    ArrayResize(@ftime, 1);
+    @fstart = 0;
+    @fsize = 0;
+  }
+  else
+    @fstart = $Size-1;
+  
+  for (int i=$Start; i<$Size; i++)
+  {
+    MqlDateTime dt;
+    TimeToStruct($time[i]-$StartHour*3600, dt);
+    if (dt.hour<(24+$EndHour-$StartHour)%24) continue;
+    if (@fsize==0)
+    {
+      <?fopen>@fopen[0] = $open[i];</>
+      <?fclose>@fclose[0] = $close[i];</>
+      <?fhigh>@fhigh[0] = $high[i];</>
+      <?flow>@flow[0] = $low[i];</>
+      <?fvolume>@fvolume[0] = $volume[i];</>
+      @ftime[0] = $time[i];
+      @fsize++;
+    }
+    else
+    {
+      datetime bartime = floor($time[i]/$Period/60)*$Period*60;
+      datetime curtime = floor(@ftime[@fsize-1]/$Period/60)*$Period*60;
+      if (bartime==curtime)
+      {
+        <?fclose>@fclose[@fsize-1] = $close[i];</>
+        <?fhigh>@fhigh[@fsize-1] = MathMax(@fhigh[@fsize-1], $high[i]);</>
+        <?flow>@flow[@fsize-1] = MathMin(@flow[@fsize-1], $low[i]);</>
+        <?fvolume>@fvolume[@fsize-1] += $volume[i];</>
+        @ftime[@fsize-1] = $time[i];
+      }
+      else
+      {
+        @fsize++;
+        if ($Start>0 && @fstart>0) @fstart--;
+        <?fopen>ArrayResize(@fopen, @fsize);</>
+        <?fclose>ArrayResize(@fclose, @fsize);</>
+        <?fhigh>ArrayResize(@fhigh, @fsize);</>
+        <?flow>ArrayResize(@flow, @fsize);</>
+        <?fvolume>ArrayResize(@fvolume, @fsize);</>
+        ArrayResize(@ftime, @fsize);
+        <?fopen>@fopen[@fsize-1] = $open[i];</>
+        <?fclose>@fclose[@fsize-1] = $close[i];</>
+        <?fhigh>@fhigh[@fsize-1] = $high[i];</>
+        <?flow>@flow[@fsize-1] = $low[i];</>
+        <?fvolume>@fvolume[@fsize-1] = $volume[i];</>
+        @ftime[@fsize-1] = $time[i];
+      }
+    }
+  }

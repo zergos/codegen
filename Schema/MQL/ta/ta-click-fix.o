@@ -1,0 +1,27 @@
+[Main]
+Name=TAClickFix
+Title=Ind Обработка "Фикс"
+Group=ТА
+
+[Input]
+code=s
+
+[InputPars]
+Button
+
+[Code]
+<lines>
+  if ($code!="")
+  {
+    int i = StringToInteger($code);
+    TABaseModel *S = taModels[i];
+    S.fixed = $Button.Pressed();
+  
+    int width = S.fixed?2:1;
+  
+    ObjectSet("trend"+$code, OBJPROP_WIDTH, width);
+    ObjectSet("target"+$code, OBJPROP_WIDTH, width);
+    ObjectSet("trend"+$code, OBJPROP_WIDTH, width);
+    //ObjectSet("hypo"+$code, OBJPROP_WIDTH, width);
+  }
+

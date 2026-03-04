@@ -1,0 +1,46 @@
+[Main]
+Name=SigBorders
+Title=Пробитие рамки
+Group=Фильтры
+
+[Property]
+Range=f,0.5
+
+[Input]
+in=row
+
+[Output]
+sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+int $sig[];
+
+<lines>
+  ArrayInit($sig, $Size);
+  CheckShift($sig);
+  
+  static int @dir;
+  if ($Start==0) @dir = 0;
+
+  for (int i=$Start; i<$Size-1; i++)
+  {
+    if (@dir>=0 && $in[i]<-$Range)
+    {
+      $sig[i] = -1;
+      @dir = -1;
+      continue;
+    }
+    if (@dir<=0 && $in[i]>$Range)
+    {
+      $sig[i] = 1;
+      @dir = 1;
+    }
+  }
+  
+[Help]
+Сигнал отмечает моменты переходов из нижней границы в верхнюю.

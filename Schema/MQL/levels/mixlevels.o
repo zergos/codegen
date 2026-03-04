@@ -1,0 +1,39 @@
+[Main]
+Name=ExpandLevels
+Title=Расш. уровней
+Group=Уровни
+
+[Input]
+high=n
+low=n
+price=n
+
+[Output]
+high=n,up$name
+low=n,down$name
+
+[Code]
+<gvars>
+double up$name;
+double down$name;
+
+<lines>
+  if (trend>0)
+  {
+    up$name = $price;
+    down$name = $low;
+  }
+  else
+  {
+    up$name = $high;
+    down$name = $price;
+  }
+  <?debug>Print("новые уровни: ",up$name," -- ",down$name);</>
+
+<sync>
+  syncTitle("$name");
+  sync("up", up$name);
+  sync("down", down$name);
+  
+[Help]
+Корректировка уровней по тренду.

@@ -1,0 +1,41 @@
+[Main]
+Name=LevelInc
+Title=Расширение
+Group=Уровни
+
+[Property]
+IncFormula=s,pow(a+n\,b),формула расширения канала
+StartCount=n,0,начальное значение счётчика
+
+[Input]
+in=n
+
+[Output]
+out=n,$name
+
+[Code]
+<gvars>
+int @count;
+double up$out;
+double down$out;
+
+<procs>
+double @inc(double n)
+{
+  return $IncFormula;
+}
+
+<init>
+  @count = $StartCount;
+
+<lines>
+  up$out = up$in + @inc(@count);
+  down$out = down$in - @inc(@count);
+  @count ++;
+
+<sync>
+  sync(up$name);
+  sync(down$name);
+
+[Help]
+Увеличивающееся расширение канала по заданной формуле.

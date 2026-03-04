@@ -1,0 +1,53 @@
+[Main]
+Unit
+Name=Param
+Title=Общий
+Group=Параметры
+
+[Property]
+ParType=type,int,тип параметра
+Initial=s,0,начальное значение
+Inputable=t,1,доступность для изменения пользователем
+Changable=t,,изменяемая программно
+GlobalVar=s,,считать из глобальной переменной
+Label=s,,наименование переменной для ввода
+LabelEng=s,,наименование на английском
+HideParName=t,,не выводить имя параметра в комменты
+
+[Code]
+<gvars>
+<?Label>
+  <?!english>
+    <?!HideParName>
+      <?Inputable><?Changable>extern<~>input</> </>$ParType $name = $Initial;// $name: $Label
+    <~>
+      <?Inputable><?Changable>extern<~>input</> </>$ParType $name = $Initial;// $Label
+    </>
+  </>
+</>
+<?LabelEng>
+  <?english>
+    <?!HideParName>
+      <?Inputable><?Changable>extern<~>input</> </>$ParType $name = $Initial;// $name: $LabelEng
+    <~>
+      <?Inputable><?Changable>extern<~>input</> </>$ParType $name = $Initial;// $LabelEng
+    </>
+  </>
+</>
+<?!Label><?!LabelEng>
+<?Inputable><?Changable>extern<~>input</> </>$ParType $name = $Initial;
+</></>
+
+<init>
+  <?GlobalVar>
+  double @res;
+  if (GlobalVariableGet("$GlobalVar"+Symbol(), @res))
+  {
+    $name = @res;
+    <?debug>Print("$name = ",$name);</>
+  }
+  </>
+ 
+[Help]
+Определение пользовательского параметра.
+

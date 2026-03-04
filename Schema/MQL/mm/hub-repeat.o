@@ -1,0 +1,13 @@
+[Main]
+Name=HubRepeat
+Title=Повтор обработки хаба
+Group=Сделки
+
+[Code]
+<lines>
+  <?debug>add_log("повтор обработки хаба");</>
+  hub_repeat = true;
+
+[Help]
+Запускает поток на повторную обработку потока.
+

@@ -1,0 +1,103 @@
+[Main]
+Choice
+Name=TAScriptHL
+Title=EA Торг. сценарий HL
+Group=ТА
+
+[Property]
+Lots=f
+MarketLot=t
+Martin=t,1
+LateStops=n,0
+Resize=t
+
+[Output]
+work=c
+
+[Code]
+<gvars>
+TAScript *taCur;
+int hid;
+
+<lines>
+  taCur = (TAScript*)TABaseScript::Get();
+  for ( ; RefObject::HasRef(taCur); taCur = (TAScript*)TABaseScript::Get())
+  {  
+    taCur.thread_index = thread_index;
+    
+    if (taCur.denied)
+    {
+      taCur.Release();
+      continue;
+    }
+    
+    if (taCur.trend>0 && (Ask>=taCur.tp || Ask<=taCur.sl)
+     || taCur.trend<0 && (Bid<=taCur.tp || Bid>=taCur.sl))
+    {
+      <?debug>taCur.M.Log("цена вышла за диапазон");</>
+      taCur.Release();
+      continue;
+    }
+    
+    // все проверки только для первой сделки модели
+    double profit = (taCur.trend>0?taCur.tp-Ask:Bid-taCur.tp)/Point;
+    double loss = (taCur.trend>0?Bid-taCur.sl:taCur.sl-Ask)/Point;
+    if (!RefObject::HasRef(taCur.M) || taCur.M.sCount==1)
+    {
+    if (profit<taMinProfit)
+    {
+      <?debug>taCur.M.Log("малый профит "+profit);</>
+      taCur.Release();
+      continue;
+    }
+    else
+    if (loss>taMaxLoss)
+    {
+      <?debug>taCur.M.Log("большой убыток "+loss);</>
+      taCur.Release();
+      continue;
+    }
+    else if ((((TAModel*)taCur.M).state==TA_5Down
+      || ((TAModel*)taCur.M).state==TA_6Up
+      || ((TAModel*)taCur.M).state==TA_TRDown)
+      && profit<loss*taMaxLossCoef)
+    {
+      <?debug>taCur.M.Log("профит меньше убытка "+NormalizeDouble(profit/loss,2));</>
+      taCur.Release();
+      continue;
+    }
+    }
+    
+    hid = HubFreeIndex();
+    hub[hid].cmd = taCur.trend==1?OP_VBUYSTOP:OP_VSELLSTOP;
+    double lot = $Lots;
+    <?Resize>
+    int dist = fabs(taCur.ftp-Bid());
+    lot = dist<=400?$Lots:$Lots/(dist/400);
+    </>
+    hub[hid].lots = <?MarketLot>MarketLot</>(lot)<?Martin>+((TAModel*)taCur.M).lots</>;
+    hub[hid].ftp = taCur.tp;
+    hub[hid].fsl = taCur.sl;
+    hub[hid].late_stops = $LateStops==0?0:iTime(NULL, 0, 0)+$LateStops*PeriodSeconds();
+    OrderToMarket(hid);
+    
+    if (order_error)
+    {
+      order_error = false;
+      taCur.Release();
+      continue;
+    }
+    
+    taCur.price = hub[hid].price;
+    ((TAModel*)taCur.M).lots = hub[hid].lots;
+      
+    trend = taCur.trend;
+    state_mark = taCur.M.id;
+        
+$work.lines
+    break;
+  }
+  
+[Help]
+Извлекает скрипт для работы.
+

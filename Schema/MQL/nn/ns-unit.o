@@ -1,0 +1,55 @@
+[Main]
+Unit
+Name=NSUnit
+Title=NS модуль
+Group=Нейросети
+
+[Property]
+DLL=s,test,имя библиотеки для подключения
+
+[Code]
+<top>
+#include "ns-unit.mqh"
+
+<attach>
+=ns-unit.mqh
+#include "$DLL\\Globals.h"
+
+#import "$DLL.dll"
+int createNetwork(int &pNeuralNetwork, int networkType);
+int destroyNetwork(int pNeuralNetwork);
+int loadWeights(int pNeuralNetwork, uchar &weightsPathName[]);
+int getResponse(int pNeuralNetwork, int exemplars, double &inputData[], double &outputData[]);
+int train(int pNeuralNetwork, int epochs, int exemplars, double &inputData[], double &desiredData[], int cvExemplars, double &cvInputData[], double &cvDesiredData[]);
+int saveWeights(int pNeuralNetwork, uchar &weightsPathName[]);
+#import
+
+int pNeuralNetwork;
+
+bool NSInit()
+{
+  if (createNetwork(pNeuralNetwork, 1)!=0) return false;
+  uchar str[];
+  StringToCharArray(WEIGHTS_PATH_NAME, str);
+  if (loadWeights(pNeuralNetwork, str)!=0) return false;
+  return true;
+}
+
+void NSDeinit()
+{
+  destroyNetwork(pNeuralNetwork);
+}
+
+<init>
+  if (!NSInit())
+  {
+    Print("NeuroSolutions ошибка инициации");
+    return -1;
+  }
+  
+<deinit>
+  NSDeinit();
+
+[Help]
+Подключает нейросетевой модуль от Neurosolutions.
+

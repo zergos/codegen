@@ -1,0 +1,33 @@
+[Main]
+Name=MulMany
+Title=Умножение (множество)
+Group=Арифметика
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Prefix]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++)
+    $out[@i] = 1;
+
+[Code]
+<lines>
+  for (@i=$Start; @i<$Size; @i++)
+    $out[@i] = $out[@i]*$in[@i];
+
+[Help]
+Последовательное умножение всех элементов входящих массивов
+<code>out = out * in</code>

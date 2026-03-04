@@ -1,0 +1,112 @@
+[Main]
+Title=Чтение баров
+Name=FileReadBars
+Group=Файлы
+
+[Property]
+Type=type,double,Тип считываемой серии
+FiltBySymbol=t,,фильтровать серию по символу
+ExactMode=t,,загружать точно по часам (с нулевыми промежутками)
+SumBars=t,,суммировать значения внутри баров
+FixedData=n,,значение\, которое использовать вместо данных
+ReadToEnd=t,,считать до конца
+GMTShift=n,,часовой сдвиг
+
+[Input]
+time=row
+file=n
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+bool @loaded;
+int @fileSize;
+datetime @time[];
+ $Type @datas[];
+ $Type $name[];
+int @last_idx;
+
+<init>
+  @loaded = false;
+  @last_idx = 0;
+  
+<lines>
+  if (!@loaded)
+  {
+    <?ReadToEnd>
+    @fileSize = 0;
+    <~>
+    @fileSize = FileReadNumber($file);
+    <?debug>Print("$name size ",@fileSize);</>
+    ArrayResize(@time, @fileSize);
+    ArrayResize(@datas, @fileSize);
+    </>
+    <?ReadToEnd>
+    while (!FileIsEnding($file))
+    {
+      int i = @fileSize;
+      @fileSize++;
+      ArrayResize(@time, @fileSize);
+      ArrayResize(@datas, @fileSize);
+    <~>
+    for (int i=0; i<@fileSize; i++)
+    {
+    </>
+      <?FiltBySymbol>string @sym = FileReadString($file);</>
+      @time[i] = FileReadDatetime($file)<?GMTShift>+($GMTShift*3600)</>;
+      <?!FixedData>
+      @datas[i] = FileReadNumber($file);
+      <~>
+      @datas[i] = $FixedData;
+      </>
+      <?FiltBySymbol>if (@sym!=Symbol()) @datas[i] = 0;</>
+      <?debug>if (i<20) Print(TimeToStr(@time[i])," >> ",@datas[i]);</>
+    }
+    @loaded = true;
+  }
+
+  ArrayInit($name, $Size);
+  CheckShift($name);
+  
+  //if ($Start==0)
+  //  @last_idx = 0;
+  //else
+  //  @last_idx -= $Size-$Start-1;
+  while (@last_idx>0 && $time[$Start]<@time[@last_idx]) @last_idx--;
+  
+  int @k=@last_idx;
+  for (int i=$Start; i<$Size; i++)
+  {
+    $name[i] = 0;
+    if ($time[i]>=@time[@last_idx])
+      for ( ; @k<@fileSize && $time[i]>=@time[@k]; @k++)
+        <?SumBars>
+        if ($time[i]>=@time[@k] && $time[i]<@time[@k+1])
+        {
+          $name[i] += @datas[@k];
+        }
+        <~>
+        <?ExactMode>
+        if ($time[i]==@time[@k])
+        <~>
+        if ($time[i]>=@time[@k] && (@k==@fileSize-1 || $time[i]<@time[@k+1]))
+        </>
+        {
+          $name[i] = @datas[@k];
+          @last_idx = @k;
+          break;
+        }
+        </>
+    <?SumBars>
+    @last_idx = @k;
+    </>
+  }
+
+[Help]
+Чтение баров из файлов (например, для быстрой прогонки тестера).

@@ -1,0 +1,30 @@
+[Main]
+Title=Медиан
+Group=Алгоритмы
+Name=MedianPrice
+
+[Input]
+high=row
+low=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+
+  for (int @i=$Start; @i<$Size; @i++)
+    $out[@i] = ($high[@i]+$low[@i])/2;
+
+[Help]
+Расчёт медианной цены.
+<code>out = (high + low) / 2</code>

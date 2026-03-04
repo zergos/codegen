@@ -1,0 +1,44 @@
+[Main]
+Choice
+Name=CheckSigFile
+Title=Сигнал из файла
+Group=Файлы
+
+[Property]
+FileName=s,,имя файла
+CommonFile=t,1,файл в общей папке
+SymbolPrefix=t,1,добавлять к имени файла наименование символа
+ForceInit=t,1,первый раз выполнять независимо от сигнала
+
+[Output]
+sig=c
+
+[Code]
+<gvars>
+<?ForceInit>bool @inited;</>
+
+<init>
+  <?ForceInit>@inited = false;</>
+
+<lines>
+  bool @state = false;
+  int @file = FileOpen(<?SymbolPrefix>Symbol()+</>"$FileName", FILE_TXT|FILE_WRITE|FILE_READ|FILE_SHARE_READ|FILE_SHARE_WRITE<?CommonFile>|FILE_COMMON</>);
+  if (@file>0)
+  {
+    if (FileReadString(@file)=="1")
+    {
+      FileSeek(@file, 0, SEEK_SET);
+      FileWrite(@file, 0);
+      @state = true;
+    }
+    FileClose(@file);
+  }
+  if (@state <?ForceInit>|| !@inited</>)
+  {
+    <?debug>Print("$name worked");</>
+    <?ForceInit>@inited = true;</>
+$sig.lines
+  }
+  
+[Help]
+Файл создаётся в папке .\experts\files

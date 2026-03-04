@@ -1,0 +1,136 @@
+[Main]
+Modular
+Title=Скрипт
+Group=Программы
+Name=Script
+
+[Property]
+MinBufferSize=n,128,мин. размер буфера
+MaxBufferSize=n,1024,макс. размер буфера
+# BufferSize=n,128,размер буфера
+Copyright=s,,название компании-производителя
+link=s,,ссылка на сайт компании-производителя
+Version=s,1.0
+stacksize=n,,размер стека для рекурсивных вызовов
+show_confirm=t,,выводить окно подтверждения перед запуском скрипта
+show_inputs=t,,выводить окно со свойствами перед запуском скрипта и запретить вывод окна подтверждения
+strict=t,1,новый режим компилятора
+definePI=t
+
+[Output]
+Trace=c
+After=c
+
+[OutputPars]
+Size=@GlobalSize
+Start=0
+
+[Code]
+<top>
+//+------------------------------------------------------------------+
+//| $name                                                            
+//| $copyright                                                       
+//| $link
+//+------------------------------------------------------------------+
+
+#property version "$Version"
+<?Copyright>#property copyright "$Copyright"</>
+<?link>#property link "$link"</>
+<?stacksize>#property stacksize $stacksize</>
+<?show_confirm>#property show_confirm</>
+<?show_inputs>#property show_inputs</>
+<?strict>#property strict</>
+
+<?definePI>#define PI 3.1415926535897</>
+
+<gvars>
+int @GlobalSize;
+
+<procs>
+template <typename T>
+void CheckShift(T& a[])
+{
+  // для скриптов не нужно
+  return (false);
+}
+
+template <typename T>
+void ArrayInit(T &a[], int NewSize=0)
+{
+  if (ArraySize(a)<NewSize) ArrayResize(a, NewSize);
+}
+
+<lines>
+<?MinBufferSize>
+  if (Bars<$MinBufferSize)
+<~>
+  if (Bars==0)
+</>
+    return(0);
+    
+<?MaxBufferSize>
+  if (Bars<$MaxBufferSize) @GlobalSize = Bars; else @GlobalSize = $MaxBufferSize;
+<~>
+  @GlobalSize = Bars;
+</>
+
+<?Trace>
+  int trace_index = 0;
+$CTRL.lines
+$Trace.init
+  while (trace_index<GlobalSize)
+  {
+    int ti = trace_index;
+    int ii = Bars-1-ti;
+$Trace.lines
+    trace_index++;
+  }
+</>
+    
+<?After>
+$After.lines
+</>
+
+[Template]
+$top
+
+//---- parameters
+$gvars
+
+//---- user functions
+$procs
+
+//+------------------------------------------------------------------+
+//| Custom script initialization function                            |
+//+------------------------------------------------------------------+
+int init()
+{
+$init
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom script deinitialization function                          |
+//+------------------------------------------------------------------+
+int deinit()
+{
+$deinit
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom script iteration function                                 |
+//+------------------------------------------------------------------+
+int start()
+{
+$lines
+$endlines
+  return(0);
+}
+//+------------------------------------------------------------------+
+$attach
+
+[Help]
+Объект можно использовать один раз в одной схеме.

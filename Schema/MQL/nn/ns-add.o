@@ -1,0 +1,28 @@
+[Main]
+Custom
+Name=NSAdd
+Title=NS добавить вход
+Group=Нейросети
+Size=5
+
+[Property]
+Index=n
+
+[Input]
+CTRL=c,,d
+Value=n
+
+[Output]
+CTRL=c
+
+[InputPars]
+NSInput
+
+[Code]
+<lines>
+  $NSInput[idx] = $Value<?Index>[$Index]</>;
+  idx++;
+
+[Help]
+Добавляет значение на вход нейросети.
+  

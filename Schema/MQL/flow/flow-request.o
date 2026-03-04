@@ -1,0 +1,17 @@
+[Main]
+Title=Запрос тиков
+Name=FlowRequest
+Group=Лента
+
+[Input]
+tick=row
+
+[InputPars]
+Start
+
+[Code]
+<lines>
+  if ($Start!=0 && !$tick.in_work) $tick.qid = FlowRequestTicksByID($tick.sid, $tick.last_id);
+
+[Help]
+Выполнение запроса новых тиков.

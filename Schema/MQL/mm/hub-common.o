@@ -1,0 +1,553 @@
+[Main]
+Usable
+Name=HubOrder
+Title=Класс ордера хаба
+Group=Сделки
+
+[Uses]
+common\chain
+
+[Code]
+<top>
+#include "hub-order.mqh"
+
+<attach>
+=hub-order.mqh
+
+#define opLIMIT(cmd) (cmd==OP_BUYLIMIT || cmd==OP_SELLLIMIT)
+#define opSTOP(cmd) (cmd==OP_BUYSTOP || cmd==OP_SELLSTOP)
+#define opBUY(cmd) (cmd==OP_BUY || cmd==OP_BUYSTOP || cmd==OP_BUYLIMIT || cmd==OP_VBUYSTOP || cmd==OP_VBUYLIMIT)
+#define opSELL(cmd) (cmd==OP_SELL || cmd==OP_SELLSTOP || cmd==OP_SELLLIMIT || cmd==OP_VSELLSTOP || cmd==OP_VSELLLIMIT)
+#define opVIRTUAL(cmd) (cmd==OP_VSELLSTOP || cmd==OP_VBUYSTOP || cmd==OP_VSELLLIMIT || cmd==OP_VBUYLIMIT || cmd==OP_VCLOSE)
+#define opMARKET(cmd) (cmd==OP_BUY || cmd==OP_SELL)
+#define opPENDING(cmd) (cmd==OP_BUYSTOP || cmd==OP_SELLSTOP || cmd==OP_BUYLIMIT || cmd==OP_SELLLIMIT)
+#define opREAL(cmd) (opMARKET(cmd) || opDEFER(cmd))
+
+enum hubState
+{
+  HUB_CLOSED = 0,
+  HUB_TAIL = 1,
+  HUB_INITIAL = 2,
+  HUB_ACTIVE = 3
+};
+
+enum specialCmd
+{
+  OP_VIRTUAL = 10,
+  OP_VBUYLIMIT = 11,
+  OP_VSELLLIMIT = 12,
+  OP_VBUYSTOP = 13,
+  OP_VSELLSTOP = 14,
+  OP_VCLOSE = 15
+};
+
+
+class CHubThread;
+class CHubOrder : public ChainObject
+{
+  public:
+  CHubThread *host;
+  
+  int ticket;
+  int cmd;
+  double price;
+  double lots;
+  int sl, tp; // stop/take in points
+  double fsl, ftp; //fact stop/take
+  hubState state;
+  datetime expire;
+  datetime late_stops;
+  datetime time_stamp;
+  bool signal;
+  
+  CHubOrder(CHubThread *_host) : ChainObject()
+  {
+    host = _host;
+    time_stamp = CurTime();
+    ticket = -1;
+    cmd = -1;
+    state = HUB_CLOSED;
+    add();
+  }
+  ~CHubOrder()
+  {
+    if (host.firstOrder==GetPointer(this)) host.firstOrder = next;
+  }
+  
+  virtual ChainObject *getFirst() { return host.firstOrder; }
+  virtual void setFirst(ChainObject *o) { host.firstOrder = o; }
+  
+  <?debug>
+  void add_log(string message)
+  {
+    host.add_log(message);
+  }
+  </>
+  
+  static int getLastTicket()
+  {
+    if (OrderSelect(OrdersTotal()-1, SELECT_BY_POS, MODE_TRADES))
+      return OrderTicket();
+    else
+      return -1;
+  }
+
+  <?OrdersControl>
+  bool OrderClose2(double by_lots)
+  {
+    bool res = false;
+    if (cmd == OP_BUY)
+    {
+      double prc = Bid;
+      res = OrderClose(ticket, by_lots, prc, host.Slippage);
+      while (!res && host.ProcessError(GetLastError()))
+      {
+        prc = Bid;
+        res = OrderClose(ticket, by_lots, prc, host.Slippage);
+      }
+    }
+    else if (cmd == OP_SELL)
+    {
+      double prc = Ask;
+      res = OrderClose(ticket, by_lots, prc, host.Slippage);
+      while (!res && host.ProcessError(GetLastError()))
+      {
+        prc = Ask;
+        res = OrderClose(ticket, by_lots, prc, host.Slippage);
+      }
+    }
+    return res;
+  }
+  </>
+
+  void ToMarket()
+  {
+    <?debug>add_log("ордер по рынку "+cmdNames[cmd]+" lots "+lots+" sl "+sl+" tp "+tp+" fsl "+fsl+" ftp "+ftp);</>
+    if (cmd == OP_VBUYSTOP || cmd == OP_VBUYLIMIT || cmd == OP_BUY)
+    {
+      fsl = fsl==0?(sl==0?0:Ask-sl*Point):norm(fsl);
+      ftp = ftp==0?(tp==0?0:Ask+tp*Point):norm(ftp);
+      <?!OrdersControl>
+      price = Ask;
+      ticket = OrderSend(Symbol(), OP_BUY, lots, price, host.Slippage, late_stops==0?fsl:0, ftp, "", host.MAGIC);
+      <~>
+      ticket = host.OrderSend2(OP_BUY, lots, price, late_stops==0?fsl:0, ftp);
+      </>
+      <?debug>add_log("тикет нового ордера "+ticket);</>
+      cmd = OP_BUY;
+    }
+    else if (cmd == OP_VSELLSTOP || cmd == OP_VSELLLIMIT || cmd == OP_SELL)
+    {
+      fsl = fsl==0?(sl==0?0:Bid+sl*Point):norm(fsl);
+      ftp = ftp==0?(tp==0?0:Bid-tp*Point):norm(ftp);
+      <?!OrdersControl>
+      price = Bid;
+      ticket = OrderSend(Symbol(), OP_SELL, lots, price, host.Slippage, late_stops==0?fsl:0, ftp, "", host.MAGIC);
+      <~>
+      ticket = host.OrderSend2(OP_SELL, lots, price, late_stops==0?fsl:0, ftp);
+      </>
+      <?debug>add_log("тикет нового ордера "+ticket);</>
+      cmd = OP_SELL;
+    }
+    if (ticket>=0)
+    {
+      state = HUB_ACTIVE;
+      expire = 0;
+      if (host.hub_state != HUB_ACTIVE)
+      {
+        host.hub_state = HUB_ACTIVE;
+        host.hub_activated = true;
+        host.initial = GetPointer(this);
+        <?debug>add_log("состояние изменилось");</>
+      }
+      host.last_order = GetPointer(this);
+    }
+    else
+      host.order_error = true;
+  }
+  
+  void SendDeferred()
+  {
+    <?debug>add_log("отложенник "+cmdNames[cmd]+" по "+price+" sl "+fsl+" tp "+ftp+" lots "+lots);</>
+    <?!OrdersControl>
+    ticket = OrderSend(Symbol(), cmd, lots, price, host.Slippage, fsl, ftp, "corrected", host.MAGIC);
+    <~>
+    ticket = host.OrderSend3(cmd, lots, price, fsl, ftp, "corrected");
+    </>
+    if (ticket<0) host.order_error = true;
+  }
+  
+  void Update()
+  {
+    switch (cmd)
+    {
+      case OP_BUYSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET) && (OrderOpenPrice()!=norm(price)
+        || OrderStopLoss()!=norm(fsl)
+        || OrderTakeProfit()!=norm(ftp)))
+        {
+          <?debug>add_log(StringFormat("обновление отложенника #%d цена %f с/л %f т/п %f", ticket, price, fsl, ftp));</>
+          if (!OrderModify(ticket, price, fsl, ftp, OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            host.order_error = true;
+          }
+        }
+        break;
+      case OP_SELLSTOP:
+      case OP_SELLLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET) && (OrderOpenPrice()!=norm(price)
+        || OrderStopLoss()!=(fsl==0?0:norm(fsl))
+        || OrderTakeProfit()!=(ftp==0?0:norm(ftp))))
+        {
+          <?debug>add_log(StringFormat("обновление отложенника #%d цена %f с/л %f т/п %f", ticket, price, fsl==0?0:norm(fsl), ftp==0?0:norm(ftp)));</>
+          if (!OrderModify(ticket, price, fsl==0?0:norm(fsl), ftp==0?0:norm(ftp), OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            host.order_error = true;
+          }
+        }
+        break;
+      case OP_BUY:
+        if (OrderSelect(ticket, SELECT_BY_TICKET) &&
+          (OrderStopLoss()!=norm(fsl)
+        || OrderTakeProfit()!=norm(ftp)))
+        {
+          <?debug>add_log(StringFormat("обновление стопов #%d с/л %f т/п %f", ticket, fsl, ftp));</>
+          if (!OrderModify(ticket, 0, fsl, ftp, OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            host.order_error = true;
+          }
+        }
+        break;
+      case OP_SELL:
+        if (OrderSelect(ticket, SELECT_BY_TICKET) &&
+          (OrderStopLoss()!=(fsl==0?0:norm(fsl))
+        || OrderTakeProfit()!=(ftp==0?0:norm(ftp))))
+        {
+          <?debug>add_log(StringFormat("обновление стопов #%d с/л %f т/п %f", ticket, fsl==0?0:norm(fsl), ftp==0?0:norm(ftp)));</>
+          if (!OrderModify(ticket, 0, fsl==0?0:norm(fsl), ftp==0?0:norm(ftp), OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            host.order_error = true;
+          }
+        }
+        break;
+    }
+  }
+  
+  void ClosePending()
+  {
+    <?debug>add_log("закрытие отложенника");</>
+    if (opVIRTUAL(cmd))
+      state = HUB_CLOSED;
+    else if (opPENDING(cmd))
+      if (OrderDelete(ticket))
+        state = HUB_CLOSED;
+  }
+
+  virtual void ForceClose(double by_lots=0)
+  {
+    by_lots = by_lots==0?lots:normlot(by_lots);
+    <?debug>add_log("принудительное закрытие "+by_lots);</>
+    if (opPENDING(cmd))
+    {
+      if (OrderSelect(ticket, SELECT_BY_TICKET))
+        if (OrderDelete(ticket))
+          state = HUB_CLOSED;
+    }
+    else if (cmd == OP_BUY)
+    {
+      if (OrderSelect(ticket, SELECT_BY_TICKET))
+      <?OrdersControl>
+        if (OrderClose2(by_lots))
+      <~>
+        if (OrderClose(ticket, by_lots, Bid, host.Slippage))
+      </>
+        if (lots==by_lots)
+          state = HUB_CLOSED;
+        else
+        {
+          lots -= by_lots;
+          ticket = getLastTicket();
+          <?XLots>time_stamp = CurTime();</>
+        }
+    }
+    else if (cmd == OP_SELL)
+    {
+      if (OrderSelect(ticket, SELECT_BY_TICKET))
+      <?OrdersControl>
+        if (OrderClose2(by_lots))
+      <~>
+        if (OrderClose(ticket, by_lots, Ask, host.Slippage))
+      </>
+        if (lots==by_lots)
+          state = HUB_CLOSED;
+        else
+        {
+          lots -= by_lots;
+          ticket = getLastTicket();
+        }
+    }
+    else // закрытие виртуальных
+      state = HUB_CLOSED;
+  }
+
+  virtual void SetTP(int new_tp, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня tp "+new_tp+" для #"+ticket+(only?" *":""));</>
+    tp = new_tp;
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), only?0:OrderStopLoss(), Ask+tp*Point, OrderExpiration()))
+          <?debug>add_log("ошибка установки tp");<~>Print("ошибка установки tp");</>
+          else
+            ftp =Ask+tp*Point;
+        break;
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_SELLLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), only?0:OrderStopLoss(), Bid-tp*Point, OrderExpiration()))
+          <?debug>add_log("ошибка установки tp");<~>Print("ошибка установки tp");</>
+          else
+            ftp = Bid-tp*Point;
+    }
+  }
+  
+  virtual void SetTP(double new_ftp, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня ftp "+new_ftp+" для #"+ticket+(only?" *":""));</>
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_SELLLIMIT:
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), only?0:OrderStopLoss(), new_ftp, OrderExpiration()))
+          <?debug>add_log("ошибка установки tp");<~>Print("ошибка установки tp");</>
+          else
+            ftp = new_ftp;
+    }
+  }
+
+  virtual void SetSL(int new_sl, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня sl "+new_sl+" для #"+ticket+(only?" *":""));</>
+    sl = new_sl;
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), Ask-sl*Point, only?0:OrderTakeProfit(), OrderExpiration()))
+          <?debug>add_log("ошибка установки sl");<~>Print("ошибка установки sl");</>
+          else
+            fsl = Ask-sl*Point;
+        break;
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_SELLLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), Bid+sl*Point, only?0:OrderTakeProfit(), OrderExpiration()))
+          <?debug>add_log("ошибка установки sl");<~>Print("ошибка установки sl");</>
+          else
+            fsl = Bid+sl*Point;
+    }
+  }
+  
+  virtual void SetSL(double new_fsl, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня fsl "+new_fsl+" для #"+ticket+(only?" *":""));</>
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_SELLLIMIT:
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), new_fsl, only?0:OrderTakeProfit(), OrderExpiration()))
+          <?debug>add_log("ошибка установки sl");<~>Print("ошибка установки sl");</>
+          else
+            fsl = new_fsl;
+    }
+  }
+  
+  void SetStop(double level, bool only=false)
+  {
+    switch (cmd)
+    {
+      case OP_BUY:
+        if (level>=Ask)
+          SetTP(level, only);
+        else
+          SetSL(level, only);
+        break;
+        
+      case OP_BUYSTOP:
+      case OP_BUYLIMIT:
+        if (level>=price)
+          SetTP(level, only);
+        else
+          SetSL(level, only);
+        break;
+          
+      case OP_SELL:
+        if (level<=Bid)
+          SetTP(level, only);
+        else
+          SetSL(level, only);
+        break;
+          
+      case OP_SELLSTOP:
+      case OP_SELLLIMIT:
+        if (level<=price)
+          SetTP(level, only);
+        else
+          SetSL(level, only);
+    }
+  }
+  
+  <?Sync>
+  virtual void sync()
+  {
+    syncTitle("ORDER #"+index());
+    sync("ticket", ticket);
+    sync("cmd", cmd);
+    sync("price", price);
+    sync("lots", lots);
+    sync("sl", sl);
+    sync("tp", tp);
+    sync("fsl", fsl);
+    sync("ftp", ftp);
+    sync("state", state);
+    sync("late_stops", late_stops);
+    sync("expire", expire);
+    sync("signal", signal);
+  }
+  </>
+  
+};
+
+<?XLots>
+class CPAMMOrder : public CHubOrder
+{
+  public:
+  CHubOrder *linked;
+  bool primary;
+  
+  CPAMMOrder(CHubThread *_host) : CHubOrder(_host)
+  {
+    primary = true;
+  }
+
+  void ForceClose1(double by_lots=0) { CHubOrder::ForceClose(by_lots); }
+  virtual void ForceClose(int i, double by_lots=0)
+  {
+    <?debug>Print("сокращение ордера на ", by_lots);</>
+    if (by_lots==0)
+    {
+      CPAMMOrder *ho = GetPointer(this);
+      while (HasRef(ho))
+      {
+        ho.ForceClose1(i);
+        ho = ho.linked;
+      }
+    }
+    else
+    {
+      double rest = normlot(by_lots);
+      while (rest>0)
+      {
+        CPAMMOrder *prev = NULL, *cur = GetPointer(this);
+        while (HasRef(cur.linked))
+        {
+          prev = cur;
+          cur = cur.linked;
+        }
+        if (rest>=cur.lots) // ордер требуется закрыть полностью
+        {
+          rest -= cur.lots;
+          <?debug>Print("полное закрытие ордера ", cur.lots, " остаток: ",rest);</>
+          cur.ForceClose1();
+          cur.linked = NULL;
+          if (HasRef(prev))
+            prev.time_stamp = CurTime();
+        }
+        else // закрыть частично
+        {
+          <?debug>Print("частичное закрытие на ", rest);</>
+          cur.ForceClose1(rest);
+          rest = 0;
+        }
+      }
+    }
+  }
+
+  void SetTP1(int new_tp, bool only=false) { CHubOrder::SetTP(new_tp, only); }
+  virtual void SetTP(int new_tp, bool only=false)
+  {
+    CPAMMOrder *cur;
+    while (HasRef(cur))
+    {
+      cur.SetTP1(new_tp, only);
+      cur = cur.linked;
+    }
+  }
+
+  void SetTP1(double new_ftp, bool only=false) { CHubOrder::SetTP(new_ftp, only); }
+  virtual void SetTP(double new_ftp, bool only=false)
+  {
+    CPAMMOrder *cur;
+    while (HasRef(cur))
+    {
+      cur.SetTP1(new_ftp, only);
+      cur = cur.linked;
+    }
+  }
+
+  void SetSL1(int new_sl, bool only=false) { CHubOrder::SetSL(new_sl, only); }
+  virtual void SetSL(int new_sl, bool only=false)
+  {
+    CPAMMOrder *cur;
+    while (HasRef(cur))
+    {
+      cur.SetSL1(new_sl, only);
+      cur = cur.linked;
+    }
+  }
+
+  void SetSL1(double new_fsl, bool only=false) { CHubOrder::SetSL(new_fsl, only); }
+  virtual void SetSL(double new_fsl, bool only=false)
+  {
+    CPAMMOrder *cur;
+    while (HasRef(cur))
+    {
+      cur.SetTP1(new_fsl, only);
+      cur = cur.linked;
+    }
+  }
+  
+  <?Sync>
+  virtual void sync()
+  {
+    CHubOrder::sync();
+    sync("primary", primary);
+  }
+  </>
+};
+</>
+
+

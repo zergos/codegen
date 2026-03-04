@@ -1,0 +1,211 @@
+[Main]
+Choice
+Name=PammControl
+Title=ПАММ контроль сделок
+Group=Сделки
+
+[Property]
+Doubled=t,,спец. режим - отложки всегда удвоены к рыночному ордеру
+
+[Output]
+change=c
+
+[InputPars]
+Threads
+Sync
+
+[Code]
+<gvars>
+int lastBalanceOrder;
+int @extraMode;
+datetime @extraTime;
+double @extraBalance;
+
+<procs>
+double orderBalance(datetime opentime)
+{
+  double balance = 0;
+  <?debug2>Print("calc balance by: ", opentime);</>
+  for (int i=0; i<OrdersHistoryTotal(); i++)
+  {
+    if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY))
+    {
+      if (OrderCloseTime()>opentime) continue;
+      <?debug2>Print("open time: ",OrderOpenTime()," close time: ",OrderCloseTime()," profit: ",OrderProfit());</>
+      balance += OrderProfit();
+    }
+  }
+  return balance;
+}
+
+double balanceAfter(datetime opentime)
+{
+  double balance = 0;
+  for (int i=0; i<OrdersHistoryTotal(); i++)
+  {
+    if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY) && OrderType()==6)
+    {
+      if (OrderCloseTime()<=opentime) continue;
+      balance += OrderProfit();
+    }
+  }
+  return balance;
+}
+
+<hubprocs>
+<?change>
+void @fixBalance(double marketLot)
+{
+$change.lines
+}
+</>
+
+<init>
+  lastBalanceOrder = OrdersHistoryTotal();
+  @extraMode = 0;
+  
+<lines>
+  if (GlobalVariableSetOnCondition("BalanceWarning", 0, 1))
+  {
+    int @extraHour = GlobalVariableGet("BalanceWarningHour");
+    @extraTime = floor(CurTime()/86400)*86400 + @extraHour*3600;
+    @extraBalance = GlobalVariableGet("BalanceWarningSum");
+    @extraMode = 1;
+    Print("ВНИМАНИЕ: ожидается изменение баланса в ", @extraTime, " на ", @extraBalance);
+  }
+
+  double @balanceChanges = 0;
+  datetime @balanceTime = 0;
+  if (@extraMode==1 && CurTime()>=@extraTime)
+  {
+    @balanceChanges = @extraBalance;
+    @balanceTime = CurTime();
+    @extraMode = 2;
+  }
+  if (lastBalanceOrder<OrdersHistoryTotal())
+  {
+    for (int i=lastBalanceOrder; i<OrdersHistoryTotal(); i++)
+      if (OrderSelect(i, SELECT_BY_POS, MODE_HISTORY) && (OrderType()==6<?debug2> || OrderProfit()<=-1500</>))
+      {
+        @balanceChanges += OrderProfit();
+        @balanceTime = OrderOpenTime();
+        if (@extraMode==2 && OrderOpenTime()<@extraTime+3600)
+        {
+          @balanceChanges -= @extraBalance;
+          @extraMode = 0;
+        }
+      }
+  }
+  if (@balanceChanges!=0)
+  {
+    // требуется корректировка ордеров
+    <?debug>Print("баланс изменился на ", @balanceChanges, " требуется корректировка ордеров");</>
+    for (int i=0; i<ArraySize($Threads); i++)
+    if ($Threads[i].hub_state!=HUB_CLOSED)
+    {
+      // сначала по торговым
+      <?Doubled>double marketLot = 0;</>
+      for (int k=0; k<ArraySize($Threads[i].hub); k++)
+      {
+        if ($Threads[i].hub[k].state == HUB_CLOSED || !$Threads[i].hub[k].primary) continue;
+        if (!opMARKET($Threads[i].hub[k].cmd)) continue;
+        
+        double lots = $Threads[i].hub[k].lots;
+        int last = k;
+        while ($Threads[i].hub[last].linked>=0)
+        {
+          last = $Threads[i].hub[last].linked;
+          lots += $Threads[i].hub[last].lots;
+        }
+        double balance = orderBalance($Threads[i].hub[last].time_stamp);
+        double balanceAfter = balanceAfter($Threads[i].hub[last].time_stamp);
+        double newlots = MathMax(NormalizeDouble(lots*(balance+balanceAfter)/balance, 2), min_lot);
+        
+        <?debug>
+        Print("предыдущий баланс сделки: ", balance, " новый баланс: ", balance+balanceAfter);
+        Print("предыдущий лот: ", lots, " новый лот: ", newlots);
+        </>
+        
+        <?Doubled>marketLot = newlots;</>
+        
+        if (newlots == lots) continue;
+        // подлежит изменению
+        
+          if (newlots>lots) // добавляем
+          {
+            int idx = $Threads[i].HubFreeIndex();
+            $Threads[i].hub[idx] = $Threads[i].hub[k];
+            $Threads[i].hub[idx].time_stamp = MathMax(CurTime(), @balanceTime);
+            $Threads[i].hub[idx].primary = false;
+            $Threads[i].hub[idx].linked = -1;
+            $Threads[i].hub[last].linked = idx;
+            $Threads[i].hub[idx].lots = newlots-lots;
+            $Threads[i].OrderToMarket(idx);
+          }
+          else // закрываем лишние
+          {
+            double rest = lots - newlots;
+            $Threads[i].OrderForceClose(k, rest);
+          }
+      }
+      // затем отложки
+      for (int k=0; k<ArraySize($Threads[i].hub); k++)
+      {
+        if ($Threads[i].hub[k].state == HUB_CLOSED) continue;
+        if (opMARKET($Threads[i].hub[k].cmd)) continue;
+        
+        double lots = $Threads[i].hub[k].lots;
+        /* int last = k;
+        while ($Threads[i].hub[last].linked>=0)
+        {
+          last = $Threads[i].hub[last].linked;
+          lots += $Threads[i].hub[last].lots;
+        }*/
+        double balance = orderBalance($Threads[i].hub[k].time_stamp);
+        double balanceAfter = balanceAfter($Threads[i].hub[k].time_stamp);
+        <?!Doubled>
+          double newlots = MathMax(NormalizeDouble(lots*(balance+balanceAfter)/balance, 2), min_lot);
+        <~>
+          double newlots = marketLot==0?MathMax(NormalizeDouble(lots*(balance+balanceAfter)/balance, 2), min_lot):marketLot*2;
+        </>
+        
+        <?debug>
+        Print("предыдущий баланс сделки: ", balance, " новый баланс: ", balance+balanceAfter);
+        Print("предыдущий лот: ", lots, " новый лот: ", newlots);
+        </>
+        
+        if (newlots == lots) continue;
+        // подлежит изменению
+        $Threads[i].hub[k].time_stamp = MathMax(CurTime(), @balanceTime);
+        if (opVIRTUAL($Threads[i].hub[k].cmd)) // виртуальным просто меняем лот
+        {
+          $Threads[i].hub[k].lots = newlots;
+        }
+        else if (opDEFER($Threads[i].hub[k].cmd)) // отложенники пересоздаём
+        {
+          OrderDelete($Threads[i].hub[k].ticket);
+          $Threads[i].hub[k].lots = newlots;
+          $Threads[i].OrderDeferred(k);
+        }
+      }
+      
+      <?change>
+      $Threads[i].@fixBalance(marketLot);
+      </>
+    }
+  }
+  lastBalanceOrder = OrdersHistoryTotal();
+  <?Sync>
+  if (@balanceChanges!=0) syncSave();
+  </>
+  
+<sync>
+  syncTitle("$name");
+  sync("lastBalanceOrder", lastBalanceOrder);
+  sync("extraMode", @extraMode);
+  sync("extraTime", @extraTime);
+  sync("extraBalance", @extraBalance);
+ 
+[Help]
+Модуль корректировки сделок хаба при работе в режиме ПАММ-счёта, когда деньги могут вводить и выводить без согласования.
+

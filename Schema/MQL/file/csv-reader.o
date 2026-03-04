@@ -1,0 +1,92 @@
+[Main]
+Name=CSVReader
+Title=CSV читатель
+Group=Файлы
+
+[Property]
+FileName=s,,имя файла
+Mode=s,FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_COMMON,доп. режим доступа
+Delimiter=s,;,разделитель
+SymbolPrefix=t,,добавлять к имени файла наименование символа
+
+[Output]
+csv=n																																													
+
+[Code]
+<top>
+#include "CSVFile.mqh"
+
+<gvars>
+CSVFile $name;
+
+<init>
+  if ($name.Open(<?SymbolPrefix>Symbol()+</>"$FileName", <?Mode>$Mode<~>0</>, '$Delimiter') == INVALID_HANDLE)
+  {
+    Print("Файл $FileName не найден");
+    return -1;
+  }
+  
+<deinit>
+  $name.Close();
+
+<attach>
+=CSVFile.mqh
+#include <Files\File.mqh>
+
+class CSVFile : public CFile
+{
+private:
+  int cur_col;
+  void rewind(int col)
+  {
+    cur_col++;
+    if (cur_col>col)
+    {
+      SkipLine();
+      cur_col++;
+    }
+    while (cur_col<col)
+    {
+      FileReadString(m_handle);
+      cur_col++;
+    }
+  }
+   
+public:
+  int Open(const string file_name,const int open_flags, const short delimiter=';')
+  {
+    return(CFile::Open(file_name,open_flags|FILE_CSV|FILE_READ, delimiter));
+  }
+  
+  void SkipLine()
+  {
+    if(m_handle!=INVALID_HANDLE)
+      while (!IsLineEnding())
+        FileReadString(m_handle);
+    cur_col = 0;
+  }
+  
+  int GetInt(int col)
+  {
+    rewind(col);
+    return (int)FileReadNumber(m_handle);
+  }
+  
+  double GetDouble(int col)
+  {
+    rewind(col);
+    return FileReadNumber(m_handle);
+  }
+  
+  string GetString(int col)
+  {
+    rewind(col);
+    return FileReadString(m_handle);
+  }
+  
+  datetime GetDatetime(int col)
+  {
+    rewind(col);
+    return FileReadDatetime(m_handle);
+  }
+};

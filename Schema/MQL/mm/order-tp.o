@@ -1,0 +1,21 @@
+[Main]
+Name=OrderTP
+Title=Тейк-профит
+Group=Сделки
+
+[Property]
+HubState=hubstate
+Level=n,50,уровень тейк-профита в пунктах
+Reverse=t,,обратная логика
+
+[Code]
+<lines>
+  for (int @i=0; @i<ArraySize(hub); @i++)
+  <?HubState>if (hub[@i].state==$HubState)<~>if (hub[@i].state!=HUB_CLOSED)</>
+  if (<?Reverse>-</>trend>0)
+    OrderSetStop(@i, Bid+$Level*Point);
+  else //if (<?Reverse>-</>$sig<0)
+    OrderSetStop(@i, Ask-$Level*Point);
+
+[Help]
+Устанавливание всем ордерам тейк-профит по уровню от текущей цены.

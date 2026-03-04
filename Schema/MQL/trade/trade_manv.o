@@ -1,0 +1,97 @@
+[Main]
+Deprecated
+Group=—оветник
+Title=“орговый бот (виртуал)
+Name=TradeManVirt
+
+[Property]
+Waitless=t,1,режим открыти€ ордера сразу после закрыти€ предыдущего
+MainCheck=n,0,основной тик проверки
+TailCheck=n,1,сколько тиков с конца провер€ть на наличие сигнала
+TrLevel=n,1,суммарный сигнал дл€ срабатывани€
+
+Volume=f,0.1,количество лотов
+# StopLoss=n,25,ширина стоп коридора
+SL=n,25
+TP=n,25
+
+[Input]
+Sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+//extern int @StopLevel = $StopPoints;
+extern int @TradeSL = $SL;
+extern int @TradeTP = $TP;
+extern int @TradeLevel = $TrLevel;
+int @Mode = 0; //1 - уже бай, -1 - уже селл
+double @LastMode;
+
+<lines>
+  ArraySetAsSeries($Sig, true);
+
+  double @CurMode = 0;
+
+  for (int @i = $MainCheck+$TailCheck-1; @i>=$MainCheck; @i--) @CurMode += $Sig[@i];
+  if (MathAbs(@CurMode)>@TrLevel && @CurMode!=@LastMode)
+  {
+    @LastMode = @CurMode;
+    while (true)
+    {
+      if (@CurMode>0)
+      {
+        if (@Mode>0) break;
+        if (!vOrderOpened(1))
+        {
+          <?debug>Alert("открыть вирт. бай по ",Ask);</>
+          vOrderOpen(0, OP_BUY, $Volume, @TradeSL, @TradeTP);
+          break;
+        }
+        else
+        {
+          <?debug>Alert("закрыть вирт. селл ", 1, " по ",Ask);</>
+          vOrderClose(1);
+          <?Waitless>continue;
+          <~>
+            @Mode=0;
+            @LastMode=0;
+            break;
+          </>
+        }
+      }
+      else if (@CurMode<0)
+      {
+        if (@Mode<0) break;
+        if (!vOrderOpened(0))
+        {
+          <?debug>Alert("открыть вирт. селл по ",Bid);</>
+          vOrderOpen(1, OP_SELL, $Volume, @TradeSL, @TradeTP);
+          break;
+        }
+        else
+        {
+          <?debug>Alert("закрыть вирт. бай", 0, " по ",Bid);</>
+          vOrderClose(0);
+          <?Waitless>continue;
+          <~>
+            @Mode=0;
+            @LastMode=0;
+            break;
+          </>
+        }
+      }
+    }
+  }
+
+  ArraySetAsSeries($Sig, false);
+
+[Help]
+ќрганизаци€ торговли виртуальными ордерами по вход€щему сигналу.\\
+≈сли суммарный сигнал **TailCheck** тиков, начина€ с **MainCheck** тика, превышает по модулю **TrLevel**, тогда:
+  * если сигнал положительный - следует **buy**
+  * если отрицательный - **sell**
+ќткрытые ордера добавл€ютс€ в очередь виртуальных ордеров.

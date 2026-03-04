@@ -1,0 +1,28 @@
+[Main]
+Title=Генератор тиков
+Group=Генераторы
+Name=TicksGen
+
+[Property]
+OutMode=series,Close,серия для извлечения
+
+[InputPars]
+Start
+Size
+Trace
+
+[Output]
+Out=row
+
+[Code]
+<gvars>
+double $Out[];
+
+<lines>
+  ArrayInit($Out);
+  CheckShift($Out);
+  for (int i=$Start; i<$Size; i++)
+    $Out[i] = $OutMode[$Size-1-i<?Trace>+trace_index</>];
+
+[Help]
+Подготавливает буфер с любой серией

@@ -1,0 +1,35 @@
+[Main]
+Custom
+Name=SwitchSet
+Title=Уст. режим автомата
+Group=Управление
+Size=4
+
+[Property]
+NewMode=n,0,новый режим
+RepeatMode=t,,повтор автомата с новым значением
+
+[Input]
+CTRL=c,,d
+Mode=n
+
+[Output]
+CTRL=c
+
+[InputPars]
+Switch
+
+[Code]
+<lines>
+  <?Mode>
+  <?debug>if (mode$Mode!=$NewMode) Print("new $Mode mode is "+$NewMode);</>
+  mode$Mode = $NewMode;
+  <?RepeatMode>repeat$Mode = true;</>
+  <~>
+  <?debug>if (mode$Switch!=$NewMode) Print("new $Switch mode is "+$NewMode);</>
+  mode$Switch = $NewMode;
+  <?RepeatMode>repeat$Switch = true;</>
+  </>
+  
+[Help]
+Меняет состояние автомата (развилки) на заданное.

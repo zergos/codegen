@@ -1,0 +1,55 @@
+[Main]
+Name=FlowHrSecs
+Title=√ориз. врем€ пребывани€
+Group=Ћента
+
+[Property]
+MaxBreak=n,120,максимальный срок ожидани€ изменени€ цены в сек.
+
+[Input]
+tick=row
+
+[Output]
+V=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+int plus$V[], minus$V[];
+int start$V=0;
+int size$V;
+datetime time$V[];
+
+int @last_idx;
+double @last_time;
+
+<flow_init>
+  if ($Start==0)
+  {
+    start$V=0;
+    size$V=0;
+    @last_idx = -1;
+  }
+  int @hidx = 0;
+
+<flow_tick>  
+  @hidx = HrIndex(plus$V, minus$V, start$V, size$V, $tick.price);
+  if (@last_idx == -1)
+  {
+    @last_idx = @hidx;
+    @last_time = $tick.rawtime;
+  }
+  else if (@hidx!=@last_idx)
+  {
+    minus$V[@hidx] += MathMin($tick.rawtime-@last_time, $MaxBreak);
+    @last_idx = @hidx;
+    @last_time = $tick.rawtime;
+  }  
+    
+      
+  
+[Help]
+»звлечение времени пребывани€ в цене.

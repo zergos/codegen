@@ -1,0 +1,45 @@
+[Main]
+Group=Фильтры
+Title=Сигнал
+Name=Signal
+Size=4
+
+[Property]
+Reverse=t
+Level=n,0,уровень срабатывания сигнала
+
+[Input]
+in=row
+
+[Output]
+S=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $S[];
+
+<lines>
+  ArrayInit($S, $Size);
+  CheckShift($S);
+
+  for (int i=$Start; i<$Size; i++)
+  {
+    int res = 0;
+    if ($in[i]>$Level) res++;
+    else
+    if ($in[i]<-$Level) res--;
+    <?!Reverse>$S[i] = res;
+    <~>$S[i] = -res;</>
+  }
+
+[Help]
+Вычисляет сигнал по формуле:
+<code>
+Sig = | +1, x > **Level**
+      | -1, x < **-Level**
+</code>
+Если указан **Reverse**, то знак результата меняется на противоположный.

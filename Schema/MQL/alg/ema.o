@@ -1,0 +1,56 @@
+[Main]
+Name=EMA
+Title=EMA
+Group=јлгоритмы (тех)
+
+[Property]
+Period=n,15,период скольз€щей
+
+[Input]
+close=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+int @ema_step;
+double @ema;
+
+<init>
+  @ema_step = 0;
+  @ema = 0;
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  if ($Start==0)
+  {
+    @ema_step = 0;
+    @ema = 0;
+  }
+  
+  for (int i=$Start; i<$Size; i++)
+  {
+    if (@ema_step<$Period) @ema_step++;
+    if (i<$Size-1)
+    {
+      @ema += 2*($close[i]-@ema)/(@ema_step+1);
+      $out[i] = @ema;
+    }
+    else
+    {
+      double _ema = @ema+2*($close[i]-@ema)/(@ema_step+1);
+      $out[i] = _ema;
+    }
+  }
+
+[Help]
+Ёкспоненциальна€ скольз€ща€ средн€€.
+

@@ -1,0 +1,21 @@
+[Main]
+Name=LinkPar
+Title=Привязка параметра
+Group=События
+
+[Property]
+ParName=s
+
+[InputPars]
+Button
+
+[Code]
+<init>
+  $Button.Pressed($ParName);
+  
+<lines>
+  $ParName = $Button.Pressed();
+  
+[Help]
+Привязывает булевский параметр с кнопкой.
+

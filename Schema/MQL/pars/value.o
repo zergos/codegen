@@ -1,0 +1,15 @@
+[Main]
+Unit
+Name=Value
+Title=Ген. значения
+Group=Параметры
+
+[Property]
+Value=n,1,значение
+
+[Output]
+value=n,$Value
+
+[Help]
+Блок для прямой передачи значения на вход.
+

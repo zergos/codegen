@@ -1,0 +1,72 @@
+[Main]
+Name=Average
+Title=Среднее
+Group=Арифметика
+
+[Property]
+Coef=f,,коэффициент усиления
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Prefix]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+
+  int @i;
+  if ($Start==0) ArrayInitialize($out, 0);
+  else
+  {
+    CheckShift($out);
+    for (@i=$Start; @i<$Size; @i++) $out[@i] = 0;
+  }
+  <?!Coef>
+  int @count = 0;
+  <~>
+  double @coef = 1;
+  double @sum = 0;
+  </>
+
+[Code]
+<lines>
+  for (@i=$Start; @i<$Size; @i++)
+    <?!Coef>
+    $out[@i] += $in[@i];
+    <~>
+    $out[@i] += $in[@i]*@coef;
+    </>
+    
+  <?!Coef>
+  @count++;
+  <~>
+  @sum += @coef;
+  @coef *= $Coef;
+  </>
+
+[Postfix]
+<lines>
+  for (@i=$Start; @i<$Size; @i++)
+    <?!Coef>
+    $out[@i] = $out[@i]/@count;
+    <~>
+    $out[@i] = $out[@i]/@sum;
+    </>
+
+[Help]
+Расчет среднего арифметического всех входящих буферов.\\
+На вход может подаваться несколько потоков.\\
+Если задан **Coef**: каждый очередной вход подаётся с весом
+<code>
+Coef^N
+</code>
+где N - индекс очередного входа

@@ -1,0 +1,141 @@
+[Main]
+Usable
+Name=Compat
+Title=Модуль совместимости
+Group=Общее
+
+[Code]
+<top>
+<?compat>
+#include "compat-4.mqh"
+</>
+
+<attach>
+<?compat>
+=compat-4.mqh
+<?indicator>
+// global variables
+double Point, Ask, Bid;
+int Digits;
+int Bars;
+datetime Time[];
+
+void RefreshCompat()
+{
+  Point =	Symbol.Point();
+  Ask	=	Symbol.Ask();
+  Bid	=	Symbol.Bid();
+  Digits =	Symbol.Digits();
+}
+
+void RefreshCompatSeries(int bars, const datetime &time[])
+{
+  Bars = bars;
+  ArrayResize(Time, bars);
+  for (int i=0; i<bars; i++)
+    Time[i] = time[bars-1-i];
+}
+
+// mql4 functions
+int iBarShift(string symbol, int timeframe, datetime time, bool exact=false)
+{
+  return Bars(symbol, (ENUM_TIMEFRAMES)timeframe, time, 32000000000);
+}
+</>
+// info functions
+double AccountBalance()
+{
+  return AccountInfoDouble(ACCOUNT_BALANCE);
+}
+double AccountEquity()
+{
+  return AccountInfoDouble(ACCOUNT_EQUITY);
+}
+int AccountNumber()
+{
+  return AccountInfoInteger(ACCOUNT_LOGIN);
+}
+string AccountName()
+{
+  return AccountInfoString(ACCOUNT_NAME);
+}
+string AccountCompany()
+{
+  return AccountInfoString(ACCOUNT_COMPANY);
+}
+
+bool IsDemo()
+{
+  return (ENUM_ACCOUNT_TRADE_MODE)AccountInfoInteger(ACCOUNT_TRADE_MODE) == ACCOUNT_TRADE_MODE_DEMO;
+}
+
+// other function
+string TimeToStr(datetime value, int mode=TIME_DATE|TIME_MINUTES)
+{
+  return TimeToString(value, mode);
+}
+datetime CurTime()
+{
+  return TimeCurrent();
+}
+int TimeDay(datetime dt)
+{
+  MqlDateTime dts;
+  TimeToStruct(dt, dts);
+  return dts.day;
+}
+int TimeMonth(datetime dt)
+{
+  MqlDateTime dts;
+  TimeToStruct(dt, dts);
+  return dts.mon;
+}
+int TimeYear(datetime dt)
+{
+  MqlDateTime dts;
+  TimeToStruct(dt, dts);
+  return dts.year;
+}
+
+int TimeDayOfYear(datetime dt)
+{
+  MqlDateTime dts;
+  TimeToStruct(dt, dts);
+  return dts.day_of_year;
+}
+
+// objects
+bool ObjectSet(string name, ENUM_OBJECT_PROPERTY_DOUBLE id, double value)
+{
+  return ObjectSetDouble(0, name, id, value);
+}
+bool ObjectSet(string name, ENUM_OBJECT_PROPERTY_INTEGER id, long value)
+{
+  return ObjectSetInteger(0, name, id, value);
+}
+double ObjectGet(string name, ENUM_OBJECT_PROPERTY_DOUBLE id)
+{
+  return ObjectGetDouble(0, name, id);
+}
+long ObjectGet(string name, ENUM_OBJECT_PROPERTY_INTEGER id)
+{
+  return ObjectGetInteger(0, name, id);
+}
+bool ObjectDelete(string name)
+{
+  return ObjectDelete(0, name);
+}
+int ObjectFind(string name)
+{
+  return ObjectFind(0, name);
+}
+bool ObjectCreate(string object_name, ENUM_OBJECT object_type, int sub_window, datetime time1, double price1, datetime time2=0, double price2=0, datetime time3=0, double price3=0, datetime time4=0, double price4=0)
+{
+  return ObjectCreate(0, object_name, object_type, sub_window, time1, price1, time2, price2, time3, price3, time4, price4);
+}
+
+void ObjectSetText(string name, string text)
+{
+  ObjectSetString(0, name, OBJPROP_TEXT, text);
+}
+</>

@@ -1,0 +1,35 @@
+[Main]
+Name=TimeOnDropped
+Title=Время активации
+Group=Скрипты
+
+[Input]
+time=row
+
+[InputPars]
+Size
+
+[OutputPars]
+Start=$name
+
+[Code]
+<gvars>
+int $name;
+
+<lines>
+  double @fixtime = WindowTimeOnDropped();
+  if (@fixtime==0)
+  {
+    Print("цена не выбрана");
+    return(0);
+  }
+  $name = 0;
+  for (int @i=0; @i<$Size-1; @i++)
+    if ($time[@i]<=@fixtime && @fixtime<$time[@i+1])
+    {
+      $name = @i;
+      break;
+    }
+    
+[Help]
+Считывает позицию установки скрипта на график цены.

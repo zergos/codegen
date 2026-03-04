@@ -1,0 +1,99 @@
+[Main]
+Choice
+Name=CheckFixDLvl
+Title=ѕроверка фикс. уровн€ (2х)
+Group=”ровни
+
+[Property]
+CheckMode=n,3,режим проверки (0 - на пробитие\, 1 - на отбой\, 2 - Bid\, 3 - Bid или high/low на трейсе\, 4 - Open)
+SetTrend=t,1,устанавливает тренд потока после пробити€
+CheckTrend=t,1,провер€ет пробитие в сторону тренда
+Reverse=t
+
+[Input]
+up=n
+down=n
+
+[Output]
+True=c
+False=c
+sig=n
+
+[Code]
+<gvars>
+int $sig;
+
+<lines>
+  $sig = 0;
+  <?!CheckTrend>
+  <?CheckMode=0>
+  if (Ask()>up$down && Ask()<=up$up) $sig = 1;
+  else
+  if (Bid()<down$down && Bid()>=down$up) $sig = -1;
+  </>
+  <?CheckMode=1>
+  if (Bid()>=up$down && Bid()<up$up) $sig = 1;
+  else
+  if (Ask()<=down$down && Ask()>down$up) $sig = -1;
+  </>
+  <?CheckMode=2>
+  if (Bid()>=up$down && Bid()<up$up) $sig = 1;
+  else
+  if (Bid()<=down$down && Bid()>down$up) $sig = -1;
+  </>
+  <?CheckMode=3>
+  if (High()>=up$down && High()<up$up) $sig = 1;
+  else
+  if (Low()<=down$down && Low()>down$up) $sig = -1;
+  </>
+  <?CheckMode=4>
+  if (Open()>=up$down && Open()<up$up) $sig = 1;
+  else
+  if (Open()<=down$down && Open()>down$up) $sig = -1;
+  </>
+  <~>
+  <?CheckMode=0>
+  if (<?Reverse>-</>trend>0 && Ask()>up$down && Ask()<=up$up) $sig = 1;
+  else
+  if (<?Reverse>-</>trend<0 && Bid()<down$down && Bid()>=down$up) $sig = -1;
+  </>
+  <?CheckMode=1>
+  if (<?Reverse>-</>trend>0 && Bid()>=up$down && Bid()<up$up) $sig = 1;
+  else
+  if (<?Reverse>-</>trend<0 && Ask()<=down$down && Ask()>down$up) $sig = -1;
+  </>
+  <?CheckMode=2>
+  if (<?Reverse>-</>trend>0 && Bid()>=up$down && Bid()<up$up) $sig = 1;
+  else
+  if (<?Reverse>-</>trend<0 && Bid()<=down$down && Bid()>down$up) $sig = -1;
+  </>
+  <?CheckMode=3>
+  if (<?Reverse>-</>trend>0 && High()>=up$down && High()<up$up) $sig = 1;
+  else
+  if (<?Reverse>-</>trend<0 && Low()<=down$down && Low()>down$up) $sig = -1;
+  </>
+  <?CheckMode=4>
+  if (<?Reverse>-</>trend>0 && Open()>=up$down && Open()<up$up) $sig = 1;
+  else
+  if (<?Reverse>-</>trend<0 && Open()<=down$down && Open()>down$up) $sig = -1;
+  </>
+  </>
+  if ($sig!=0)
+  {
+    <?SetTrend>trend = $name;</>
+  <?debug>
+  Print("Ask "+Ask()+" > "+up$down+" <= "+up$up);
+  Print("Bid "+Bid()+" < "+down$down+" >= "+down$up);
+  </>
+$True.lines
+  }
+<?False>
+  else
+  {
+$False.lines
+  }
+</>
+
+[Help]
+ѕровер€ет проход ценой заданных уровней.
+

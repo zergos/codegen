@@ -1,0 +1,12 @@
+[Main]
+Usable
+Name=DefinePI
+Title=Число Пи
+Group=Арифметика
+
+[Code]
+<top>
+const double PI = 3.1415926535897;
+
+[Help]
+Определяет число Пи для использования в математических модулях.

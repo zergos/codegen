@@ -1,0 +1,42 @@
+[Main]
+Name=ZigInfo
+Title=Зигзаг анализ
+Group=Преобразования
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+  double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+
+  int @dist=0, @n;
+
+  for (int @i=0; @i<$Size; @i++)
+  {
+    if ($in[@i]!=0) // find next peak
+    {
+      @dist = 0; 
+      for (@n=@i+1; @n<$Size && $in[@n]==0; @n++)
+        @dist++;
+      if (@n==$Size) @dist=0;
+    }
+    if (@dist==0) $out[@i] = 0;
+    else
+    {
+      $out[@i] = @dist;
+      @dist--;
+    }
+  }
+
+[Help]
+Измеряет расстояние до следующего разворота

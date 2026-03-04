@@ -1,0 +1,23 @@
+[Main]
+Name=TATrigger
+Title=Ind Обработка "триггер"
+Group=ТА
+
+[Property]
+MType=n
+Filter=s
+
+[InputPars]
+Button
+
+[Code]
+<lines>
+  <?MType>
+  if ($Button.Pressed()) TABaseModel::filter_type = $MType;
+  else TABaseModel::filter_type = -1;
+  </>
+  <?Filter>
+  TABaseModel::filter_$Filter = $Button.Pressed();
+  </>
+  TABaseModel::ShowFiltered();
+    

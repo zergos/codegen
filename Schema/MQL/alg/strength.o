@@ -1,0 +1,56 @@
+[Main]
+Name=Strength
+Title=Сила канала
+Group=Алгоритмы
+
+[Property]
+Depth=n,60,отрезок для анализа
+InPoints=t,,результат в пунктах (иначе в центах)
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+
+[Output]
+out_h=row,@st_h
+out_l=row,@st_l
+
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @st_h[];
+double @st_l[];
+
+<lines>
+  ArrayInit(@st_h, $Size);
+  CheckShift(@st_h);
+  ArrayInit(@st_l, $Size);
+  CheckShift(@st_l);
+  
+  for (int i=MathMax($Start, $Depth); i<$Size; i++)
+  {
+    double middle = 0;
+    for (int k=i-$Depth; k<i; k++)
+      middle += $open[k]+$close[k]+$high[k]+$low[k];
+    middle = middle/$Depth/4;
+    
+    double res = 0;
+    for (int k=i-$Depth; k<i; k++)
+      if ($low[k]>middle) res += $high[k]-middle;
+      else if ($high[k]<middle) res += middle-$low[k];
+      else res += $high[k]-$low[k];
+    @st_h[i] = res/$Depth<?InPoints>/Point</>;
+    
+    res = 0;
+    for (int k=i-$Depth; k<i; k++)
+      if (MathMin($open[k],$close[k])>middle) res += MathMax($open[k],$close[k])-middle;
+      else if (MathMax($open[k],$close[k])<middle) res += middle-MathMin($open[k],$close[k]);
+      else res += MathAbs($open[k]-$close[k]);
+    @st_l[i] = res/$Depth<?InPoints>/Point</>;
+  }  

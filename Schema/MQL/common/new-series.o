@@ -1,0 +1,27 @@
+[Main]
+Name=Series
+Title=Новая серия
+Group=Общие
+
+[OutputPars]
+Series=$name
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double $name[];
+
+<init>
+  ArrayInit($name, $Size);
+  
+<lines>
+  $name[ti] = 0;
+
+[Help]
+Создаёт новую серию для заолнения при ретрейсинге.
+

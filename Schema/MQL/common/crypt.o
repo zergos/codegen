@@ -1,0 +1,93 @@
+[Main]
+Usable
+Name=Crypt
+Title=Crypt
+Group=Common
+
+[Code]
+<top>
+#include "crypt.mqh"
+
+<attach>
+=crypt.mqh
+string tohex(int a)
+{
+   return StringSubstr(IntegerToHexString(a), 6, 2);
+}
+
+string crypt(uchar &s[])
+{
+   string res = "";
+   int shift = 1;
+   for (int i=0; i<ArraySize(s); i++)
+   {
+      int c = s[i];
+      int r = MathRand()&255;
+      res += tohex(((c<<shift)&255) + (r>>(8-shift)));
+      res += tohex(((r<<shift)&255) + (c>>(8-shift)));
+      shift++;
+      if (shift==8) shift=1;
+   }
+   return res;
+}
+
+ulong SuperFastHash (uchar &data[])
+{
+   uint len = ArraySize(data);
+   ulong hash = len, tmp;
+   uint rem;
+
+   if (len == 0) return 0;
+
+   rem = len & 3;
+   len >>= 2;
+
+   /* Main loop */
+   ulong bits0, bits2;
+   int i=0;
+   for (; len > 0; len--, i+=4)
+   {
+      bits0 = data[i] + (data[i+1]<<8);
+      bits2 = data[i+2] + (data[i+3]<<8);
+      hash  += bits0;
+      tmp    = (bits2 << 11) ^ hash;
+      hash   = (hash << 16) ^ tmp;
+      hash  += hash >> 11;
+   }
+
+   /* Handle end cases */
+   switch (rem)
+   {
+      case 3:
+      {
+         bits0 = data[i] + (data[i+1]<<8);
+         hash += bits0;
+         hash ^= hash << 16;
+         hash ^= data[i+2] << 18;
+         hash += hash >> 11;
+         break;
+      }
+      case 2:
+      {
+         bits0 = data[i] + (data[i+1]<<8);
+         hash += bits0;
+         hash ^= hash << 11;
+         hash += hash >> 17;
+         break;
+      }
+      case 1:
+         hash += data[i];
+         hash ^= hash << 10;
+         hash += hash >> 1;
+   }
+   /* Force "avalanching" of final 127 bits */
+   hash ^= hash << 3;
+   hash += hash >> 5;
+   hash ^= hash << 4;
+   hash += hash >> 17;
+   hash ^= hash << 25;
+   hash += hash >> 6;
+
+   return hash;
+}
+</>

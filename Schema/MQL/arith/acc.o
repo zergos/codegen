@@ -1,0 +1,28 @@
+[Main]
+Name=Accumulate
+Title=Накопление
+Group=Арифметика
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++)
+    $out[@i] = $out[@i-1]+$in[@i];
+  
+[Help]
+Последовательное суммирование значений серии.
+  

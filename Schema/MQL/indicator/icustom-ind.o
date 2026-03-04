@@ -1,0 +1,34 @@
+[Main]
+Title=Индикатор в индикаторе
+Group=Индикатор
+Name=iCustomInd
+
+[Property]
+Symbol=s,,имя символа
+TimeFrame=n,0
+Name=s
+Pars=s,,параметры индикатора
+BufferIndex=n,0
+Shift=n,0,cдвиг индикатора относительно ценового графика
+
+[Input]
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int n=$Size-1; n>=$Start; n--)
+    $out[n] = iCustom(<?Symbol>"$Symbol"<~>NULL</>, $TimeFrame, "$Name", <?Pars>$Pars,</> $BufferIndex, $Shift+$Size-1-n);
+    
+[Help]
+Вызов пользовательского индикатора внутри другого индикатора.

@@ -1,0 +1,22 @@
+[Main]
+Unit
+Name=Logger
+Title=Логер
+Group=Советник
+
+[Property]
+FileName=s,log.csv
+Delimiter=s," "
+
+[Code]
+<gvars>
+int $name;
+
+<init>
+  $name = FileOpen("$FileName", FILE_CSV|FILE_WRITE|FILE_SHARE_WRITE|FILE_SHARE_READ<?Delimiter>, $Delimiter</>);
+  
+<deinit>
+  FileClose($name);
+
+[Help]
+Модуль для отладки. Создаёт файл **FileName** для записи.

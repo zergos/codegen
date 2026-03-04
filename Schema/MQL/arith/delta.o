@@ -1,0 +1,42 @@
+[Main]
+Name=Delta
+Title=Дельта
+Group=Арифметика
+Size=4
+
+[Property]
+UseLog=t,,использовать логарифм отношения тиков
+UseAbs=t,,вычислить разницу между абсолютными значениями
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=MathMax($Start,1); @i<$Size; @i++)
+<?UseLog>
+    $out[@i] = MathLog($in[@i-1]/$in[@i]);
+<~>
+  <?UseAbs>
+    $out[@i] = MathAbs($in[@i])-MathAbs($in[@i-1]);
+  <~>
+    $out[@i] = $in[@i]-$in[@i-1];
+  </>
+</>
+  if ($Start==0)
+    $out[0] = $out[1];
+
+[Help]
+Разница между двумя тиками

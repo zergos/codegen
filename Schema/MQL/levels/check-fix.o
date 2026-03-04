@@ -1,0 +1,93 @@
+[Main]
+Choice
+Name=CheckFixLvl
+Title=Проверка фикс. уровня
+Group=Уровни
+
+[Property]
+CheckMode=n,3,режим проверки (0 - на пробитие\, 1 - на отбой\, 2 - проверка только цены Bid\, 3 - Bid или high/low на трейсе)
+SetTrend=t,1,устанавливает тренд потока после пробития
+CheckTrend=t,1,проверяет пробитие в сторону тренда
+Reverse=t
+
+[Input]
+lvl=n
+
+[Output]
+True=c
+False=c
+
+[Code]
+<gvars>
+int $name;
+
+<lines>
+  <?!CheckTrend>
+  $name = 0;
+  <?CheckMode=0>
+  if (Ask()>up$lvl) $name = 1;
+  else
+  if (Bid()<down$lvl) $name = -1;
+  </>
+  <?CheckMode=1>
+  if (Bid()>up$lvl) $name = 1;
+  else
+  if (Ask()<down$lvl) $name = -1;
+  </>
+  <?CheckMode=2>
+  if (Bid()>up$lvl) $name = 1;
+  else
+  if (Bid()<down$lvl) $name = -1;
+  </>
+  <?CheckMode=3>
+  if (High()>up$lvl) $name = 1;
+  else
+  if (Low()<down$lvl) $name = -1;
+  </>
+  <?CheckMode=4>
+  if (High[1]>up$lvl) $name = 1;
+  else
+  if (Low[1]<down$lvl) $name = -1;
+  </>
+  <?Reverse>$name = -$name;</>
+  if ($name!=0)
+  {
+  <~>
+  $name = 0;
+  <?CheckMode=0>
+  if (Ask()>up$lvl && <?Reverse>-</>trend>0) $name = 1;
+  else
+  if (Bid()<down$lvl && <?Reverse>-</>trend<0) $name = -1;
+  </>
+  <?CheckMode=1>
+  if (Bid()>=up$lvl && <?Reverse>-</>trend>0) $name = 1;
+  else
+  if (Ask()<=down$lvl && <?Reverse>-</>trend<0) $name = -1;
+  </>
+  <?CheckMode=2>
+  if (Bid()>=up$lvl && <?Reverse>-</>trend>0) $name = 1;
+  else
+  if (Bid()<=down$lvl && <?Reverse>-</>trend<0) $name = -1;
+  </>
+  <?CheckMode=3>
+  if (High()>=up$lvl && <?Reverse>-</>trend>0) $name = 1;
+  else
+  if (Low()<=down$lvl && <?Reverse>-</>trend<0) $name = -1;
+  </>
+  if ($name!=0)
+  {
+  </>
+    <?SetTrend>trend = $name;</>
+    <?debug>Print("$name checked: ",$name);</>
+$True.lines
+  }
+<?False>
+  else
+  {
+$False.lines
+  }
+</>
+
+[Help]
+Проверяет проход ценой заданных уровней.
+

@@ -1,0 +1,14 @@
+[Main]
+Name=Trace
+Title=Трассировка
+Group=Советник
+
+[Property]
+Traceback=n,,запуск советника по истории
+
+[OutputPars]
+Trace=$Traceback
+
+[Code]
+<gvars>
+

@@ -1,0 +1,16 @@
+[Main]
+Name=MartinAlign
+Title=Мартин. выравнивание
+Group=Сделки
+
+[Property]
+CheckSide=n,,направление выравниваемых ордеров
+
+[Code]
+<lines>
+  ForEachL(CHubOrder, ho, firstOrder)
+    if (ho!=last_order && ho.state == HUB_ACTIVE<?CheckSide> && ho.cmd==$CheckSide</>)
+      ho.SetStop(last_order.ftp, true);
+
+[Help]
+Выравнивает стоп уровни всех ордеров к тейк-стопу последнего открытого.

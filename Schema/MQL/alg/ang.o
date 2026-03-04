@@ -1,0 +1,71 @@
+[Main]
+Name=GiveAngle
+Title=Извлечь углы
+Group=Алгоритмы
+
+[Property]
+outLength=n,1024,макс количество получаемых данных
+
+[Input]
+inZig=row
+
+[Output]
+Ang=row,@ang
+Len=row,@len
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double @ang[];
+double @len[];
+
+<lines>
+  ArrayInit(@ang, $outLength);
+  ArrayInit(@len, $outLength);
+  
+  ArrayInitialize(@ang, 0);
+  ArrayInitialize(@len, 0);
+  
+  int @ipos = 0, @opos = 0, @ppos = 0;
+  
+  // find 1st peak
+  for (@ppos=0; @ppos<$Size; @ppos++)
+    if ($inZig[@ppos]!=0) break;
+    
+  @ipos = @ppos+1;
+  
+  while (@ipos<$Size && @opos<$outLength)
+  {
+    // get next peak
+    while (@ipos<$Size)
+    {
+      if ($inZig[@ipos]!=0) break;
+      @ipos++;
+    }
+    
+    if (@ipos == $Size) break;
+    
+    double @deltax = @ipos-@ppos+1.0; // no norm to minutes
+    double @deltay = ($inZig[@ipos]-$inZig[@ppos])/Point+1.0; // has norm to point
+    
+    @len[@opos] = MathSqrt(@deltax*@deltax + @deltay*@deltay);
+    @ang[@opos] = MathArctan(@deltay/@deltax);
+    @opos++;
+    
+    @ppos = @ipos;
+    @ipos++;
+    
+    <?debug>Print("got next: ", @opos, " : ", @ang[@opos], " x ", @deltax, " y ", @deltay);</>
+  }
+  
+  if (@opos<$outLength)
+  {
+    ArrayCopy(@ang, @ang, $outLength-@opos, 0, @opos);
+    ArrayCopy(@len, @len, $outLength-@opos, 0, @opos);
+  }
+  
+
+[Help]
+Строит график углов и длин отрезков зигзага.

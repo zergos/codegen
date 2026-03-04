@@ -1,0 +1,56 @@
+[Main]
+Name=HrShift
+Title=Сдвиг
+Group=Объёмы
+
+[Property]
+PlusMinus=plusminus,minus,какие объёмы двигать
+Dir=updown,down,в какую сторону
+Shift=n,1,на сколько клеток
+Enabled=t,1,при отключении пропускает сигнал без изменений
+
+[Input]
+V=row
+
+[Output]
+VS=row,$V
+
+[Code]
+<lines>
+<?Enabled>
+  <?Dir=up>
+  HrMix(plus$V, minus$V, start$V-$Shift, size$V, start$V, size$V);
+  for (int @i=0; size$V-1-$Shift; @i++)
+  {
+    <?PlusMinus=plus>
+    plus$V[@i] = plus$V[@i+$Shift];
+    </>
+    <?PlusMinus=minus>
+    minus$V[@i] = minus$V[@i+$Shift];
+    </>
+    <?PlusMinus=both>
+    plus$V[@i] = plus$V[@i+$Shift];
+    minus$V[@i] = minus$V[@i+$Shift];
+    </>
+  }
+  <~>
+  HrMix(plus$V, minus$V, start$V, size$V+$Shift, start$V, size$V);
+  for (int @i=size$V-1; @i>$Shift; @i--)
+  {
+    <?PlusMinus=plus>
+    plus$V[@i+$Shift] = plus$V[@i];
+    </>
+    <?PlusMinus=minus>
+    minus$V[@i+$Shift] = minus$V[@i];
+    </>
+    <?PlusMinus=both>
+    plus$V[@i+$Shift] = plus$V[@i];
+    minus$V[@i+$Shift] = minus$V[@i];
+    </>
+  }
+  </>
+</>
+  
+[Help]
+Сдвигает столбики горизонтальных объёмов вверх/вниз.
+

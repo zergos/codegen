@@ -1,0 +1,54 @@
+[Main]
+Title=Генератор тиков времени
+Group=Генераторы
+Name=TicksTime
+
+[Property]
+ExpandSecs=n,,количество добавленных секунд
+
+[InputPars]
+Size
+Trace
+
+[Output]
+Out=row
+
+[OutputPars]
+Size=<?ExpandSecs>@ExpandSize<~>$Size</>
+
+[Global]
+<procs>
+void ArrayInitT(datetime &a[], int NewSize)
+{
+  if (ArraySize(a)<NewSize) ArrayResize(a, NewSize);
+}
+
+[Code]
+<gvars>
+<?ExpandSecs>
+int @ExpandSize;
+</>
+datetime $Out[];
+
+<lines>
+  ArrayResize($Out, $Size);
+
+<?!Trace>
+  for (int @i=0; @i<$Size; @i++)
+    $Out[@i] = Time[$Size-1-@i];
+    
+<?ExpandSecs>
+  int @secs = PeriodSeconds();
+  @ExpandSize = $Size+$ExpandSecs/@secs;
+  ArrayResize($Out, @ExpandSize);
+  <?debug>Print(TimeToStr($Out[$Size-1]));</>
+  for (@i=$Size; @i<@ExpandSize; @i++)
+    $Out[@i] = $Out[@i-1] + @secs;
+</>
+<~>
+  for (int @i=0; @i<$Size; @i++)
+    $Out[@i] = Time[$Size-1-@i+trace_index];
+</>
+  
+[Help]
+Подготавливает буфер с серией времени

@@ -1,0 +1,125 @@
+[Main]
+Name=Channels
+Title=Каналы
+Group=Алгоритмы
+
+[Property]
+MinPoints=n,2
+RLimit1=f,0.1,ограничение по оценке аппроксимации
+RLimit2=f,0.15,ограничение по оценке аппроксимации
+TrendCount=n,1000,размер массива трендов
+RecountChannels=t,,пересчитывать каналы при изменении тайм-фрейма
+Draw=t
+Color=color
+
+[Input]
+in=row
+time=row
+
+[Output]
+left=row,@sleft
+right=row,@sright
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=@start
+
+[Global]
+<procs>
+<?Draw>
+void ChanClear(name, trend_count)
+{
+  for (int @i=0; @i<trend_count; @i++)
+    ObjectDelete(name+@i);
+}
+</>
+
+[Code]
+<gvars>
+double @lsxy, @lsx, @lsx2, @lsy, @lw;
+double @lerr, @err_pnt;
+int @cleft[$TrendCount];
+int @cright[$TrendCount];
+int @last_tick;
+int @trend_count = 0;
+
+<lines>
+  if ($Start==0)
+  {
+    <?Draw>
+      ChanClear("$name", @trend_count);
+    </>
+    @trend_count = 0;
+    @lsxy = 0; @lsx = 0; @lsx2 = 0; @lsy = 0; @lw = 0;
+    @lerr = 0; @err_pnt = 0;
+    @last_tick = 0;
+  }
+  
+  int @i = 0;
+  double @sx = @lsx, @sxy = @lsxy, @sx2 = @lsx2, @sy = @lsy, @y, @w = @lw;
+  double @err;
+  while (@i+@last_tick < $Size)
+  {
+    // check current trend
+    @y = $in[@i+@last_tick];
+    @sx = @sx + @i;
+    @sxy = @sxy + @i*@y;
+    @sx2 = @sx2 + @i*@i;
+    @sy = @sy + @y;
+    
+    double @a = (@sxy-@sx*@sy)/(@sx*@sx-@sx2);
+    double @b = @sy-@a*@sx;
+    
+    double @delta = MathAbs(@y-(@a*@i+@b));
+    @w = MathMax(@w, @delta);
+    
+    @err = @delta/@w;
+    if (@err_pnt>0)
+      if (@lerr<=$RLimit1)
+        @lerr = (@lerr*@pnt_count + @err)/(@pnt_count+1);
+      else
+        @lerr = (@lerr + @err)/2.0;
+        
+    if (@lerr<=$RLimit2)
+    {
+      @i++;
+      continue;
+    }
+    
+    // fix current trend
+    int @idx = @trend_count%$TrendCount;
+    @trend_count++;
+    <?Draw>// clear previous trend
+      if (@trend_count>$TrendCount)
+        ObjectDelete("$name"+(@idx-$TrendCount));
+    </>
+    
+    double @width = 0;
+    
+      
+
+    //@reg = MathAbs(@sxy/MathSqrt(@sx2)/MathSqrt(@sy2));
+
+    <?left>$sleft[@i] = @cb1*@i + @cb0;</>
+    <?right>$sright[@i+1] = @cb1*(@i+@curstep) + @cb0;</>
+
+    <?Draw>
+    ObjectCreate("$name"+@i, OBJ_TREND, 0, $time[@i], @cb1*@i + @cb0, $time[@i+@curstep-1], @cb1*(@i+@curstep-1) + @cb0);
+    ObjectSet("$name"+@i, OBJPROP_RAY, 0);
+    <?Color>ObjectSet("$name"+@i, OBJPROP_COLOR, $Color);</>
+    </>
+
+    @start = @i;
+    @i+=@curstep-1;
+  }
+
+<deinit>
+  for (int @i=0; @i<$Size; @i++) ObjectDelete("$name"+@i);
+
+[Help]
+Находит отрезки линейной регрессии длины не менее **Step** со среднеквадратичным отклонением не более **Limit**.\\
+На выходе - левые и правые значения отрезков.
+

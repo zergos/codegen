@@ -1,0 +1,330 @@
+[Main]
+Modular
+Title=Индикатор
+Group=Программы
+Name=Indicator
+
+[Property]
+MinBufferSize=n,128,мин. размер буфера
+MaxBufferSize=n,1024,макс. размер буфера
+MaxBufferPeriod=bufperiod,,задать период для авто-расчёта размера буфера
+MaxBufferPeriodCount=n,1,количество периодов
+PeriodStart=s,,точная дата для начала
+WaitNewBar=t,,обновлять индикатор только на каждом новом баре
+FullRedraw=t,,полностью перерисовывать на каждом тике
+indicator_chart_window=t,,выводить индикатор в окно графика
+indicator_separate_window=t,,выводить индикатор в отдельное окно
+indicator_buffers=n,,количество буферов для расчета индикатора\, максимум до 8
+
+Copyright=s,,название компании-производителя
+link=s,,ссылка на сайт компании-производителя
+stacksize=n,,размер стека для рекурсивных вызовов
+indicator_minimum=f,,нижнее ограничение шкалы отдельного окна индикатора
+indicator_maximum=f,,верхнее ограничение шкалы отдельного окна индикатора
+indicator_levelcolor=color,,цвет горизонтальных уровней индикатора
+indicator_levelwidth=n,,толщина горизонтальных уровней индикатора
+indicator_levelstyle=buf_style,,стиль горизонтальных уровней индикатора
+show_confirm=t,,выводить окно подтверждения перед запуском скрипта
+show_inputs=t,,выводить окно со свойствами перед запуском скрипта и запретить вывод окна подтверждения
+strict=t,1,новый режим компилятора
+
+RealBuffers=n,,буферов для вычисления
+ShortName=s,,короткое имя в подокне индикатора
+
+[Output]
+Events=c
+Trace=c
+
+[OutputPars]
+Size=GlobalSize
+Start=GlobalStart
+
+[Code]
+<top0>
+//+------------------------------------------------------------------+
+//| $name                                                            
+//| $copyright                                                       
+//| $link
+//+------------------------------------------------------------------+
+
+#property version "$version.00"
+<?Copyright>#property copyright "$Copyright"</>
+<?link>#property link "$link"</>
+<?stacksize>#property stacksize $stacksize</>
+<?indicator_chart_window>#property indicator_chart_window</>
+<?indicator_separate_window>#property indicator_separate_window</>
+<?indicator_buffers>#property indicator_buffers $indicator_buffers</>
+<?indicator_minimum>#property indicator_minimum $indicator_minimum</>
+<?indicator_maximum>#property indicator_maximum $indicator_maximum</>
+<?indicator_levelcolor>#property indicator_levelcolor $indicator_levelcolor</>
+<?indicator_levelwidth>#property indicator_levelwidth $indicator_levelwidth</>
+<?indicator_levelstyle>#property indicator_levelstyle $indicator_levelstyle</>
+<?show_confirm>#property show_confirm</>
+<?show_inputs>#property show_inputs</>
+<?strict>#property strict</>
+
+<gvars>
+int GlobalSize, GlobalStart;
+int MaxGlobalSize;
+bool Shifted;
+int @LastBars, @LastSize;
+<?Trace>
+bool traced = false;
+int trace_index;
+</>
+
+<procs>
+bool CheckShift(double& a[])
+{
+  //ArrayCopy(a, a, 0, shift);
+  if (!Shifted) return (false);
+
+  int shift = GlobalSize-GlobalStart-1;
+  
+  for (int i=0; i<=GlobalStart; i++) a[i] = a[i+shift];//@ShiftSize];
+  return (true);
+}
+
+bool CheckShift(int& a[])
+{
+  //ArrayCopy(a, a, 0, shift);
+  if (!Shifted) return (false);
+
+  int shift = GlobalSize-GlobalStart-1;
+  
+  for (int i=0; i<=GlobalStart; i++) a[i] = a[i+shift];//@ShiftSize];
+  return (true);
+}
+
+void ArrayInit(double &a[], int NewSize=0)
+{
+  if (NewSize==0) NewSize = GlobalSize;
+  if (ArraySize(a)<NewSize)
+  {
+    int size = ArraySize(a);
+    ArrayResize(a, NewSize);
+    for (int n=size; n<NewSize; n++)
+      a[n] = 0;
+  }
+}
+
+void ArrayInit(int &a[], int NewSize)
+{
+  if (ArraySize(a)<NewSize)
+  {
+    int size = ArraySize(a);
+    ArrayResize(a, NewSize);
+    for (int n=size; n<NewSize; n++)
+      a[n] = 0;
+  }
+}
+
+void ArrayInit(datetime &a[], int NewSize)
+{
+  if (ArraySize(a)<NewSize)
+  {
+    int size = ArraySize(a);
+    ArrayResize(a, NewSize);
+    for (int n=size; n<NewSize; n++)
+      a[n] = 0;
+  }
+}
+
+<?Events>
+void OnChartEvent(const int event_id, const long& lparam, const double& dparam, const string& sparam)
+{
+$Events.lines
+}
+</>
+
+<?Trace>
+void TraceDeinit()
+{
+$Trace.deinit
+}
+</>
+
+<init>
+  <?RealBuffers>IndicatorBuffers($RealBuffers);</>
+  <?ShortName>IndicatorShortName("$ShortName");</>
+  <?MaxBufferSize>
+    MaxGlobalSize = $MaxBufferSize;
+    GlobalSize = $MaxBufferSize;
+  <~>
+    <?MaxBufferPeriod>
+      <?MaxBufferPeriod=Month>
+      MaxGlobalSize = iBarShift(NULL, 0, CurTime()-30*86400*$MaxBufferPeriodCount);
+      </>
+      <?MaxBufferPeriod=Week>
+      MaxGlobalSize = iBarShift(NULL, 0, CurTime()-7*86400*$MaxBufferPeriodCount);
+      </>
+      <?MaxBufferPeriod=Day>
+      MaxGlobalSize = iBarShift(NULL, 0, CurTime()-86400*$MaxBufferPeriodCount);
+      </>
+      GlobalSize = MaxGlobalSize;
+      <?debug>Print("buffer size: "+GlobalSize);</>
+    <~>
+      <?PeriodStart>
+      MaxGlobalSize = iBarShift(NULL, 0, $PeriodStart);
+      GlobalSize = MaxGlobalSize;
+      <~>
+      MaxGlobalSize = Bars;
+      GlobalSize = Bars;
+      </>
+    </>
+  </>
+  GlobalStart = 0;
+  
+<lines>
+<?CTRL>
+<?MinBufferSize>
+  if (Bars<$MinBufferSize)
+  {
+    Print("Not enough Bars ($MinBufferSize>",Bars,")");
+    return(-1);
+  }
+<~>
+  if (Bars==0) {Print("No Bars"); return(-1);}
+</>
+
+<?MaxBufferSize>
+  GlobalSize = MathMin(Bars, $MaxBufferSize);
+<~>
+  <?MaxBufferPeriod>
+  GlobalSize = MathMin(Bars, MaxGlobalSize);
+  <~>
+    <?PeriodStart>
+    GlobalSize = MathMin(Bars, iBarShift(NULL, 0, $PeriodStart));
+    <~>
+    GlobalSize = Bars;
+    </>
+  </>
+</>
+<?FullRedraw>
+  GlobalStart = 0;
+  Shifted = false;
+<~>
+  if (@LastBars==0 || IndicatorCounted()==0)
+  {
+    @LastBars = Bars;
+    @LastSize = GlobalSize;
+  }
+  bool @newbar = false;
+  if (IsTesting())
+  {
+    if (@LastBars<Bars)
+    {
+      Shifted = (@LastSize==GlobalSize);
+      GlobalStart = GlobalSize-1-(Bars-@LastBars);
+      @newbar = true;
+    }
+    else
+    {
+      Shifted = false;
+      GlobalStart = IndicatorCounted()==0?0:GlobalSize-1;
+      @newbar = false;
+    }
+  }
+  else
+  {
+    if (@LastBars<Bars)
+    {
+      Shifted = @LastSize==GlobalSize;
+      GlobalStart = GlobalSize-1-(Bars-@LastBars);
+      @newbar = true;
+    }
+    else if (@LastBars>Bars)
+    {
+      Shifted = false;
+      GlobalStart = 0;
+      @newbar = true;
+    }
+    else
+    {
+      Shifted = IndicatorCounted()>0 && Bars-IndicatorCounted()>=2 && @LastSize==GlobalSize;
+      GlobalStart = MathMax(@LastSize-(Bars-IndicatorCounted()), 0);
+      @newbar = Shifted;
+    }
+  }
+  @LastBars = Bars;
+  @LastSize = GlobalSize;
+
+  <?WaitNewBar>
+  if (!@newbar && GlobalStart!=0) return (0);
+  </>
+
+</>
+  
+<?debug>
+  Print("bars: ",Bars," counted: ",IndicatorCounted());
+  Print("start: ", GlobalStart, " size: ", GlobalSize," shifted: ",Shifted?"true":"false");
+</>
+</>
+
+<?Trace>
+$CTRL.lines
+  if (GlobalStart==0)
+  {
+    trace_index = 0;
+    if (traced) TraceDeinit();
+$Trace.init
+    traced = true;
+  }
+  else
+    trace_index = GlobalStart;
+  while (trace_index<GlobalSize)
+  {
+$Trace.lines
+    trace_index++;
+  }
+</>
+
+<deinit>
+<?Trace>
+  if (traced) TraceDeinit();
+
+[Template]
+$top0
+$top
+
+//---- parameters
+$gvars
+
+//---- user functions
+$procs
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int init()
+{
+$init
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator deinitialization function                       |
+//+------------------------------------------------------------------+
+int deinit()
+{
+$deinit
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int start()
+{
+$lines
+$endlines
+  return(0);
+}
+//+------------------------------------------------------------------+
+
+$attach
+
+[Help]
+Объект можно использовать один раз в одной схеме.

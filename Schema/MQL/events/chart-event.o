@@ -1,0 +1,28 @@
+[Main]
+Choice
+Name=ChartEvent
+Title=Событие графика
+Group=События
+
+[Property]
+EventID1=event_id,CHARTEVENT_OBJECT_CREATE,событие 1
+EventID2=event_id,CHARTEVENT_OBJECT_CHANGE,событие 2 для парной проверки
+
+[Output]
+run=c
+
+[Code]
+<init>
+<?EventID1=CHARTEVENT_OBJECT_CREATE>
+  ChartSetInteger(0, CHART_EVENT_OBJECT_CREATE, true);
+</>
+
+<lines>
+  if (event_id == $EventID1<?EventID2> || event_id == $EventID2</>)
+  {
+$run.lines
+  }
+  
+[Help]
+Проверяет запуск события графика.
+

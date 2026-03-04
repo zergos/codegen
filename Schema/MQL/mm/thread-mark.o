@@ -1,0 +1,14 @@
+[Main]
+Name=ThreadMark
+Title=Уст. сост. потока
+Group=Сделки
+
+[Property]
+Caption=s,"MARK"
+
+[Code]
+<lines>
+  state_mark = $Caption;
+
+[Help]
+Маркировка текущего потока.

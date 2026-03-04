@@ -1,0 +1,18 @@
+[Main]
+Name=ParMulti
+Title=Удвоение
+Group=Параметры
+Size=4
+
+[Property]
+ParName=s,Param
+MulFactor=n,2,во сколько раз увеличивать
+
+[Code]
+<lines>
+  $ParName *= $MulFactor;
+  <?debug>Print("$ParName = ",$ParName);</>
+
+[Help]
+Увеличивает параметр в произвольное количество раз.
+  

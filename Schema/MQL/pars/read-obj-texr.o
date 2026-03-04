@@ -1,0 +1,17 @@
+[Main]
+Name=ReadObj
+Title=—читать объект
+Group=ѕараметры
+
+[Property]
+ObjName=s
+ParName=s
+ToInt=t
+
+[Code]
+<lines>
+  $ParName = <?ToInt>StrToInteger(</>ObjectGetString(0, "$ObjName", OBJPROP_TEXT)<?ToInt>)</>;
+
+[Help]
+—читывает текст графического объекта и записывает в параметр.
+

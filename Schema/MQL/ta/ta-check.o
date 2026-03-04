@@ -1,0 +1,22 @@
+[Main]
+Choice
+Name=TACheck
+Title=CSV Проверка
+Group=ТА
+
+[Output]
+work=c
+
+[InputPars]
+active
+
+[Code]
+<lines>
+  if (trend>0 && Close[1]>models[$active].price6 || trend<0 && Close[1]<models[$active].price6 || HubOpenCount()==0)
+  {
+$work.lines
+  }
+  
+[Help]
+Проверяет пробитие цены 6-й точки по тренду для разворота сделки.
+

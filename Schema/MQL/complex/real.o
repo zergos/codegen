@@ -1,0 +1,39 @@
+[Main]
+Name=Real
+Group=Преобразования
+Title=В вещественные
+
+[Property]
+Mode=reim,Real
+
+[Input]
+cin=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=0
+Size=($Size/2)
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size/2);
+
+  for (int @n=0; @n<$Size/2; @n++)
+  <?Mode=Real>
+    $out[@n] = $cin[@n<<1];
+  <~>
+    $out[@n] = $cin[@n<<1+1];
+  </>
+
+[Help]
+Преобразует из комплексного в вещественный формат\\
+Размер при этом уменьшается в два раза

@@ -1,0 +1,35 @@
+[Main]
+Deprecated
+Name=TAFields
+Title=EA Поля поиска
+Group=ТА
+
+[Input]
+up=row
+down=row
+
+close=row
+high=row
+low=row
+time=row
+
+[InputPars]
+Size
+
+[Code]
+<lines>
+  if ($up[$Size-1]>0)
+  {
+    TAField *f = new TAField(ModeC, -1);
+    f.Activate();
+  }
+  if ($down[$Size-1]<0)
+  {
+    TAField *f = new TAField(ModeC, 1);
+    f.Activate();
+  }
+  TAField::ProcessAll($close[$Size-1], $high[$Size-1], $low[$Size-1], $time[$Size-1]);
+
+[Help]
+Активирует поля поиска по входящему ЗигЗагу.
+

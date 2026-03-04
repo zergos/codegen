@@ -1,0 +1,33 @@
+#c - caseless, m - multi line, s - single line for dot, u - ungreedy, a - anchored to previous match
+
+[Main]
+Extension=mq4
+
+[Colors]
+Default  =d, $000000
+Comments =c, $808080
+Strings  =s, $A000A0
+Keywords =k, $A00000
+Numbers  =n, $005000
+Extra    =x, $8080FF
+Symbols  =z, $008040
+Id       =i, $0000FF
+Special  =p, $00AFAF
+Help     =h, $208020
+Vars     =v, $FF8000
+Consts   =t, $00A000
+
+[Sections]
+Code      =      "(.*)"
+
+[Regex.Code]
+SectionId       = "\A(\[\w+\])$",i,m
+CommentLine     = "(\/\/.*)",c
+CommentBlock    = "(\/\*.*\*\/)",c,msu
+Defines         = "(\#\w+)",x
+Strings         = "(\".*\")",s,u
+Numbers         = "\W(\d+)",n
+Keywords        = "\b(class|new|delete|GetPointer|this|public|private|break|case|continue|default|datetime|else|extern|static|false|for|if|null|return|sizeof|switch|true|while|void|bool|char|double|int|string)\b",k
+ExtraWords      = "\b(Sleep|ArraySize|ArrayResize|Alert|RefreshRates|Bars|Time|High|Low|Open|Close|Volume|start|init|deinit|Symbol|Point|MathMax|MathMin|MathAbs|iMAOnArray|ArraySetAsSeries|Print|iBars|iBarShift|iHigh|iLow|iOpen|iClose|iVolume|ObjectCreate|ObjectDelete|ObjectSet|ObjectSetText|ObjectGet|MathTan|MathArctan|MathSqrt|MathLog|MathPow|MathSin|MathCos|MathExp|MathMod|SetIndexBuffer|SetIndexStyle|SetIndexEmptyValue|SetIndexArrow|SetIndexDrawBegin|SetIndexLabel|SetIndexShift|ArrayMinimum|ArrayMaximum|ArrayCopy|ArrayInitialize|TimeDayOfWeek|FileWriteArray||GetLastError|FileOpen|FileSeek|FileClose|FileReadArray|FileReadInteger|IndicatorBuffers|IndicatorShortName|IndicatorCounted|TimeCurrent|TimeToStr|ArrayBsearch|TimeHour|OrderSelect|OrderCloseTime|OrderClose|NormalizeDouble|Ask|Bid|Digits|OrderSend|OrderType|OrderStopLoss|OrderTakeProfit|OrderOpenPrice|OrderModify|OrderTicket|OrdersTotal)\b",k
+Consts          = "\b(MODE_SMA|OBJ_TREND|OBJPROP_COLOR|OBJ_TEXT|OBJPROP_RAY|OBJ_VLINE|SEEK_END|TIME_DATE|TIME_MINUTES|SELECT_BY_TICKET|NULL|OP_BUY|OP_SELL|SELECT_BY_POS|MODE_TRADES|OBJPROP_TIME1|OBJPROP_TIME2|OBJPROP_PRICE1|OBJPROP_PRICE2)\b",t
+Symbols         = "([][+*/&%=,.;:<>()|-])",z

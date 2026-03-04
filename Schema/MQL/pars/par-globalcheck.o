@@ -1,0 +1,34 @@
+[Main]
+Choice
+Name=GlobalCheck
+Title=Проверка глобального
+Group=Параметры
+
+[Property]
+Name=s,Parameter
+Unique=t,1,привязка к символу
+
+[Output]
+Raise=c
+
+[Code]
+<gvars>
+double $Name;
+datetime @par_changed;
+
+<init>
+  GlobalVariableSet("raise$Name"<?Unique>+Symbol()</>, 0);
+  @par_changed = 0;
+
+<lines>
+  datetime @curtime = GlobalVariableTime("$Name"<?Unique>+Symbol()</>);
+  if (@curtime>@par_changed)
+  {
+    $Name = GlobalVariableGet("$Name"<?Unique>+Symbol()</>);
+    @par_changed = @curtime;
+    <?debug>Print("global changed $Name ",$Name);</>
+$Raise.lines
+  }
+
+[Help]
+Проверяет инициацию глобального параметра и продолжает выполнение.

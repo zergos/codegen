@@ -1,0 +1,103 @@
+[Main]
+Name=FFT
+Group=Алгоритмы
+Title=БФП
+
+[Property]
+Inverse=t,,установить для обратного преобразования
+
+[Input]
+cin=row
+
+[Output]
+cout=row,@a
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double @a[];
+
+<lines>
+    ArrayInit(@a, $Size);
+
+    int @ii, @jj, @n, @mmax, @m, @j, @istep, @i;
+    double @wr, @wpr, @wpi, @wi, @theta;
+    double @wtemp, @tempr, @tempi;
+    int @nn = $Size/2;
+
+    //ArrayCopy(@a, $cin);
+    
+    @n = 2*@nn;
+    @j = 1;
+    for(@ii = 1; @ii <= @nn; @ii++)
+    {
+        @i = 2*@ii-1;
+        if( @j>@i )
+        {
+            @a[@j-1] = $cin[@i-1];
+            @a[@j] = $cin[@i];
+            @a[@i-1] = $cin[@j-1];
+            @a[@i] = $cin[@j];
+
+            <?>@tempr = @a[@j-1];
+            @tempi = @a[@j];
+            @a[@j-1] = @a[@i-1];
+            @a[@j] = @a[@i];
+            @a[@i-1] = @tempr;
+            @a[@i] = @tempi;</>
+        }
+        else if (@i==@j)
+        {
+            @a[@j-1] = $cin[@j-1];
+            @a[@j] = $cin[@j];
+        }
+        @m = @n/2;
+        while(@m>=2&&@j>@m)
+        {
+            @j = @j-@m;
+            @m = @m/2;
+        }
+        @j = @j+@m;
+    }
+    @mmax = 2;
+    while(@n>@mmax)
+    {
+        @istep = 2*@mmax;
+        @theta = 2.0*PI/(<?Inverse>-</>@mmax);
+        @wpr = -2.0*MathPow(MathSin(0.5*@theta),2);
+        @wpi = MathSin(@theta);
+        @wr = 1.0;
+        @wi = 0.0;
+        for(@ii = 1; @ii <= @mmax/2; @ii++)
+        {
+            @m = 2*@ii-1;
+            for(@jj = 0; @jj <= (@n-@m)/@istep; @jj++)
+            {
+                @i = @m+@jj*@istep;
+                @j = @i+@mmax;
+                @tempr = @wr*@a[@j-1]-@wi*@a[@j];
+                @tempi = @wr*@a[@j]+@wi*@a[@j-1];
+                @a[@j-1] = @a[@i-1]-@tempr;
+                @a[@j] = @a[@i]-@tempi;
+                @a[@i-1] = @a[@i-1]+@tempr;
+                @a[@i] = @a[@i]+@tempi;
+            }
+            @wtemp = @wr;
+            @wr = @wr*@wpr-@wi*@wpi+@wr;
+            @wi = @wi*@wpr+@wtemp*@wpi+@wi;
+        }
+        @mmax = @istep;
+    }
+    <?Inverse>
+        for(@i = 1; @i <= 2*@nn; @i++)
+        {
+            @a[@i-1] = @a[@i-1]/@nn;
+        }
+    </>
+
+[Help]
+Быстрое преобразование Фурье\\
+**BufferSize** должен быть степенью двойки\\
+//(c) klot 2006, [[alglib.sources.ru/fft/]] // \\

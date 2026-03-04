@@ -1,0 +1,139 @@
+[Main]
+Deprecated
+Group=Советник
+Title=Торговый бот 2x
+Name=TradeMan2x
+
+[Property]
+MainCheck=n,0,основной тик проверки для открытия
+TailCheck=n,1,сколько тиков с конца проверять на наличие сигнала открытия
+TrLevel=n,1,суммарный сигнал для срабатывания открытия
+
+MainCheckStop=n,0,основной тик проверки для закрытия
+TailCheckStop=n,1,сколько тиков с конца проверять на наличие сигнала стопа
+TrLevelStop=n,1,суммарный сигнал для срабатывания стопа
+
+Volume=f,0.1,количество лотов
+Slippage=n,3,максимально допустимое отклонение цены
+Color=color,CLR_NONE,цвет открывающей стрелки на графике
+StopPoints=n,25,ширина стоп коридора
+
+[Input]
+Sig=row
+Stop=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+extern int @StopLevel = $StopPoints;
+extern int @TradeLevel = $TrLevel;
+extern int @TradeLevelStop = $TrLevelStop;
+int @Ticket = 0;
+int @Mode = 0; //1 - уже бай, -1 - уже селл
+int @LastMode;
+
+<lines>
+  ArraySetAsSeries($Sig, true);
+  ArraySetAsSeries($Stop, true);
+
+  // Сначала расчёт стопа
+  int @CurMode = 0;
+
+  for (int @i = $MainCheckStop+$TailCheckStop-1; @i>=$MainCheckStop; @i--) @CurMode += $Stop[@i];
+
+  if (@Ticket!=0 && MathAbs(@CurMode)>=@TradeLevelStop && @CurMode!=@LastMode) //напраление должно измениться
+  {
+    @LastMode = @CurMode;
+    while (true)
+    {
+      if (@CurMode>0) // можно закрыть селл
+      {
+        if (@Mode>0) break; // последний раз открыт бай
+        OrderSelect(@Ticket, SELECT_BY_TICKET);
+        if (OrderCloseTime()>0) // закрыт автоматом
+        {
+          @Ticket=0;
+          @Mode=0;
+          break;
+        }
+        if (OrderClose(@Ticket, $Volume, NormalizeDouble(Ask, Digits), $Slippage, $Color))
+        {
+          @Ticket = 0;
+	  @Mode=0;
+	  @LastMode=0;
+	  break;
+	}
+	if (Fun_Error(GetLastError())==1) continue;
+	return(0);
+      }
+      else if (@CurMode<0) //можно закрыть бай
+      {
+        if (@Mode<0) break; // последний раз открыт селл
+        OrderSelect(@Ticket, SELECT_BY_TICKET);
+        if (OrderCloseTime()>0) // закрыт автоматом
+        {
+          @Ticket=0;
+          @Mode=0;
+          break;
+        }
+        if (OrderClose(@Ticket, $Volume, NormalizeDouble(Bid, Digits), $Slippage, $Color))
+	{
+          @Ticket = 0;
+	  @Mode=0;
+	  @LastMode=0;
+	  break;
+	}
+	if (Fun_Error(GetLastError())==1) continue;
+	return(0);
+      }
+    }
+  }
+
+  // далее, расчёт открытия
+  @CurMode = 0;
+
+  for (@i = $MainCheck+$TailCheck-1; @i>=$MainCheck; @i--) @CurMode += $Sig[@i];
+
+  if (@Ticket==0 && MathAbs(@CurMode)>=@TradeLevel && @CurMode!=@LastMode)
+  {
+    @LastMode = @CurMode;
+    while (true)
+    {
+      if (@CurMode>0) // можно открыть бай
+      {
+        if (@Mode>0) break; // уже открыт
+        @Ticket = OrderSend(Symbol(), OP_BUY, $Volume, NormalizeDouble(Ask, Digits), $Slippage, Bid-@StopLevel*Point, Ask+@StopLevel*Point, NULL, MAGIC, 0, $Color);
+	if (@Ticket>0)
+	{
+	  @Mode = 1;
+	  break;
+	}
+	if (Fun_Error(GetLastError())==1) continue;
+	return(0);
+      }
+      else if (@CurMode<0) // можно открыть селл
+      {
+        if (@Mode<0) break; // уже открыт
+        @Ticket = OrderSend(Symbol(), OP_SELL, $Volume, NormalizeDouble(Bid, Digits), $Slippage, Ask+@StopLevel*Point, Bid-@StopLevel*Point, NULL, MAGIC, 0, $Color);
+	if (@Ticket>0)
+	{
+	  @Mode = -1;
+	  break;
+	}
+	if (Fun_Error(GetLastError())==1) continue;
+	return(0);
+      }
+    }
+  }
+
+  ArraySetAsSeries($Stop, false);
+  ArraySetAsSeries($Sig, false);
+
+[Help]
+Организация торговли по двум входящемим сигналам.\\
+Работает только с одним ордером.\\
+При повторном сигнале на открытие в ту же сторону - игнорируется.\\
+Сигналы закрытия должны быть в противоположную сторону сигналам открытия.

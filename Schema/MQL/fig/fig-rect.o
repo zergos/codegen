@@ -1,0 +1,72 @@
+[Main]
+Name=FigRect
+Title=Рамка
+Group=Фигуры
+
+[Uses]
+common\obj-counter
+
+[Property]
+StartBar=n,Param,время/номер начального бара
+EndBar=n,Param,время/номер конечного бара
+UseTime=t,1,параметры задают время вместо номера
+Color=color,Magenta
+Back=bool,true,фоном или с заливкой
+Single=bool,false,оставлять рамку и рисовать новые 
+UseInputs=t
+
+[Input]
+high=row
+low=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+ObjCounter *$name;
+
+<init>
+  $name = new ObjCounter("$name", $Single);
+
+<lines>
+  if ($Start==0) $name.Clear();
+  <?UseTime>
+  int @t1 = iBarShift(NULL,0,$StartBar), @t2 = iBarShift(NULL,0,$EndBar);
+  <~>
+  int @t1 = $Size-1-$StartBar, @t2 = $Size-1-$EndBar;
+  </>
+  string @name = $name.NextName();
+  ObjectCreate(@name, OBJ_RECTANGLE, 0, 0, 0, 0, 0);
+  ObjectSetInteger(0, @name, OBJPROP_COLOR, $Color);
+  ObjectSetInteger(0, @name, OBJPROP_BACK, $Back);
+  ObjectSetInteger(0, @name, OBJPROP_TIME1, Time[@t1]);
+  ObjectSetInteger(0, @name, OBJPROP_TIME2, Time[@t2]);
+  double @min = 0, @max = 0;
+  <?!UseInputs>
+  for (int i=@t2; i<=@t1; i++)
+  {
+    if (@min==0 || Low[i]<@min)
+      @min = Low[i];
+    if (High[i]>@max)
+      @max = High[i];
+  }
+  <~>
+  for (int i=$StartBar; i<=$EndBar; i++)
+  {
+    if (@min==0 || $low[i]<@min)
+      @min = $low[i];
+    if ($high[i]>@max)
+      @max = $high[i];
+  }
+  </>
+  ObjectSet(@name, OBJPROP_PRICE1, @min);
+  ObjectSet(@name, OBJPROP_PRICE2, @max);
+
+<deinit>
+  delete $name;
+
+[Help]
+Рисует рамку по заданным номерам баров, обводя попадающие в диапозон свечи.
+

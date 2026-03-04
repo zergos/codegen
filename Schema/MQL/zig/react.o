@@ -1,0 +1,33 @@
+[Main]
+Deprecated
+Name=React
+Title=Реактор
+Group=Алгоритмы
+
+[Input]
+in=row
+vol=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  double @cur = 0;
+  for (int @i=MathMax($Start,1); @i<$Size; @i++)
+  {
+    double @d = $in[@i]-$in[@i-1];
+    @cur += @d*$vol[@i];
+    $out[@i] = @cur;
+  }
+
+

@@ -1,0 +1,17 @@
+[Main]
+Name=SetHubState
+Title=Уст. статус хаба
+Group=Сделки
+
+[Property]
+NewState=hubstate,HUB_INITIAL
+
+[Code]
+<lines>
+  hub_state = $NewState;
+  hub_activated = true;
+  <?debug>add_log("force thread state");</>
+  
+[Help]
+Устанавливает новое состояние хаба.
+

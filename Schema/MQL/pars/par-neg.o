@@ -1,0 +1,14 @@
+[Main]
+Name=ParNeg
+Title=Отрицание
+Group=Параметры
+
+[Property]
+ParName=s,Param
+
+[Code]
+<lines>
+  $ParName = -$ParName;
+
+[Help]
+Меняет знак параметра на противоположный.

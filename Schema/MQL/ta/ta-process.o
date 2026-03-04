@@ -1,0 +1,243 @@
+[Main]
+Name=TAProcess
+Title=CSV Процессинг
+Group=ТА
+
+[Property]
+BarLimit=n,30,сколько баров ждать пробития
+MinProfit=n,200,минимальный профит в пунктах
+MaxLoss=n,1000,максимально допустимый уровень убытка по сделке
+BreakPoints=n,10,минимальное количество пунктов для зачёта пробития линии
+Draw=t,,рисовать трендовые
+Leave=t,,оставлять линии
+
+[Code]
+<procs>
+void modelStop(int i)
+{
+  models[i].state = TA_CANCEL;
+  <?Draw>
+        <?!Leave>
+        ObjectDelete("trend"+models[i].id);
+        ObjectDelete("target"+models[i].id);
+        <~>
+        ObjectSet("trend"+models[i].id, OBJPROP_COLOR, DarkGray);
+        ObjectSet("target"+models[i].id, OBJPROP_COLOR, DarkGray);
+        ObjectSet("trend"+models[i].id, OBJPROP_RAY, 0);
+        ObjectSet("target"+models[i].id, OBJPROP_RAY, 0);
+        
+        ObjectSet("trend"+models[i].id, OBJPROP_TIME2, Time[1]);
+        ObjectSet("trend"+models[i].id, OBJPROP_PRICE2, models[i].trendprice);
+        ObjectSet("target"+models[i].id, OBJPROP_TIME2, Time[1]);
+        ObjectSet("target"+models[i].id, OBJPROP_PRICE2, models[i].targetprice);
+        </>
+  </>
+}
+
+<lines>
+  // поиск срабатывающих форм
+  for (int i=0; i<ArraySize(models); i++)
+  {
+    TAState state = models[i].state;
+    switch (models[i].state)
+    {
+    case TA_CANCEL:
+      break;
+    case TA_NEW:
+      if (models[i].start==Time[1])
+      {
+        models[i].state = TA_DETECTED;
+        models[i].price1 = Close[1];
+        models[i].curbar = 0;
+        <?debug>Print("модель #",models[i].id," started");</>
+      }
+      break;
+    case TA_DETECTED:
+      models[i].curbar++;
+      if (models[i].curbar == models[i].bar2p)
+      {
+        models[i].price2p = Close[1];
+      }
+      if (models[i].curbar == models[i].bar3)
+      {
+        models[i].price3 = Close[1];
+        models[i].price3stop = models[i].trend>0?Low[1]:High[1];
+      }
+      else
+      if (models[i].curbar == models[i].bar4)
+      {
+        models[i].price4 = Close[1];
+        models[i].price6 = Close[1];
+        models[i].price6stop = models[i].trend>0?High[1]:Low[1];
+        models[i].state = TA_WORK;
+        
+        // расчёт трендовой линии
+        models[i].trenddelta = (models[i].price3-models[i].price1)/models[i].bar3;
+        models[i].trendprice = models[i].price3+(models[i].bar4-models[i].bar3)*models[i].trenddelta;
+        // вычисление правильного бара для рисования трендовой
+        int bar = models[i].bar3;
+        int idx = 1+models[i].bar4-models[i].bar3;
+        for (int k = 1+models[i].bar4-models[i].bar3; k>1; k--, bar++) // цикл от 3го бара к 4му
+        {
+          double price3 = Close[k];
+          double trenddelta = (price3-models[i].price1)/bar;
+          price3 += trenddelta;
+          bool checked = true;
+          <?debug2>Print("id #",models[i].id," bar ",Time[k-1]," price ",price3);</>
+          for (int l = k-1; l>=1; l--, price3+=trenddelta)
+            if (models[i].trend>0 && Close[l]<price3 || models[i].trend<0 && Close[l]>price3)
+            {
+              checked = false;
+              break;
+            }
+          if (checked)
+          {
+            models[i].trendprice = models[i].price3+(k-1)*models[i].trenddelta;
+            models[i].trenddelta = trenddelta;
+            idx = k;
+            break;
+          }
+        }
+        <?debug2>Print("модель #",models[i].id," to work (p4) bar ",models[i].curbar);</>
+        <?Draw>
+        ObjectCreate("trend"+models[i].id, OBJ_TREND, 0, models[i].start, models[i].price1, Time[idx], Close[idx]);
+        ObjectSet("trend"+models[i].id, OBJPROP_RAY, true);
+        ObjectSet("trend"+models[i].id, OBJPROP_COLOR, Red);
+        </>
+        
+        // расчёт целевой
+        models[i].targetprice = models[i].price4;
+        models[i].targetdelta = (models[i].price4-models[i].price2p)/(models[i].bar4-models[i].bar2p);
+        // вычисление правильного бара для рисования целевой
+        bar = models[i].bar4 - models[i].bar2p;
+        idx = 1;
+        for (int k = 1; k<1+models[i].bar4-models[i].bar3; k++, bar--) // цикл от 4го бара к 3му
+        {
+          double price4 = Close[k];
+          double targetdelta = (price4-models[i].price2p)/bar;
+          price4 -= targetdelta;
+          bool checked = true;
+          <?debug2>Print("id #",models[i].id," bar ",Time[k+1]," price ",price4);</>
+          for (int l = k+1; l<models[i].bar4-models[i].bar3; l++, price4-=targetdelta)
+            if (models[i].trend>0 && Close[l]>price4 || models[i].trend<0 && Close[l]<price4)
+            {
+              checked = false;
+              break;
+            }
+          if (checked)
+          {
+            models[i].targetdelta = targetdelta;
+            models[i].targetprice = Close[k];
+            idx = k;
+            break;
+          }
+        }
+        <?Draw>
+        ObjectCreate("target"+models[i].id, OBJ_TREND, 0, Time[1+models[i].bar4-models[i].bar2p], models[i].price2p, Time[idx], Close[idx]);
+        ObjectSet("target"+models[i].id, OBJPROP_RAY, true);
+        ObjectSet("target"+models[i].id, OBJPROP_COLOR, Orange);
+        </>
+        
+        // вычисление сакральной точки
+        models[i].bar_cp = (models[i].targetprice - models[i].trendprice)/(models[i].trenddelta - models[i].targetdelta);
+        Print("CP: ", models[i].bar_cp);
+        
+        if (models[i].bar_cp>0)
+        {
+          models[i].state = TA_CANCEL;
+          <?debug>Print("модель #",models[i].id," сакральная точка оказалась справа");</>
+          break;
+        }
+        
+        models[i].bar_end = models[i].bar_cp+models[i].bar4 - models[i].bar_cp*5;
+        Print("Bar end: ", models[i].bar_end);
+        <?Draw>
+        ObjectSet("trend"+models[i].id, OBJPROP_TIME1, Time[2-(int)models[i].bar_cp]);
+        ObjectSet("trend"+models[i].id, OBJPROP_PRICE1, models[i].trendprice+models[i].trenddelta*(models[i].bar_cp-1));
+        ObjectSet("target"+models[i].id, OBJPROP_TIME1, Time[2-(int)models[i].bar_cp]);
+        ObjectSet("target"+models[i].id, OBJPROP_PRICE1, models[i].targetprice+models[i].targetdelta*(models[i].bar_cp-1));
+        
+        
+        </>
+      }
+      break;
+    case TA_WORK:
+      models[i].curbar++;
+      models[i].trendprice += models[i].trenddelta;
+      models[i].targetprice += models[i].targetdelta;
+      if (models[i].curbar == models[i].bar5)
+      {
+        models[i].price5 = Close[1];
+        models[i].price5stop = models[i].trend>0?Low[1]:High[1];
+      }
+      else
+      if (models[i].trend>0 && Close[1]>models[i].price6 || models[i].trend<0 && Close[1]<models[i].price6) //обновление 6-й точки
+      {
+        models[i].price6 = Close[1];
+        models[i].price6stop = models[i].trend>0?High[1]:Low[1];
+        if (models[i].trend>0 && Close[1]>models[i].targetprice || models[i].trend<0 && Close[1]<models[i].targetprice)
+        {
+          models[i].state = TA_CANCEL;
+          <?debug>Print("модель #",models[i].id," cancelled by cross target line");</>
+        }
+      }
+      else
+      if (models[i].trend>0 && models[i].trendprice-Close[1]>$BreakPoints*Point || models[i].trend<0 && Close[1]-models[i].trendprice>$BreakPoints*Point) // пробитие трендовой
+      {
+        if (MathAbs(Close[1]-2*models[i].trendprice+models[i].price6)/Point<$MinProfit)
+        {
+          models[i].state = TA_CANCEL;
+          <?debug>Print("модель #",models[i].id," cancelled by min profit ",MathAbs(Close[1]-2*models[i].trendprice+models[i].price6)/Point);</>
+        }
+        else if (MathAbs(Close[1]-models[i].price6)/Point>$MaxLoss)
+        {
+          models[i].state = TA_CANCEL;
+          <?debug>Print("модель #",models[i].id," cancelled by max loss ",MathAbs(Close[1]-models[i].price6)/Point);</>
+        }
+        else if (models[i].trend>0 && models[i].trendprice>models[i].price6 || models[i].trend<0 && models[i].trendprice<models[i].price6)
+        {
+          models[i].state = TA_CANCEL;
+          <?debug>Print("модель #",models[i].id," cancelled by out of trend");</>
+        }
+        else
+        {
+          models[i].state = TA_ORDER;
+          <?debug>Print("модель #",models[i].id," to order");</>
+        }
+      }
+      else
+      if (models[i].curbar>=models[i].bar_end)
+      {
+        models[i].state = TA_CANCEL;
+        <?debug>Print("модель #",models[i].id," timeout");</>
+      }
+      break;
+    case TA_ORDER:
+    case TA_TRADE:
+      models[i].curbar++;
+      models[i].trendprice += models[i].trenddelta;
+      models[i].targetprice += models[i].targetdelta;
+    }
+    
+    
+    if (state!=models[i].state)
+    {
+      <?debug>Print("new модель id ", models[i].id, " state: ", models[i].state);</>
+      <?Draw>
+      if (models[i].state == TA_CANCEL)
+      {
+        modelStop(i);
+      }
+      </>
+    }
+  }
+  
+<deinit>
+  <?!Leave>
+  for (int i=0; i<ArraySize(models); i++)
+    ObjectDelete("trend"+models[i].id);
+  </>
+  
+[Help]
+Обработка активных форм тактики Адверза.
+Выполнять на открытии свечи.

@@ -1,0 +1,59 @@
+[Main]
+Name=Alert
+Title=Оповещение
+Group=Индикатор
+
+[Property]
+Level=n,0,уровень срабатывания сигнала
+Index=n,0,номер бара от конца
+Word=s,,строковое содержимое сообщения
+Alert=t,1,вызывать предупреждение
+Notify=t,,отправлять оповещение на мобильный терминал
+CmpUp=s,!=
+CmpDown=s,!=
+
+[Input]
+sup=row
+sdown=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+<?sup>double @up_alerted;</>
+<?sdown>double @down_alerted;</>
+
+<init>
+  <?sup>@up_alerted=0;</>
+  <?sdown>@down_alerted=0;</>
+
+<lines>
+  <?sup>
+  if ($sup[$Size-1-$Index]$CmpUp$Level)
+  {
+    if (@up_alerted==0)
+    {
+      <?Alert>Alert(Symbol()," ",Period()," $Word вверх");</>
+      <?Notify>SendNotification(Symbol()+": $Word вверх");</>
+      @up_alerted = 1; 
+    }
+  }
+  else @up_alerted = 0;
+  </>
+  <?sdown>
+  if ($sdown[$Size-1-$Index]$CmpDown$Level)
+  {
+    if (@down_alerted==0)
+    {
+      <?Alert>Alert(Symbol()," ",Period()," $Word вниз");</>
+      <?Notify>SendNotification(Symbol()+": $Word вниз");</>
+      @down_alerted = -1;
+    }
+  }
+  else @down_alerted = 0;
+  </>
+
+[Help]
+Вызывает функцию **Alert**/**SendNotification** при превышении последним элементом входящей серии указанного
+уровня **Level** (вверх, в положительной области, или вниз, в отрицательной).

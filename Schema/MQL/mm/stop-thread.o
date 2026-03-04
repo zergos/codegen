@@ -1,0 +1,12 @@
+[Main]
+Name=StopThread
+Title=Стоп потока
+Group=Сделки
+
+[Code]
+<lines>
+  stop_thread = true;
+
+[Help]
+Предотвращает выполнение потока на этот раунд.
+

@@ -1,0 +1,37 @@
+[Main]
+Name=OrderFind
+Title=Поиск ордера
+Group=Управление
+
+[Property]
+Cmd=cmd,OP_BUY,тип операции
+Magic=n,0,поиск по коду
+Comment=s,,поиск по комментарию
+
+[Input]
+ID=s
+
+[Output]
+Ticket=n,@Ticket
+OutID=s,@ID
+
+[Code]
+<gvars>
+int @Ticket;
+string @ID;
+
+<lines>
+  for (int @i=0; @i<OrdersTotal(); @i++)
+  {
+    if (!OrderSelect(@i,SELECT_BY_POS,MODE_TRADES)) continue;
+    if (!OrderType()==$Cmd) continue;
+    string @comment = OrderComment();
+    if (StringFind(@comment, "$Comment")!=0) continue;
+    string @split[];
+    if (StringSplit(@comment, '#', split)>1) @ID = @split[1];
+    break;
+  }
+
+[Help]
+Поиск ордера по типу операции, строке комментария и magic коду.
+

@@ -1,0 +1,108 @@
+[Main]
+Title=Генератор тиков (полный)
+Group=Генераторы
+Name=TickGenFull
+
+[Property]
+Shift=n,0,сдвиг
+LastTime=d,,последнее время в серии
+
+[InputPars]
+Size
+Trace
+
+[Output]
+OPEN=row,@zOpen
+CLOSE=row,@zClose
+HIGH=row,@zHigh
+LOW=row,@zLow
+VOLUME=row,@zVolume
+TIME=row,@zTime
+
+[OutputPars]
+TimeShift=@shift
+Size=<?LastTime>@tickSize<~>$Size</>
+
+[Code]
+<gvars>
+int @shift;
+<?LastTime>int @tickSize;</>
+<?OPEN>double @zOpen[];</>
+<?CLOSE>double @zClose[];</>
+<?HIGH>double @zHigh[];</>
+<?LOW>double @zLow[];</>
+<?VOLUME>double @zVolume[];</>
+<?TIME>datetime @zTime[];</>
+
+<lines>
+  <?OPEN>ArrayInit(@zOpen,$Size);</>
+  <?CLOSE>ArrayInit(@zClose,$Size);</>
+  <?HIGH>ArrayInit(@zHigh,$Size);</>
+  <?LOW>ArrayInit(@zLow,$Size);</>
+  <?VOLUME>ArrayInit(@zVolume,$Size);</>
+  <?TIME>ArrayInit(@zTime, $Size);</>
+
+  <?LastTime>
+  @shift = iBarShift(NULL,0,"$LastTime");
+  <~>
+  @shift = $Shift;
+  </>
+  <?Trace>
+  @shift += trace_index;
+  </>
+
+  <?LastTime>
+  <?OPEN>
+  @tickSize = $Size-@shift;
+  for (int i=0; i<@tickSize; i++)
+    @zOpen[i] = $Size-1-i>=Bars?0:Open[$Size-1-i];
+  </>
+  <?CLOSE>
+  for (int i=0; i<@tickSize; i++)
+    @zClose[i] = $Size-1-i>=Bars?0:Close[$Size-1-i];
+  </>
+  <?HIGH>
+  for (int i=0; i<@tickSize; i++)
+    @zHigh[i] = $Size-1-i>=Bars?0:High[$Size-1-i];
+  </>
+  <?LOW>
+  for (int i=0; i<@tickSize; i++)
+    @zLow[i] = $Size-1-i>=Bars?0:Low[$Size-1-i];
+  </>
+  <?VOLUME>
+  for (int i=0; i<@tickSize; i++)
+    @zVolume[i] = $Size-1-i>=Bars?0:Volume[$Size-1-i];
+  </>
+  <?TIME>
+  for (int i=0; i<@tickSize; i++)
+    @zTime[i] = $Size-1-i>=Bars?0:Time[$Size-1-i];
+  </>
+  <~>
+  <?OPEN>
+  for (int i=0; i<$Size; i++)
+    @zOpen[i] = i<@shift||$Size-1-i+@shift>=Bars?0:Open[$Size-1-i+@shift];
+  </>
+  <?CLOSE>
+  for (int i=0; i<$Size; i++)
+    @zClose[i] = i<@shift||$Size-1-i+@shift>=Bars?0:Close[$Size-1-i+@shift];
+  </>
+  <?HIGH>
+  for (int i=0; i<$Size; i++)
+    @zHigh[i] = i<@shift||$Size-1-i+@shift>=Bars?0:High[$Size-1-i+@shift];
+  </>
+  <?LOW>
+  for (int i=0; i<$Size; i++)
+    @zLow[i] = i<@shift||$Size-1-i+@shift>=Bars?0:Low[$Size-1-i+@shift];
+  </>
+  <?VOLUME>
+  for (int i=0; i<$Size; i++)
+    @zVolume[i] = i<@shift||$Size-1-i+@shift>=Bars?0:Volume[$Size-1-i+@shift];
+  </>
+  <?TIME>
+  for (int i=0; i<$Size; i++)
+    @zTime[i] = i<@shift||$Size-1-i+@shift>=Bars?0:Time[$Size-1-i+@shift];
+  </>
+  </>
+
+[Help]
+Подготавливает буфера со всеми сериями

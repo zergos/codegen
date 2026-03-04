@@ -1,0 +1,79 @@
+[Main]
+Deprecated
+Group=Советник
+Title=Торговый бот (без закрытия)
+Name=TradeMany
+
+[Property]
+MainCheck=n,0,основной тик проверки
+TailCheck=n,1,сколько тиков с конца проверять на наличие сигнала
+TrLevel=n,1,суммарный сигнал для срабатывания
+UseSlip=t,,ждать разворотного сигнала
+
+Volume=f,0.1,количество лотов
+Slippage=n,3,максимально допустимое отклонение цены
+Color=color,CLR_NONE,цвет открывающей стрелки на графике
+StopPoints=n,25,ширина стоп коридора
+LossOnly=t,1,фикс. только стоп-лосс
+
+[Input]
+Sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+extern int @StopLevel = $StopPoints;
+extern int @TradeLevel = $TrLevel;
+<?UseSlip>double @Mode = 0;</>
+
+<lines>
+  ArraySetAsSeries($Sig, true);
+
+  int @CurMode = 0;
+  int @Ticket;
+
+  for (int @i = $MainCheck+$TailCheck-1; @i>=$MainCheck; @i--) @CurMode += $Sig[@i];
+
+  if (MathAbs(@CurMode)>=@TrLevel)
+  {
+    while (true)
+    {
+      if (@CurMode>0 <?UseSlip>&& @Mode!=1</>)
+      {
+        <?debug>Alert("попытка открыть бай по ",Ask);</>
+        @Ticket = OrderSend(Symbol(), OP_BUY, $Volume, NormalizeDouble(Ask, Digits), $Slippage, Bid-@StopLevel*Point, <?!LossOnly>Ask+@StopLevel*Point<~>0</>, NULL, MAGIC, 0, $Color);
+        if (@Ticket>0)
+        {
+          <?debug>Alert("сделка бай ",@Ticket);</>
+          <?UseSlip>@Mode = 1;</>
+          break;
+        }
+        if (Fun_Error(GetLastError())==1) continue;
+        return(0);
+      }
+      else if (@CurMode<0 <?UseSlip>&& @Mode!=-1</>)
+      {
+        <?debug>Alert("попытка открыть селл по ",Bid);</>
+        @Ticket = OrderSend(Symbol(), OP_SELL, $Volume, NormalizeDouble(Bid, Digits), $Slippage, Ask+@StopLevel*Point, <?!LossOnly>Bid-@StopLevel*Point<~>0</>, NULL, MAGIC, 0, $Color);
+        if (@Ticket>0)
+        {
+          <?debug>Alert("сделка селл ",@Ticket);</>
+          <?UseSlip>@Mode = -1;</>
+          break;
+        }
+        if (Fun_Error(GetLastError())==1) continue;
+        return(0);
+      }
+      else
+        break;
+    }
+  }
+
+  ArraySetAsSeries($Sig, false);
+
+[Help]
+Организация торговли по входящему сигналу.\\
+Работает только на открытие. Рекомендуется использовать трейлинг.

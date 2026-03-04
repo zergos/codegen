@@ -1,0 +1,93 @@
+[Main]
+Name=CDVolumes
+Title=КД Объёмы
+Group=ClusterDelta
+
+[Property]
+
+[Input]
+time=row
+
+[Output]
+vol=row
+
+[InputPars]
+Start
+Size
+
+[Global]
+<procs>
+bool readCDVolumes(datetime start_time, datetime last_time, datetime &times[], int &vols[])
+{
+  string req =
+    "http://generatedata.biz/mt4/volume.php?symbol=" + 
+    Symbol() + 
+    "&timeframe=" + Period() + 
+    "&usertime=" + url_encode(TimeToStr(TimeCurrent())) +
+    "&lastopen=" + url_encode(TimeToStr(last_time)) + 
+    "&instrument=" + "AUTO" + 
+    "&lastloaded=" + url_encode(TimeToStr(start_time)) + 
+    "&mtgmt=" + "AUTO" + 
+    "&ver=" + url_encode("ver 1.4") + 
+    "&company=" + url_encode(AccountCompany());
+    
+  string datas = "";
+  if (!load_url(req, datas))
+  {
+    Print("ошибка подключения к серверу котировок");
+    return false;
+  }
+  
+  string st[];
+  StringSplit(datas, StringGetCharacter("\\n",0), st);
+  
+  if (StringTrimLeft(st[0])!="")
+  {
+    Print("ошибка ", st[0]);
+    return false;
+  }
+  
+  ArrayResize(times, ArraySize(st)-2);
+  ArrayResize(vols, ArraySize(st)-2);
+  
+  for (int i=1; i<ArraySize(st)-1; i++)
+  {
+    string s = st[i];
+    int pos = StringFind(s, ";");
+    if (pos>=0)
+    {
+      times[i-1] = StringToTime(StringSubstr(s, 0, pos));
+      vols[i-1] = StringToInteger(StringSubstr(s, pos+1));
+    }
+  }
+  
+  return true;
+}
+
+[Code]
+<gvars>
+int $vol[];
+
+<lines>
+  ArrayInit($vol, $Size);
+  CheckShift($vol);
+  
+  datetime @times[];
+  int @vols[];
+  
+  if (readCDVolumes($time[$Start], $time[$Size-1], @times, @vols))
+  {
+    for (int i=$Start; i<$Size; i++)
+      $vol[i] = 0;
+    int pos = $Size-1;
+    for (int i=0; i<ArraySize(@times) && pos>=$Start; i++)
+    {
+      if (@times[i]>$time[pos]) continue;
+      while ((pos>=$Start && pos<$Size-1 && $time[pos]!=@times[i]) || (pos==$Size-1 && @times[i]<=$time[pos-1])) pos--;
+      if (pos>=0) $vol[pos] = @vols[i];
+      pos--;
+    }
+  }
+  
+[Help]
+Считывает серию объёмов по свечам с ClusterDelta.

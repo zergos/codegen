@@ -1,0 +1,50 @@
+[Main]
+Name=VLineFigure
+Title=¬ертикаль
+Group=‘игуры
+
+[Property]
+Index=n,0,номер бара дл€ линии (справа)
+Color=color,Red,цвет фигуры (не об€зательно)
+Back=t,,рисовать как фон
+Leave=t,,оставл€ть линии
+
+[Input]
+time=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+<?Leave>
+string @names[];
+</>
+
+<lines>
+  string @name = "$name"<?Leave>+<?time>$time[$Size-1-$Index]<~>Time[$Index]</></>;
+  <?Leave>
+  ArrayResize(@names, ArraySize(@names)+1);
+  @names[ArraySize(@names)-1] = @name;
+  </>
+  
+  if (ObjectFind(0, @name)<0)
+  {
+    ObjectCreate(@name, OBJ_VLINE, 0, 0, 0);
+    <?Color>ObjectSet(@name,  OBJPROP_COLOR, $Color);</>
+    <?Back>ObjectSet(@name, OBJPROP_BACK, 1);</>
+  }
+  //ObjectSet(@name, OBJPROP_TIME1, <?time>$time[$Size-1-$Index]<~>Time[$Index]</>);
+  ObjectMove(0, @name, 0, <?time>$time[$Size-1-$Index]<~><?mql4>Time[$Index]<~>Bar.Time($Index)</></>, 0);
+  
+<deinit>
+  <?!Leave>
+  ObjectDelete("$name");
+  <~>
+  for (int i=0; i<ArraySize(@names); i++)
+    ObjectDelete(@names[i]);
+  </>
+
+[Help]
+–исует вертикальную линию по индексу временной серии (если указан), или по текущему времени.
+

@@ -1,0 +1,40 @@
+[Main]
+Name=FlowHrVol
+Title=Гориз. объёмы
+Group=Лента
+
+[Input]
+tick=row
+
+[Output]
+V=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+int plus$V[], minus$V[];
+int start$V=0;
+int size$V;
+datetime time$V[];
+
+<flow_init>
+  if ($Start==0)
+  {
+    start$V=0;
+    size$V=0;
+  }
+  int @hidx = 0;
+
+<flow_tick>  
+  @hidx = HrIndex(plus$V, minus$V, start$V, size$V, $tick.price);
+    
+  if ($tick.mode==1)
+      plus$V[@hidx] += $tick.volume;
+    else
+      minus$V[@hidx] += $tick.volume;
+  
+[Help]
+Извлечение горизонтальных объёмов.

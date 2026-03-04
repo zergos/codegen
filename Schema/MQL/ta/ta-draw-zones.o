@@ -1,0 +1,9 @@
+[Main]
+Name=TADrawZones
+Title=EA Прорисовка зон HL
+Group=ТА
+
+[Code]
+<lines>
+  TAZone::Draw();
+

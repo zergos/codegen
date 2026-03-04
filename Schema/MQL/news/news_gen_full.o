@@ -1,0 +1,24 @@
+[Main]
+#Unit
+Name=NewsGenFull
+Title=√енератор (полный)
+Group=Ќовости
+
+[Property]
+Days=n,2,на сколько дней назад считывать новости
+Size=n,100,предел новостей
+
+[Output]
+time=row,@Times
+ids=row,@Ids
+
+[OutputPars]
+Size=$Size
+
+[Code]
+<gvars>
+double @Times[$Size];
+int @Ids[$Size];
+
+<lines>            
+  NewsList(TimeCurrent(), "", $Size, @Times, @Ids);

@@ -1,0 +1,72 @@
+[Main]
+Name=OrderCross
+Title=Пресечение ордеров
+Group=Управление
+
+[Property]
+PrintError=t,1,выводить сообщения при неудаче закрытия
+
+[Input]
+Ticket1=n
+Ticket2=n
+
+[Output]
+Ticket=n,@TicketCross
+Cross=c
+Close=c
+
+[Code]
+<gvars>
+int @TicketCross;
+
+<lines>
+  bool @fine = false;
+  if (OrderSelect($Ticket1, SELECT_BY_TICKET, MODE_TRADES) && (OrderType()==OP_BUY || OrderType()==OP_SELL) && OrderCloseTime()==0)
+  {
+    if (OrderSelect($Ticket2, SELECT_BY_TICKET, MODE_TRADES) && OrderCloseTime()==0)
+    {
+      double @price=0;
+      if (OrderType()==OP_BUY) @price = Bid;
+      else if (OrderType()==OP_SELL) @price = Ask;
+      if (!OrderDelete($Ticket2))
+      {
+      <?PrintError>
+        Print("OrderDelete завершилась с ошибкой #",GetLastError());
+        return (0);
+      </>
+      }
+      @fine = true;
+      @TicketCross = $Ticket1;
+    }
+  }
+  else if (OrderSelect($Ticket2, SELECT_BY_TICKET, MODE_TRADES) && (OrderType()==OP_BUY || OrderType()==OP_SELL) && OrderCloseTime()==0)
+  {
+    if (OrderSelect($Ticket1, SELECT_BY_TICKET, MODE_TRADES) && OrderCloseTime()==0)
+    {
+      @price=0;
+      if (OrderType()==OP_BUY) @price = Bid;
+      else if (OrderType()==OP_SELL) @price = Ask;
+      if (!OrderDelete($Ticket1))
+      {
+      <?PrintError>
+        Print("OrderDelete завершилась с ошибкой #",GetLastError());
+        return (0);
+      </>
+      }
+      @fine = true;
+      @TicketCross = $Ticket2;
+    }
+  }
+  else if (OrderSelect($Ticket1, SELECT_BY_TICKET, MODE_TRADES) && OrderCloseTime()!=0
+       &&  OrderSelect($Ticket2, SELECT_BY_TICKET, MODE_TRADES) && OrderCloseTime()!=0)
+  {
+$Close.lines
+  }
+
+  if (@fine)
+  {
+$Cross.lines
+  }  
+
+[Help]
+Проверяет открытие одного ордера и синхронно закрывает второй.

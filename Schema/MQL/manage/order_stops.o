@@ -1,0 +1,33 @@
+[Main]
+Name=OrderStops
+Title=Уст. стопы ордера
+Group=Управление
+
+[Property]
+SL=n,0,стоп-лосс в пунктах
+TP=n,,тейк-профит в пунктах
+RaiseError=t,1,сообщать об ошибке открытия
+
+[Input]
+Ticket=n,@Ticket
+
+[Code]
+<lines>
+  if (OrderSelect($Ticket, SELECT_BY_TICKET, MODE_TRADES) && OrderCloseTime()==0)
+  {
+    double @spread = Ask-Bid;
+    if (OrderType()==OP_BUY)
+    {
+      <?SL>OrderModify($Ticket, 0, OrderOpenPrice()+@spread-$SL*Point, 0, 0, 0);</>
+      <?TP>OrderModify($Ticket, 0, 0, OrderOpenPrice()+$TP*Point, 0, 0);</>
+    }
+    else
+    {
+      <?SL>OrderModify($Ticket, 0, OrderOpenPrice()-@spread+$SL*Point, 0, 0, 0);</>
+      <?TP>OrderModify($Ticket, 0, 0, OrderOpenPrice()-$TP*Point, 0, 0, 0);</>
+    }
+  }
+
+[Help]
+Обновляет уровни авто-закрытия ордера.
+

@@ -1,0 +1,80 @@
+[Main]
+Title=Генератор баров (полный)
+Group=Генераторы
+Name=BarsGenFull
+
+[Property]
+Symbol=null,NULL,инструмент
+StartTime=d,,начальное время извлечения буфера
+TimeFrame=period,0,период
+Restart=t,,заполнять каждый раз полностью
+FixedSize=n,,размер массива\,отличный от глобального
+
+[Input]
+Time=row
+
+[Output]
+OPEN=row,@aOpen
+CLOSE=row,@aClose
+HIGH=row,@aHigh
+LOW=row,@aLow
+VOLUME=row,@aVolume
+TIME=row,@aTime
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=<?Restart>0<~>$Start</>
+Size=<?FixedSize>$FixedSize<~>$Size</>
+
+[Code]
+<gvars>
+<?OPEN>double @aOpen[];</>
+<?CLOSE>double @aClose[];</>
+<?HIGH>double @aHigh[];</>
+<?LOW>double @aLow[];</>
+<?VOLUME>double @aVolume[];</>
+<?TIME>datetime @aTime[];</>
+
+<init>
+//  ArraySetAsSeries(@aLow, false);
+
+<lines>
+
+  int @size = <?FixedSize>$FixedSize<~>$Size</>;
+<?OPEN>  ArrayInit(@aOpen, @size);</>
+<?CLOSE>  ArrayInit(@aClose, @size);</>
+<?HIGH>  ArrayInit(@aHigh, @size);</>
+<?LOW>  ArrayInit(@aLow, @size);</>
+<?VOLUME>  ArrayInit(@aVolume, @size);</>
+<?TIME>  ArrayInit(@aTime, @size);</>
+
+  int @shift = 0;
+  <?StartTime>@shift = iBarShift($Symbol, $TimeFrame, D'$StartTime');
+  <~>
+    <?Time>@shift = iBarShift($Symbol, $TimeFrame, $Time[$Size-1]);
+    <~>@shift = iBarShift($Symbol, $TimeFrame, Time[0]);</>
+  </>
+
+  if (@shift+@size>iBars($Symbol, $TimeFrame))
+  {
+    Print("Not enought Bars for timeframe: ",@shift+$Size," > ",iBars($Symbol, $TimeFrame));
+    return(0);
+  }
+
+  int @n;
+  for (@n=0; @n<@size; @n++)
+  {
+    <?OPEN>@aOpen[@n] = iOpen($Symbol, $TimeFrame, @size-1-@n+@shift);</>
+    <?CLOSE>@aClose[@n] = iClose($Symbol, $TimeFrame, @size-1-@n+@shift);</>
+    <?HIGH>@aHigh[@n] = iHigh($Symbol, $TimeFrame, @size-1-@n+@shift);</>
+    <?LOW>@aLow[@n] = iLow($Symbol, $TimeFrame, @size-1-@n+@shift);</>
+    <?VOLUME>@aVolume[@n] = iVolume($Symbol, $TimeFrame, @size-1-@n+@shift);</>
+    <?TIME>@aTime[@n] = iTime($Symbol, $TimeFrame, @size-1-@n+@shift);</>
+  }
+
+[Help]
+Подготавливает буфер с любой серией за любой период.\\
+Если **StartTime** не задан - обязателен входящий параметр **Time** для определения начала отсчёта.

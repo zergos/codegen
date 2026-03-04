@@ -1,0 +1,290 @@
+[Main]
+Modular
+Title=Индикатор
+Group=Программы
+Name=Indicator
+
+[Property]
+MinBufferSize=n,128,мин. размер буфера
+MaxBufferSize=n,1024,макс. размер буфера
+MaxBufferPeriod=bufperiod,,задать период для авто-расчёта размера буфера
+MaxBufferPeriodCount=n,1,количество периодов
+PeriodStart=s,,точная дата для начала
+WaitNewBar=t,,обновлять индикатор только на каждом новом баре
+FullRedraw=t,,полностью перерисовывать на каждом тике
+indicator_chart_window=t,,выводить индикатор в окно графика
+indicator_separate_window=t,,выводить индикатор в отдельное окно
+indicator_buffers=n,,количество буферов для расчета индикатора\, максимум до 8
+
+Copyright=s,,название компании-производителя
+link=s,,ссылка на сайт компании-производителя
+Version=s,1.0
+stacksize=n,,размер стека для рекурсивных вызовов
+indicator_minimum=f,,нижнее ограничение шкалы отдельного окна индикатора
+indicator_maximum=f,,верхнее ограничение шкалы отдельного окна индикатора
+indicator_levelcolor=color,,цвет горизонтальных уровней индикатора
+indicator_levelwidth=n,,толщина горизонтальных уровней индикатора
+indicator_levelstyle=buf_style,,стиль горизонтальных уровней индикатора
+strict=t,1,новый режим компилятора
+
+RealBuffers=n,,буферов для вычисления
+ShortName=s,,короткое имя в подокне индикатора
+
+# UseTrace=t
+
+[Output]
+Events=c
+Trace=c
+After=c
+
+[OutputPars]
+Size=GlobalSize
+Start=GlobalStart
+Trace=$UseTrace
+
+[Code]
+<top0>
+//+------------------------------------------------------------------+
+//| $name                                                            
+//| $copyright                                                       
+//| $link
+//+------------------------------------------------------------------+
+
+#property version "$Version"
+<?Copyright>#property copyright "$Copyright"</>
+<?link>#property link "$link"</>
+<?stacksize>#property stacksize $stacksize</>
+<?indicator_chart_window>#property indicator_chart_window</>
+<?indicator_separate_window>#property indicator_separate_window</>
+<?indicator_buffers>#property indicator_buffers $indicator_buffers</>
+<?indicator_minimum>#property indicator_minimum $indicator_minimum</>
+<?indicator_maximum>#property indicator_maximum $indicator_maximum</>
+<?indicator_levelcolor>#property indicator_levelcolor $indicator_levelcolor</>
+<?indicator_levelwidth>#property indicator_levelwidth $indicator_levelwidth</>
+<?indicator_levelstyle>#property indicator_levelstyle $indicator_levelstyle</>
+<?show_confirm>#property show_confirm</>
+<?show_inputs>#property show_inputs</>
+<?strict>#property strict</>
+
+<gvars>
+int GlobalSize, GlobalStart;
+int MaxGlobalSize;
+bool Shifted, NewBar;
+int @LastSize;
+datetime @LastTime;
+<?Trace>
+bool traced = false;
+int trace_index;
+</>
+
+<procs>
+template <typename T>
+void CheckShift(T& a[])
+{
+  if (Shifted)
+    for (int i=0; i<ArraySize(a)-1; i++) a[i] = a[i+1];
+}
+
+template <typename T>
+void ArrayInit(T &a[], int NewSize=0)
+{
+  if (NewSize==0) NewSize = GlobalSize;
+  if (ArraySize(a)<NewSize)
+  {
+    int size = ArraySize(a);
+    ArrayResize(a, NewSize);
+    for (int n=size; n<NewSize; n++)
+      a[n] = 0;
+  }
+  if (GlobalStart==0) ArrayInitialize(a, 0);
+}
+
+<?Events>
+void OnChartEvent(const int event_id, const long& lparam, const double& dparam, const string& sparam)
+{
+$Events.lines
+}
+</>
+
+<?Trace>
+//void TraceDeinit()
+//{
+//$Trace.deinit
+//}
+</>
+
+<init>
+  <?RealBuffers>IndicatorBuffers($RealBuffers);</>
+  <?ShortName>IndicatorShortName("$ShortName");</>
+  <?MaxBufferSize>
+    MaxGlobalSize = $MaxBufferSize;
+    GlobalSize = $MaxBufferSize;
+  <~>
+    <?MaxBufferPeriod>
+      <?MaxBufferPeriod=Month>
+      MaxGlobalSize = iBarShift(NULL, 0, CurTime()-30*86400*$MaxBufferPeriodCount);
+      </>
+      <?MaxBufferPeriod=Week>
+      MaxGlobalSize = iBarShift(NULL, 0, CurTime()-7*86400*$MaxBufferPeriodCount);
+      </>
+      <?MaxBufferPeriod=Day>
+      MaxGlobalSize = iBarShift(NULL, 0, CurTime()-86400*$MaxBufferPeriodCount);
+      </>
+      GlobalSize = MaxGlobalSize;
+      <?debug>Print("buffer size: "+GlobalSize);</>
+    <~>
+      <?PeriodStart>
+      MaxGlobalSize = iBarShift(NULL, 0, $PeriodStart);
+      GlobalSize = MaxGlobalSize;
+      <~>
+      MaxGlobalSize = Bars;
+      GlobalSize = Bars;
+      </>
+    </>
+  </>
+  GlobalStart = 0;
+<?After>
+$After.init
+</>
+  
+<lines>
+<?CTRL>
+<?MinBufferSize>
+  if (Bars<$MinBufferSize)
+  {
+    Print("Not enough Bars ($MinBufferSize>",Bars,")");
+    return(-1);
+  }
+<~>
+  if (Bars==0) {Print("No Bars"); return(-1);}
+</>
+
+<?MaxBufferSize>
+  GlobalSize = MathMin(Bars, $MaxBufferSize);
+<~>
+  <?MaxBufferPeriod>
+  GlobalSize = MathMin(Bars, MaxGlobalSize);
+  <~>
+    <?PeriodStart>
+    GlobalSize = MathMin(Bars, iBarShift(NULL, 0, $PeriodStart));
+    <~>
+    GlobalSize = Bars;
+    </>
+  </>
+</>
+<?FullRedraw>
+  GlobalStart = 0;
+  Shifted = false;
+<~>
+  // calc newbar
+  datetime @curTime = iTime(NULL,0,0);
+  NewBar = false;
+  if (@LastTime==0 || IndicatorCounted()==0 || @curTime>@LastTime)
+  {
+    NewBar = true;
+    @LastTime = @curTime;
+  }
+  
+  if (@LastSize==0 || IndicatorCounted()==0)
+  {
+    GlobalStart = 0;
+    Shifted = false;
+  }
+  else
+  {
+    Shifted = @LastSize<GlobalSize?false:NewBar;
+    GlobalStart = GlobalSize-1-(int)NewBar;
+  }
+  @LastSize = GlobalSize;
+
+  <?WaitNewBar>
+  if (!NewBar) return (0);
+  </>
+
+</>
+  
+<?debug>
+  Print("bars: ",Bars," counted: ",IndicatorCounted());
+  Print("start: ", GlobalStart, " size: ", GlobalSize," shifted: ",Shifted?"true":"false");
+</>
+</>
+
+<?Trace>
+  trace_index = 0;
+$CTRL.lines
+  if (GlobalStart==0)
+  {
+    trace_index = 0;
+//    if (traced) TraceDeinit();
+//$Trace.init
+    traced = true;
+  }
+  else
+    trace_index = GlobalStart;
+  while (trace_index<GlobalSize)
+  {
+    int ti = trace_index;
+    int ii = GlobalSize-1-ti;
+    GlobalStart = trace_index;
+$Trace.lines
+    trace_index++;
+  }
+</>
+
+<?After>
+$After.lines
+</>
+
+<deinit>
+<?Trace>
+  //if (traced) TraceDeinit();
+</>
+<?After>
+$After.deinit
+</>
+
+[Template]
+$top0
+$top
+
+//---- parameters
+$gvars
+
+//---- user functions
+$procs
+
+//+------------------------------------------------------------------+
+//| Custom indicator initialization function                         |
+//+------------------------------------------------------------------+
+int init()
+{
+$init
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator deinitialization function                       |
+//+------------------------------------------------------------------+
+int deinit()
+{
+$deinit
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int start()
+{
+$lines
+$endlines
+  return(0);
+}
+//+------------------------------------------------------------------+
+
+$attach
+
+[Help]
+Объект можно использовать один раз в одной схеме.

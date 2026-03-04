@@ -1,0 +1,18 @@
+[Main]
+Unit
+Title=Линия индикатора
+Group=Индикатор
+Name=IndiLine
+
+[Property]
+indicator_color=color,,цвет для вывода линии
+indicator_width=n,,толщина линии
+indicator_style=buf_style,,стиль линии
+indicator_level=f,,горизонтальный уровень
+
+[Code]
+<top>
+<?indicator_color>#property indicator_color$index1 $indicator_color</>
+<?indicator_width>#property indicator_width$index1 $indicator_width</>
+<?indicator_style>#property indicator_style$index1 $indicator_style</>
+<?indicator_level>#property indicator_level$index1 $indicator_level</>

@@ -1,0 +1,30 @@
+[Main]
+Name=ArithNum
+Title=Вычисление (число)
+Group=Арифметика
+Size=4
+
+[Property]
+Operation=oper,+
+Value=f,0
+InPoints=t,,значение в пунктах
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++)
+    $out[@i] = $in[@i]$Operation$Value<?InPoints>*Point</>;

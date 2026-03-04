@@ -1,0 +1,302 @@
+[Main]
+Unit
+Name=FlowUnit
+Title=Модуль
+Group=Лента
+
+[Property]
+UseFlow=t,1,загружать фьючерсную ленту
+UseTicks=t,,загружать форекс тики
+UseAddTicks=t,,добавлять тики в БД
+
+[Global]
+<top>
+#include "flow.mqh"
+
+<attach>
+=flow.mqh
+#include <Files\FilePipe.mqh>
+
+string flowServer;
+CFilePipe flowPipe;
+
+struct TsymRes
+{
+  int sid;
+  bool inverse, inv2, inv3, inv4;
+  double fwd, ticksize;
+};
+
+<?UseFlow>
+struct TtickRes
+{ 
+  double time;
+  int shift;
+  int volume;
+  double price;
+  int mode;
+  int id;
+  double fwd;
+};
+
+struct flowReq
+{
+  TtickRes ticks[];
+  int pos;
+};
+</>
+
+<?UseTicks>
+struct TtickForex
+{
+  double time;
+  double ask;
+  double bid;
+  int id;
+};
+
+struct forexReq
+{
+  TtickForex ticks[];
+  int pos;
+};
+</>
+
+double mql2d(datetime d)
+{
+  return 1.0*d/86400+25569;
+}
+
+datetime d2mql(double d)
+{
+  return floor((d-25569)*86400);
+}
+
+bool getFlowPipe()
+{
+  if (flowPipe.Open("\\\\\\\\"+flowServer+"\\\\pipe\\\\flow-pipe", FILE_READ|FILE_WRITE|FILE_BIN|FILE_ANSI) == INVALID_HANDLE) return false;
+  return true;
+}
+
+bool FlowConnect()
+{
+  int handle = FileOpen("flow.cfg", FILE_READ|FILE_CSV|FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_COMMON, ";");
+  if (handle == INVALID_HANDLE) return false;
+  flowServer = FileReadString(handle);
+  FileClose(handle);
+  if (!getFlowPipe()) return false;
+  uchar cmd = 255;
+  uchar res;
+  if (flowPipe.WriteInteger(cmd)==0) return false;
+  if (!flowPipe.ReadInteger(res)) return false;
+  flowPipe.Close();
+  return res==255;
+}
+
+<?UseFlow>
+int FlowSymbolIDInfo(string symbol, bool &_inverse, double &_fwd, double &ticksize)
+{
+  if (!getFlowPipe()) return -1;
+  uchar cmd = 0;
+  uchar res;
+  TsymRes sym;
+  flowPipe.WriteInteger(cmd);
+  ushort len = StringLen(symbol);
+  flowPipe.WriteInteger(len);
+  
+  uchar s[];
+  ArrayResize(s, StringLen(symbol));
+  for (int n=0; n<StringLen(symbol); n++)
+    s[n] = StringGetChar(symbol, n);
+  flowPipe.WriteArray(s);
+
+  if (!flowPipe.ReadInteger(res)) return -1;
+  if (res==0) return -1;
+
+  if (flowPipe.ReadStruct(sym)==0) return -1;
+  flowPipe.Close();
+
+  _inverse = sym.inverse;
+  _fwd = sym.fwd;
+  ticksize = sym.ticksize;
+  return sym.sid;
+}
+
+int FlowRequestTicks(int sid, datetime time, flowReq &req)
+{
+  req.pos = -1;
+  if (!getFlowPipe()) return -1;
+  uchar cmd = 1;
+  
+  flowPipe.WriteInteger(cmd);
+  flowPipe.WriteInteger(sid);
+  flowPipe.WriteDouble(mql2d(time));
+  
+  int count;
+  if (!flowPipe.ReadInteger(count)) return -1;
+  ArrayResize(req.ticks, count);
+  if (flowPipe.ReadArray(req.ticks)==0) return -1;
+  flowPipe.Close();
+  req.pos = 0;
+  return count;
+}
+
+int FlowRequestTicksFast(int sid, datetime time, int period, flowReq &req)
+{
+  req.pos = -1;
+  if (!getFlowPipe()) return -1;
+  uchar cmd = 2;
+  
+  flowPipe.WriteInteger(cmd);
+  flowPipe.WriteInteger(sid);
+  flowPipe.WriteDouble(mql2d(time));
+  flowPipe.WriteInteger(period);
+  
+  int count;
+  if (!flowPipe.ReadInteger(count)) return -1;
+  ArrayResize(req.ticks, count);
+  if (flowPipe.ReadArray(req.ticks)==0) return -1;
+  flowPipe.Close();
+  req.pos = 0;
+  return count;
+}
+
+int FlowRequestTicksByID(int sid, int last_id, flowReq &req)
+{
+  req.pos = -1;
+  if (!getFlowPipe()) return -1;
+  uchar cmd = 3;
+  
+  flowPipe.WriteInteger(cmd);
+  flowPipe.WriteInteger(sid);
+  flowPipe.WriteInteger(last_id);
+  
+  int count;
+  if (!flowPipe.ReadInteger(count)) return -1;
+  ArrayResize(req.ticks, count);
+  if (flowPipe.ReadArray(req.ticks)==0) return -1;
+  flowPipe.Close();
+  req.pos = 0;
+  return count;
+}
+
+bool FlowReadTick(flowReq &req, datetime &time, double &price, int &shift, int &volume, int &mode, int &id, double &_fwd)
+{
+  if (req.pos<0 || req.pos == ArraySize(req.ticks)) return false;
+  
+  time = d2mql(req.ticks[req.pos].time);
+  price = req.ticks[req.pos].price;
+  shift = req.ticks[req.pos].shift;
+  volume = req.ticks[req.pos].volume;
+  mode = req.ticks[req.pos].mode;
+  id = req.ticks[req.pos].id;
+  _fwd = req.ticks[req.pos].fwd;
+  req.pos++;
+  return true;
+}
+</>
+
+<?UseTicks>
+int FlowSymbolID(string symbol, double &_fwd)
+{
+  if (!getFlowPipe()) return -1;
+  uchar cmd = 0;
+  uchar res;
+  TsymRes sym;
+  flowPipe.WriteInteger(cmd);
+  ushort len = StringLen(symbol);
+  flowPipe.WriteInteger(len);
+  
+  uchar s[];
+  ArrayResize(s, StringLen(symbol));
+  for (int n=0; n<StringLen(symbol); n++)
+    s[n] = StringGetChar(symbol, n);
+  flowPipe.WriteArray(s);
+
+  if (!flowPipe.ReadInteger(res)) return -1;
+  if (res==0) return -1;
+
+  if (flowPipe.ReadStruct(sym)==0) return -1;
+  flowPipe.Close();
+
+  _fwd = sym.fwd;
+  
+  return sym.sid;
+}
+
+int ForexRequestTicks(int sid, datetime time, forexReq &req)
+{
+  req.pos = -1;
+  if (!getFlowPipe()) return -1;
+  uchar cmd = 4;
+  
+  flowPipe.WriteInteger(cmd);
+  flowPipe.WriteInteger(sid);
+  flowPipe.WriteDouble(mql2d(time));
+  
+  int count;
+  if (!flowPipe.ReadInteger(count)) return -1;
+  ArrayResize(req.ticks, count);
+  if (flowPipe.ReadArray(req.ticks)==0) return -1;
+  flowPipe.Close();
+  req.pos = 0;
+  return count;
+}
+
+int ForexRequestTicksByID(int sid, int last_id, forexReq &req)
+{
+  req.pos = -1;
+  if (!getFlowPipe()) return -1;
+  uchar cmd = 5;
+  
+  flowPipe.WriteInteger(cmd);
+  flowPipe.WriteInteger(sid);
+  flowPipe.WriteInteger(last_id);
+  
+  int count;
+  if (!flowPipe.ReadInteger(count)) return -1;
+  ArrayResize(req.ticks, count);
+  if (flowPipe.ReadArray(req.ticks)==0) return -1;
+  flowPipe.Close();
+  req.pos = 0;
+  return count;
+}
+
+bool ForexReadTick(forexReq &req, datetime &time, double &ask, double &bid, int &id, double &fulltime)
+{
+  if (req.pos<0 || req.pos == ArraySize(req.ticks)) return false;
+  
+  time = d2mql(req.ticks[req.pos].time);
+  ask = req.ticks[req.pos].ask;
+  bid = req.ticks[req.pos].bid;
+  id = req.ticks[req.pos].id;
+  fulltime = req.ticks[req.pos].time;
+  req.pos++;
+  return true;
+}
+</>
+
+<?UseAddTicks>
+#import "flow_get.dll"
+bool ForexConnect();
+int FlowSymbolID(string symbol);
+void ForexAddTick(int sid, double ask, double bid);
+#import
+</>
+
+<init>
+  if (!FlowConnect())
+  {
+    Alert("ошибка подключения к котировочному серверу");
+    return(1);
+  }
+  <?UseAddTicks>
+  if (!ForexConnect())
+  {
+    Alert("ошибка подключения к БД");
+    return(1);
+  }
+  </>
+
+[Help]
+Модуль ленты.

@@ -1,0 +1,98 @@
+[Main]
+Custom
+Title=Буфер свечей
+Group=Индикатор
+Name=BarBuffer
+
+[Property]
+ColorBull=color,,Цвет бычьей свечи
+ColorBear=color,,Цвет медвежьей свечи
+Width=n,,ширина линии
+EmptyValue=f,,пустое значение (подавляет отображение)
+DrawBegin=n,,порядковый номер бара от начала данных\, с которого должна начинаться отрисовка указанной линии индикатора
+Label=s,,имя линии индикатора для отображения информации в окне DataWindow и всплывающей подсказке
+Shift=n,,смещене линии индикатора относительно начала графика
+ShiftPrice=n,,смещение цены в пп
+Index0=n,0
+Index1=n,1
+Index2=n,2
+Index3=n,3
+Index4=n,4
+
+[Input]
+CTRL=c
+open=row
+close=row
+high=row
+low=row
+
+[InputPars]
+Start
+Size
+TimeShift
+
+[Code]
+<top>
+#property indicator_color$Index1 $ColorBear
+<?Label>#property indicator_label$Index1 $Label</>
+#property indicator_width$Index1 1
+
+#property indicator_color$Index2 $ColorBull
+<?Label>#property indicator_label$Index2 $Label</>
+#property indicator_width$Index2 1
+
+#property indicator_color$Index3 $ColorBear
+<?Label>#property indicator_label$Index3 $Label</>
+#property indicator_width$Index3 $Width
+
+#property indicator_color$Index4 $ColorBull
+<?Label>#property indicator_label$Index4 $Label</>
+#property indicator_width$Index4 $Width
+
+<gvars>
+double h$name[];
+double l$name[];
+double o$name[];
+double c$name[];
+
+<init>
+  SetIndexBuffer($Index0, h$name);
+  SetIndexStyle($Index0, DRAW_HISTOGRAM);
+<?EmptyValue>  SetIndexEmptyValue($Index0,$EmptyValue);</>
+<?DrawBegin>  SetIndexDrawBegin($Index0, $DrawBegin);</>
+<?Shift>  SetIndexShift($Index0, $Shift);</>
+  SetIndexBuffer($Index1, l$name);
+  SetIndexStyle($Index1, DRAW_HISTOGRAM);
+<?EmptyValue>  SetIndexEmptyValue($Index1,$EmptyValue);</>
+<?DrawBegin>  SetIndexDrawBegin($Index1, $DrawBegin);</>
+<?Shift>  SetIndexShift($Index1, $Shift);</>
+  SetIndexBuffer($Index2, o$name);
+  SetIndexStyle($Index2, DRAW_HISTOGRAM);
+<?EmptyValue>  SetIndexEmptyValue($Index2,$EmptyValue);</>
+<?DrawBegin>  SetIndexDrawBegin($Index2, $DrawBegin);</>
+<?Shift>  SetIndexShift($Index2, $Shift);</>
+  SetIndexBuffer($Index3, c$name);
+  SetIndexStyle($Index3, DRAW_HISTOGRAM);
+<?EmptyValue>  SetIndexEmptyValue($Index3,$EmptyValue);</>
+<?DrawBegin>  SetIndexDrawBegin($Index3, $DrawBegin);</>
+<?Shift>  SetIndexShift($Index3, $Shift);</>
+
+<lines>
+  if ($Start==0)
+  {
+    ArrayInitialize(h$name, 0);
+    ArrayInitialize(l$name, 0);
+    ArrayInitialize(o$name, 0);
+    ArrayInitialize(c$name, 0);
+  }
+  for (int i=$Start; i<$Size; i++)
+  {
+    o$name[$Size-1-i<?TimeShift>+$TimeShift</>] = <?ShiftPrice>$ShiftPrice*Point+</>$open[i];
+    c$name[$Size-1-i<?TimeShift>+$TimeShift</>] = <?ShiftPrice>$ShiftPrice*Point+</>$close[i];
+    h$name[$Size-1-i<?TimeShift>+$TimeShift</>] = <?ShiftPrice>$ShiftPrice*Point+</>($open[i]>$close[i]?$high[i]:$low[i]);
+    l$name[$Size-1-i<?TimeShift>+$TimeShift</>] = <?ShiftPrice>$ShiftPrice*Point+</>($open[i]>$close[i]?$low[i]:$high[i]);
+  }
+    
+[Help]
+Буфер индикатора свечей\\
+Проверить, чтобы значение индикатора **indicator_buffers** соответствовало количеству буферов +4

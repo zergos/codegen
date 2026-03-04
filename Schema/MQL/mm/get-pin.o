@@ -1,0 +1,33 @@
+[Main]
+Name=GetPin
+Title=Привязка
+Group=Сделки
+Size=4
+
+[Property]
+InitOnce=t,1
+
+[Output]
+pin=n,@pin
+
+[Code]
+<gvars>
+CHubOrder *@pin;
+
+<init>
+  <?InitOnce>@pin = NULL;</>
+  
+<lines>
+  <?!InitOnce>@pin = NULL;</>
+
+<sync>
+  if (save)
+    syncWrite("$name", @pin.index());
+  else
+  {
+    int i; syncRead("$name", i);
+    @pin = firstOrder.byIndex(i);
+  }
+  
+[Help]
+Получает привязку для работы отложенников.

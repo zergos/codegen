@@ -1,0 +1,36 @@
+[Main]
+Choice
+Name=HedgeLoss
+Title=Хэдж сделки
+Group=Сделки
+
+[Property]
+Percent=n,90,процент достижения цели для БУ
+CheckHL=t,,проверять High/Low вместо Ask/Bid
+
+[Output]
+hedge=c
+
+[Code]
+<lines>
+  <?hedge>bool @hedged = false;</>
+  for (int i=0; i<ArraySize(hub); i++)
+    if (hub[i].state==HUB_ACTIVE && hub[i].ftp!=0)
+    {
+      if (hub[i].cmd == OP_BUY && (hub[i].ftp-<?CheckHL>High[0]<~>Bid</>)/(hub[i].ftp-hub[i].price)*100<100-$Percent
+       || hub[i].cmd == OP_SELL && (<?CheckHL>Low[0]<~>Ask</>-hub[i].ftp)/(hub[i].price-hub[i].ftp)*100<100-$Percent)
+      {
+        OrderSetSL(i, hub[i].price);
+        <?hedge>@hedged = true;</>
+      }
+    }
+    
+  <?hedge>
+  if (@hedged)
+  {
+$hedge.lines
+  }
+  </>
+
+[Help]
+Переводит сделку в БУ при достижении тейк-профита на **Percent** процентов.

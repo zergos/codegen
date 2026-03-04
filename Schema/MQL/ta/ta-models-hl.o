@@ -1,0 +1,14 @@
+[Main]
+Name=TAModelsHL
+Title=EA Отработка моделей HL
+Group=ТА
+
+[Code]
+<lines>
+  ForEach(TABaseModel, cur)
+    cur.ProcessTick();
+  TAZone::ProcessTick();
+  
+[Help]
+Запуск тиковых процедур отработки моделей и зон.
+

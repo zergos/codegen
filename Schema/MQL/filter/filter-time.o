@@ -1,0 +1,39 @@
+[Main]
+Choice
+Group=Фильтры
+Title=Фильтр по часам
+Name=FilterTime
+
+[Uses]
+common\date-utils
+
+[Property]
+CurTime=s,CurTime()
+StartTime=s,"09:00",начальное время
+EndTime=n,"20:00",конечное время
+Enabled=t,1
+
+[Output]
+work=c
+stop=c
+
+[Code]
+<lines>
+<?Enabled>
+  if (TimeInside($CurTime, $StartTime, $EndTime))
+  {
+  <?debug>Print("time passed");</>
+$work.lines
+  }
+<?stop>
+  else
+  {
+$stop.lines
+  }
+</>
+<~>
+$work.lines
+</>
+  
+[Help]
+Продолжает выполнение только при попадании текущего времени в диапозон.

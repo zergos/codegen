@@ -1,0 +1,115 @@
+[Main]
+Name=HrDraw
+Title=График
+Group=Объёмы
+
+[Property]
+Coef=n,1,понижающий коэффициент ширины графов
+Shift=n,0,сдвиг графика относительно правого края
+ShiftRight=t,,сдвиг вправо
+MinusColor=color,Red
+PlusColor=color,Green
+CheckVisual=t,,проверять визуализатор тестера
+
+[Input]
+V=row
+time=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+int @fixsize = 0;
+int @fixstart = 0;
+
+<lines>
+  <?CheckVisual>if (IsVisualMode()) {</>
+  if (start$V>@fixstart) @fixstart = start$V;
+  if (size$V>@fixsize) @fixsize = size$V;
+
+  for (int @i=0; @i<size$V; @i++)
+  {
+    string @name = "minus$name"+(start$V-@i);
+    if (ObjectFind(0,@name)==-1)
+      ObjectCreate(@name, OBJ_RECTANGLE, 0, 0, 0, 0, 0);
+        
+    //ObjectSet(@name, OBJPROP_TIME1, $time[$Size-1-$Shift-minus$V[@i]/$Coef]);
+    ObjectSet(@name, OBJPROP_PRICE1, (start$V-@i)*HrVolStep*Point);
+    //ObjectSet(@name, OBJPROP_TIME2, $time[$Size-1-$Shift]);
+    ObjectSet(@name, OBJPROP_PRICE2, (start$V-@i-1)*HrVolStep*Point);
+    
+    ObjectSet(@name, OBJPROP_COLOR, $MinusColor);
+    
+    @name = "plus$name"+(start$V-@i);
+    if (ObjectFind(0,@name)==-1)
+      ObjectCreate(@name, OBJ_RECTANGLE, 0, 0, 0);
+      
+    //ObjectSet(@name, OBJPROP_TIME1, $time[$Size-1-$Shift+plus$V[@i]/$Coef]);
+    ObjectSet(@name, OBJPROP_PRICE1, (start$V-@i)*HrVolStep*Point);
+    //ObjectSet(@name, OBJPROP_TIME2, $time[$Size-1-$Shift]);
+    ObjectSet(@name, OBJPROP_PRICE2, (start$V-@i-1)*HrVolStep*Point);
+    
+    ObjectSet(@name, OBJPROP_COLOR, $PlusColor);
+  }
+  
+  // align all
+  <?ShiftRight>
+  int @secs = PeriodSeconds();
+  </>
+  for (int @i=0; @i<@fixsize; @i++)
+  {
+    string @name = "minus$name"+(start$V-@i);
+    if (ObjectFind(0,@name)>=0)
+    {
+      <?ShiftRight>
+      ObjectSet(@name, OBJPROP_TIME1, $time[$Size-1]+($Shift-minus$V[@i]/$Coef)*@secs);
+      ObjectSet(@name, OBJPROP_TIME2, $time[$Size-1]+$Shift*@secs);
+      <~>
+      ObjectSet(@name, OBJPROP_TIME1, $time[$Size-1-$Shift-minus$V[@i]/$Coef]);
+      ObjectSet(@name, OBJPROP_TIME2, $time[$Size-1-$Shift]);
+      </>
+      ObjectSetString(0, @name, OBJPROP_TEXT, minus$V[@i]);
+      //double @time2 = ObjectGet(@name, OBJPROP_TIME2);
+      //double @shift = $time[$Size-1-$Shift] - @time2;
+      //if (@shift>0)
+      //{
+      //  ObjectSet(@name, OBJPROP_TIME2, @time2+@shift);
+      //  ObjectSet(@name, OBJPROP_TIME1, ObjectGet(@name, OBJPROP_TIME1)+@shift);
+      //}
+    }
+    @name = "plus$name"+(start$V-@i);
+    if (ObjectFind(0,@name)>=0)
+    {
+      <?ShiftRight>
+      ObjectSet(@name, OBJPROP_TIME1, $time[$Size-1]+($Shift+plus$V[@i]/$Coef)*@secs);
+      ObjectSet(@name, OBJPROP_TIME2, $time[$Size-1]+$Shift*@secs);
+      <~>
+      ObjectSet(@name, OBJPROP_TIME1, $time[$Size-1-$Shift+plus$V[@i]/$Coef]);
+      ObjectSet(@name, OBJPROP_TIME2, $time[$Size-1-$Shift]);
+      </>
+      ObjectSetString(0, @name, OBJPROP_TEXT, plus$V[@i]);
+      //@time2 = ObjectGet(@name, OBJPROP_TIME2);
+      //@shift = floor($time[0])-$Shift*@sec - @time2;
+      //if (@shift>0)
+      //{
+      //  ObjectSet(@name, OBJPROP_TIME2, @time2+@shift);
+      //  ObjectSet(@name, OBJPROP_TIME1, ObjectGet(@name, OBJPROP_TIME1)+@shift);
+      //}
+    }
+  }
+  <?CheckVisual>}</>
+
+<deinit>
+  <?CheckVisual>if (IsVisualMode()) {</>
+  for (int @i=0; @i<@fixsize; @i++)
+  {
+    string @name = "minus$name"+(@fixstart-@i);
+    if (ObjectFind(0,@name)>=0) ObjectDelete(0,@name);
+    @name = "plus$name"+(@fixstart-@i);
+    if (ObjectFind(0,@name)>=0) ObjectDelete(0,@name);
+  }
+  <?CheckVisual>}</>
+
+[Help]
+Выводит на график горизонтальные объёмы.

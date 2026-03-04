@@ -1,0 +1,105 @@
+[Main]
+Name=HistoryWriter
+Title=Запись истории
+Group=Файлы
+
+[Property]
+Prefix=s,,префикс символа
+Mark=s,extra,дополнительный постфикс к названию истории
+Period=n,2,любое значение периода
+RealClose=t,1,последняя Close соответствует Bid
+Online=t,1,эмуляция с отправлением тиков
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+volume=row
+time=row,,d
+
+[InputPars]
+Start
+Size
+
+[Global]
+<top>
+#include <WinUser32.mqh>
+
+#import "user32.dll"
+uint RegisterWindowMessageW(string);
+#import
+
+[Code]
+<gvars>
+int @file = -1;
+ulong @last_pos, @start_pos;
+MqlRates @rates;
+int @hwnd;
+<?Online>
+uint @MT4InternalMsg;
+</>
+
+<init>
+//---- History header
+  int      file_version=401;
+  string   c_copyright;
+  string   c_symbol="$Prefix"+Symbol();
+  int      i_digits=Digits;
+  int      i_period = $Period;
+  int      i_unused[13];
+   
+  @file = FileOpenHistory("$Prefix"+Symbol()+"$Mark.hst",FILE_BIN|FILE_WRITE|FILE_SHARE_WRITE|FILE_SHARE_READ|FILE_ANSI);
+  if(@file<0) return -1;
+  c_copyright="(C)opyright 2003, MetaQuotes Software Corp.";
+  ArrayInitialize(i_unused,0);
+//--- write history file header
+  FileWriteInteger(@file,file_version,LONG_VALUE);
+  FileWriteString(@file,c_copyright,64);
+  FileWriteString(@file,c_symbol,12);
+  FileWriteInteger(@file,i_period,LONG_VALUE);
+  FileWriteInteger(@file,i_digits,LONG_VALUE);
+  FileWriteInteger(@file,0,LONG_VALUE);
+  FileWriteInteger(@file,0,LONG_VALUE);
+  FileWriteArray(@file,i_unused,0,13);
+  @start_pos = FileTell(@file);
+
+  @hwnd = WindowHandle("$Prefix"+Symbol(), $Period);
+  <?Online>
+  @MT4InternalMsg = RegisterWindowMessageW("MetaTrader4_Internal_Message");
+  </>
+
+<lines>
+  if ($Start==0)
+  {
+    <?debug>Print("to history: ",$Size);</>
+    @last_pos = @start_pos;
+  }
+  <?debug>else Print("to history: ", $Size-$Start);</>
+  
+  FileSeek(@file, @last_pos, SEEK_SET);
+  
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    @last_pos = FileTell(@file);
+    @rates.time = $time[@i];
+    @rates.open = $open[@i];
+    @rates.close = <?RealClose>@i<$Size-1?$close[@i]:Close[0]<~>$close[@i]</>;
+    @rates.high = $high[@i];
+    @rates.low = $low[@i];
+    @rates.spread = (Ask-Bid)/Point;
+    <?volume>@rates.tick_volume = (long)$volume[@i];</>
+    FileWriteStruct(@file, @rates);
+  }
+  FileFlush(@file);
+          
+  if (@hwnd!=0) PostMessageA(@hwnd,WM_COMMAND,33324,0);
+  <?Online>
+  if (@hwnd!=0 && @MT4InternalMsg!=0) PostMessageA(@hwnd, @MT4InternalMsg, 2, 1);
+  </>
+  
+<deinit>
+  if (@file>=0) FileClose(@file);
+  
+[Help]
+Запись истории. Требуется проследить, чтобы не выполнялась повторно.

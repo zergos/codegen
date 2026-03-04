@@ -1,0 +1,117 @@
+[Main]
+Name=ForexPower
+Title=—иловые импульсы
+Group=Ћента
+
+[Property]
+UseAbs=t,1,накапливать общий импульс
+UseMax=t,1,не суммировать\, а вы€вл€ть максимальный импульс
+
+[Input]
+tick=n
+
+[Output]
+max=row,@pmax
+min=row,@pmin
+
+[InputPars]
+Start
+Size
+
+[Global]
+<procs>
+color powerColor(int power)
+{
+  if (power>=0)
+  {
+    if (power<=2000) return 0x4000 + power*0xBF/2000*0x100;
+    else if (power<=6000) return 0x404000 + (power-2000)*0xBF/4000*0x10000 + (power-2000)*0xBF/4000*0x100;
+    else return 0x4040 + MathMin(power-6000, 12000)*0xBF/12000 + MathMin(power-6000, 12000)*0xBF/12000*0x100;
+  }
+  else
+  {
+    power = -power;
+    if (power<=2000) return 0x40 + power*0xBF/2000;
+    else if (power<=6000) return 0x400040 + (power-2000)*0xBF/4000*0x10000 + (power-2000)*0xBF/4000;
+    else return 0x4040 + MathMin(power-6000, 12000)*0xBF/12000 + MathMin(power-6000, 12000)*0xBF/12000*0x100;
+  }
+    
+  return 0xFFFFFF;
+}
+
+[Code]
+<gvars>
+double @prev_time;
+double @prev_bid;
+int @powers[];
+int @pstart, @psize;
+datetime @last_time;
+<?max>double @pmax[];</>
+<?min>double @pmin[];</>
+
+<flow_init>
+  @prev_bid = 0;
+  @last_time = 0;
+  @pstart = 0;
+  <?max>
+  ArrayInit(@pmax, $Size);
+  CheckShift(@pmax);
+  </>
+  <?min>
+  ArrayInit(@pmin, $Size);
+  CheckShift(@pmin);
+  </>
+
+<flow_tick>
+  if ($tick.time!=@last_time)
+  {
+    for (int @i=0; @i<@psize; @i++)
+    {
+      string @name = "_"+@last_time+"x"+@i+"="+@powers[@i];
+      ObjectCreate(@name, OBJ_RECTANGLE, 0, @last_time, (@pstart-@i)*Point, $tick.time, (@pstart-@i)*Point);
+      //ObjectSet(@name, OBJPROP_RAY, false);
+      ObjectSet(@name, OBJPROP_COLOR, powerColor(@powers[@i]));
+      ObjectSet(@name, OBJPROP_WIDTH, 3);
+      ObjectSet(@name, OBJPROP_BACK, false);
+      <?max>if (@powers[@i]>@pmax[$tick.idx-1]) @pmax[$tick.idx-1] = @powers[@i];</>
+      <?min>if (@powers[@i]<@pmin[$tick.idx-1]) @pmin[$tick.idx-1] = @powers[@i];</>
+    }
+    
+    @pstart = 0;
+    @psize = 0;
+    @last_time = $tick.time;
+    <?max>@pmax[$tick.idx] = 0;</>
+    <?min>@pmin[$tick.idx] = 0;</>
+  }
+  
+  int @power = 0;
+  if (@prev_bid == 0);
+  else
+  {
+    if ($tick.bid==0 || $tick.bid == @prev_bid || $tick.fulltime == @prev_time || $tick.fulltime-@prev_time>0.04);
+    else
+    {
+      @power = 0.0001/Point*<?UseAbs>MathAbs</>($tick.bid-@prev_bid)/($tick.fulltime-@prev_time)/Period();
+      double @min = MathMin($tick.bid, @prev_bid), @max = MathMax($tick.bid, @prev_bid);
+      int @min_idx = HrIndex(@powers, @pstart, @psize, @min);
+      int @max_idx = HrIndex(@powers, @pstart, @psize, @max);
+      for (@i = @max_idx; @i<=@min_idx; @i++)
+        <?!UseMax>@powers[@i] += @power;
+        <~>if (MathAbs(@power)>MathAbs(@powers[@i])) @powers[@i] = @power;</>
+    }
+  }
+  @prev_bid = $tick.bid;
+  @prev_time = $tick.fulltime;
+
+<deinit>
+  int @i=0;
+  while (@i<ObjectsTotal())
+    if (StringSubstr(ObjectName(@i), 0, 1)=="_")
+      ObjectDelete(ObjectName(@i));
+    else
+      @i++;
+
+[Help]
+—бор сведений и силе ценовых тиковых движений.\\
+“ребуетс€ модуль горизонтальных объЄмов.
+

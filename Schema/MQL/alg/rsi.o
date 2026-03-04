@@ -1,0 +1,74 @@
+[Main]
+Name=RSI
+Title=RSI
+Group=Алгоритмы (тех)
+Size=5
+
+[Property]
+Period=n,15,период усреднения
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+int @rsi_step;
+double @plus;
+double @minus;
+
+<init>
+  @rsi_step = 0;
+  @plus = 0;
+  @minus = 0;
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  if ($Start==0)
+  {
+    @rsi_step = 0;
+    @plus = 0;
+    @minus = 0;
+  }
+  
+  for (int i=MathMax($Start,1); i<$Size; i++)
+  {
+    double diff = $in[i]-$in[i-1];
+    if (@rsi_step<$Period)
+    {
+      if (diff>0) @plus += diff;
+      else @minus -= diff;
+      $out[i] = @minus==0?0:100.0-100.0/(1+@plus/@minus);
+      @rsi_step++;
+    }
+    else if (i<$Size-1)
+    {
+      @plus = @plus*($Period-1)/$Period;
+      @minus = @minus*($Period-1)/$Period;
+      if (diff>0) @plus += diff/$Period;
+      else @minus -= diff/$Period;
+      $out[i] = @minus==0?0:100.0-100.0/(1+@plus/@minus);
+    }
+    else
+    {
+      double plus0 = @plus*($Period-1)/$Period;
+      double minus0 = @minus*($Period-1)/$Period;
+      if (diff>0) plus0 += diff/$Period;
+      else minus0 -= diff/$Period;
+      $out[i] = minus0==0?0:100.0-100.0/(1+plus0/minus0);
+    }
+  }
+
+[Help]
+Индекс относительной силы.\\
+См. [[www.mql5.com/ru/code/47]]
+

@@ -1,0 +1,62 @@
+[Main]
+Name=ZigFilter
+Title=Зигзаг фильтр
+Group=Массивы
+
+[Property]
+Enabled=t,1
+
+[Input]
+buf=row
+zig=row
+
+[Output]
+out=row,<?Enabled>$name<~>$buf</>
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?Enabled>
+double $out[];
+int size$out = 0;
+int wpos$out = 0;
+int rpos$out;
+int dim$out;
+</>
+
+<lines>
+<?Enabled>
+  int @pos;
+  int @count = wpos$buf/dim$buf;
+
+  int @FiltSize = 0;
+  for (int @i=$Size-@count; @i<$Size; @i++)
+    if ($zig[@i]!=0) @FiltSize++;
+
+  Print(@FiltSize);
+
+  if (size$out < @FiltSize*dim$buf)
+  {
+    if (ArrayResize($out, @FiltSize*dim$buf)==-1) return(-1);
+    size$out = @FiltSize*dim$buf;
+  }
+  wpos$out = @FiltSize*dim$buf;
+
+  @pos = 0;
+  for (@i=0; @i<@count; @i++)
+    if ($zig[$Size-@count+@i]!=0)
+    {
+      for (int @n=0; @n<dim$buf; @n++)
+        $out[@n*FiltSize+@pos] = $buf[@n*@count+@i];
+      @pos++;
+    }
+
+  rpos$out = 0;
+  dim$out = dim$buf;
+</>
+
+[Help]
+Оставляет только те тики буфера, которые соответствуют ненулевым тикам **zig**, сжимая массив

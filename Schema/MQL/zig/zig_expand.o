@@ -1,0 +1,38 @@
+[Main]
+Title=Зигзаг расширитель
+Name=ZigExpand
+Group=Преобразования
+
+[Input]
+zig=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+  double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+
+  int @i, @n;
+  double @cur;
+
+  CheckShift($out);
+
+  if ($Start==0) @cur = 0;
+  for (@i=$Start; @i<$Size; @i++)
+  {
+    $out[@i] = @cur;
+    if (@i==0 || $zig[@i]!=0)
+    {
+      for (@n=@i+1; @n<$Size && $zig[@n]==0; @n++) {}
+      if (@n<$Size) @cur = $zig[@n];
+      if (@i==0) $out[@i] = @cur;
+    }
+  }

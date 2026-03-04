@@ -1,0 +1,65 @@
+[Main]
+Group=Фильтры
+Title=Фильтр на пробитие (2х)
+Name=SignalBreak
+
+[Property]
+Reverse=t
+Percent=n,10,процент срабатывания на пробитие
+Threshold=f,0.0001,порог срабатывания (если указан)
+
+[Input]
+up=row
+down=row
+
+[Output]
+S=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $S[];
+
+<lines>
+  ArrayInit($S, $Size);
+
+  if ($Start==0)
+    ArrayInitialize($S, 0);
+  else
+    CheckShift($S);
+
+  int @i, @res;
+  for (@i=$Start; @i<$Size; @i++)
+  {
+    @res = 0;
+    if ($up[@i]!=0 || $down[@i]!=0)
+    {
+      <?Percent>
+      double @sig = ($up[@i]-$down[@i])/(MathAbs($up[@i])+MathAbs($down[@i]))*100;
+      if (@sig>$Percent) @res = 1.0;
+      else
+      if (@sig<-$Percent) @res = -1.0;
+      <~>
+      double @sig = $up[@i]-$down[@i];
+      if (@sig>$Threshold) @res = 1.0;
+      else
+      if (@sig<-$Threshold) @res = -1.0;
+      </>
+    }
+    <?!Reverse>$S[@i] = @res;
+    <~>$S[@i] = -@res;</>
+  }
+
+[Help]
+Сигнал на пробитие одного индекса другим.\\
+Вычисляет по формуле:
+<code>
+Sig = | +1, (up-down)/Max(up,down) > Percent/100
+      | -1
+Sig = | +1, up-down > Threshold
+      | -1
+</code>
+Если указан **Reverse**, то знак результата меняется на противоположный.

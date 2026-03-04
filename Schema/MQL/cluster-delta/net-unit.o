@@ -1,0 +1,62 @@
+[Main]
+Unit
+Name=InetUnit
+Title=Модуль интернета
+Group=ClusterDelta
+
+[Code]
+<top>
+#include "inet.mqh"
+
+<attach>
+=inet.mqh
+#import "stdlib.ex4"
+   string IntegerToHexString(int a0);
+#import "wininet.dll"
+   int InternetOpenW(string a0, int a1, string a2, string a3, int a4);
+   int InternetOpenUrlW(int a0, string a1, string a2, int a3, int a4, int a5);
+   int InternetReadFile(int a0, char &a1[], int a2, int& a3[]);
+   int InternetCloseHandle(int a0);
+#import
+
+int denied_chars[] = {32, 33, 42, 39, 40, 41, 59, 58, 64, 38, 61, 43, 36, 47, 63, 35, 91, 93};
+
+bool check_denied(int c)
+{
+  for (int i = ArraySize(denied_chars) - 1; i >= 0; i--)
+    if (c == denied_chars[i]) return true;
+  return false;
+}
+
+string url_encode(string s)
+{
+  string res = "";
+  for (int i = 0; i < StringLen(s); i++)
+  {
+    int c = StringGetChar(s, i);
+    if (check_denied(c)) res = StringConcatenate(res, "%", StringSubstr(IntegerToHexString(c), 6, 2));
+    else res = StringConcatenate(res, StringSubstr(s, i, 1));
+  }
+  return (res);
+}
+
+bool load_url(string url, string &res)
+{
+  int hi = InternetOpenW("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; Q312461)", 1, "", "", 0);
+  int data = InternetOpenUrlW(hi, url, "", 0, 0x84000100, 0);
+  if (data == 0) return false;
+  int size[] = {1};
+  char buf[128];
+  while (true)
+  {
+    if (InternetReadFile(data, buf, 128, size) <= 0 || size[0] == 0) break;
+    res = StringConcatenate(res, CharArrayToString(buf, 0, size[0]));
+  }
+  InternetCloseHandle(data);
+  InternetCloseHandle(hi);
+  return true;
+}
+
+[Help]
+Подключает модуль работы с интернетом.
+

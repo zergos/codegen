@@ -1,0 +1,83 @@
+[Main]
+Name=SpreadGen
+Title=Генератор спреда
+Group=Лента
+
+[Input]
+tick=row
+
+[Output]
+high=row,@high
+low=row,@low
+open=row,@open
+close=row,@close
+volume=row,@volume
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?high>
+  double @high[];
+</>
+<?low>
+  double @low[];
+</>
+<?open>
+  double @open[];
+</>
+<?close>
+  double @close[];
+</>
+<?volume>
+  double @volume[];
+</>
+
+<flow_init>
+<?high>
+  ArrayInit(@high, $Size);
+  CheckShift(@high);
+</>
+<?low>
+  ArrayInit(@low, $Size);
+  CheckShift(@low);
+</>
+<?open>
+  ArrayInit(@open, $Size);
+  CheckShift(@open);
+</>
+<?close>
+  ArrayInit(@close, $Size);
+  CheckShift(@close);
+</>
+<?volume>
+  ArrayInit(@volume, $Size);
+  CheckShift(@volume);
+</>
+
+  if ($Start==0)
+  {
+    <?high>ArrayInitialize(@high, 0);</>
+    <?low>ArrayInitialize(@low, 0);</>
+    <?open>ArrayInitialize(@open, 0);</>
+    <?close>ArrayInitialize(@close, 0);</>
+    <?volume>ArrayInitialize(@volume, 0);</>
+  }
+
+<flow_bar>  
+  <?high>@high[$tick.idx] = $tick.spread;</>
+  <?low>@low[$tick.idx] = $tick.spread;</>
+  <?open>@open[$tick.idx] = $tick.spread;</>
+  <?close>@close[$tick.idx] = $tick.spread;</>
+  <?volume>@volume[$tick.idx] = $tick.spread;</>
+    
+<flow_tick>
+  <?high>if ($tick.spread > @high[$tick.idx]) @high[$tick.idx] = $tick.spread;</>
+  <?low>if ($tick.spread < @low[$tick.idx]) @low[$tick.idx] = $tick.spread;</>
+  <?close>@close[$tick.idx] = $tick.spread;</>
+  <?volume>@volume[$tick.idx]++;</>
+  
+[Help]
+Генератор спредовых свечей.

@@ -1,0 +1,12 @@
+[Main]
+Name=ChangeTrend
+Title=Изменить тренд
+Group=Сделки
+
+[Code]
+<lines>
+  trend = -trend;
+
+[Help]
+Изменяет тренд на противоположный.
+

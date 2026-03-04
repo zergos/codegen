@@ -1,0 +1,83 @@
+[Main]
+Name=Channel
+Group=јлгоритмы
+Title= анал
+
+[Property]
+MinDepth=n,30,мин. промежуток дл€ построени€ канала
+MaxDepth=n,60,макс. промежуток (не об€зательно)
+MinDeviation=n,3,мин. допустимое отклонение р€да от канала
+MaxDeviation=n,20,макс. отклонение р€да от канала
+Mode=chan,Upper,режим расчЄта
+
+[Input]
+in=row
+
+[Output]
+b1=row,@coefs
+b0=row,@shift
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double @coefs[];
+double @shift[];
+
+extern int @ChanMinDepth=$MinDepth;
+<?MaxDepth>extern int @ChanMaxDepth=$MaxDepth;</>
+extern int @ChanMinDeviation=$MinDeviation;
+extern int @ChanMaxDeviation=$MaxDeviation;
+
+<lines>
+  ArrayInit(@coefs, $Size);
+  ArrayInit(@shift, $Size);
+  ArrayInitialize(@coefs, 0);
+  ArrayInitialize(@shift, 0);
+
+  double @min, @max;
+  int @p=0, @p1, @p2;
+  double @cf0, @cf1;
+
+  while (@p<$Size)
+  {
+    bool @check = false;
+    @p1 = @p;
+    <?MaxDepth>
+      @p2 = MathMin($Size-1, @p1+@ChanMaxDepth);
+    <~>
+      @p2 = $Size-1;
+    </>
+    while (!@check && @p2-@p1>=@ChanMinDepth)
+    {
+      @check = true;
+      @min = $in[@p1]; @max = $in[@p2];
+      @cf1 = (@max-@min)/(@p2-@p1);
+      @cf0 = @min-@p1*@cf1;
+
+      for (int @i=@p2-1; @i>=@p1+1; @i--)
+      {
+        double @pt = @i*@cf1+@cf0;
+        <?Mode=Upper>
+          if ($in[@i]-@pt>Point*@ChanMinDeviation || @pt-$in[@i]>Point*@ChanMaxDeviation)
+        <~>
+          if (-$in[@i]+@pt>Point*@ChanMinDeviation || -@pt+$in[@i]>Point*@ChanMaxDeviation)
+        </>
+        {
+          if (@i >= (@p1+@p2)/2) @p2 = @i;
+          else @p1 = @i;
+	  @check = false;
+	  break;
+        }
+      }
+    }
+
+    if (@check)
+    {
+      @coefs[@p1]=@cf1;
+      @shift[@p1]=@cf0;
+      @p = @p2;
+    }
+    else @p = @p1+1;
+  }

@@ -1,0 +1,435 @@
+[Main]
+Modular
+Group=Программы
+Title=Советник
+Name=Expert
+
+[Uses]
+sync
+common\compat
+
+[Property]
+MAGIC=n,1,волшебное число
+MinBufferSize=n,128,мин. размер буфера
+MaxBufferSize=n,1024,макс. размер буфера
+Traceback=n,,запуск советника по истории
+# BufferSize=n,128,размер буфера
+WaitNewBar=t,,выполнять эксперт только на каждом новом баре
+FullRecount=t,1,полный пересчёт серий на каждом тике
+SaveState=t,,сохранять состояние советника
+StateID=n,,локальный код состояния
+LinkingTF=t,,привязка к начальному тайм-фрейму
+CheckTradeAllowed=t,1,проверять возможность торговать
+Copyright=s,,название компании-производителя
+Version=s,1.0
+description=s,,описание
+link=s,,ссылка на сайт компании-производителя
+icon=s,,название файла с иконкой
+stacksize=n,,размер стека для рекурсивных вызовов
+show_confirm=t,,выводить окно подтверждения перед запуском скрипта
+show_inputs=t,,выводить окно со свойствами перед запуском скрипта и запретить вывод окна подтверждения
+strict=t,1,новый компилятор
+compat=t,,режим совместимости с MT4
+RollOver=t,1,контроль ролловера
+
+[Output]
+Trace=c
+Events=c
+
+[OutputPars]
+Size=GlobalSize
+Start=GlobalStart
+Trace=$Traceback
+Sync=$SaveState
+
+[Code]
+<top0>
+//+------------------------------------------------------------------+
+//| $name                                                            
+//| $copyright                                                       
+//| $link
+//+------------------------------------------------------------------+
+
+#property version "$Version"
+<?Copyright>#property copyright "$Copyright"</>
+<?description>#property description "$description"</>
+<?link>#property link "$link"</>
+<?icon>#property icon "\\\\Images\\\\$icon"</>
+
+<?stacksize>#property stacksize $stacksize</>
+<?show_confirm>#property show_confirm</>
+<?show_inputs>#property show_inputs</>
+<?strict>#property strict</>
+
+#include <Expert\ExpertBase.mqh>
+#include <Indicators\Indicators.mqh>
+#include <Trade\TerminalInfo.mqh>
+#include <Trade\SymbolInfo.mqh>
+#include <Trade\AccountInfo.mqh>
+
+<gvars>
+int GlobalSize, GlobalStart;
+int @LastSize;
+datetime @LastTime;
+bool Shifted;
+bool newbar;
+
+bool FirstRun = true;
+bool Work;
+
+<?Traceback>
+int trace_index;
+</>
+
+<?LinkingTF>
+int InitialTF;
+bool TFWarningSend;
+</>
+
+<?RollOver>
+int RollIn = 0;
+</>
+
+// MT5 extra
+class CExpertBars : public CExpertBase
+{
+   public:
+   CExpertBars() { m_used_series = 0xFF; }
+};
+
+CExpertBars Bar;
+CIndicators *BarCache;
+CTerminalInfo TInfo;
+CSymbolInfo *Symbol;
+CAccountInfo Account;
+int Bars;
+double Point;
+
+bool IsTesting()
+{
+  return (bool)MQLInfoInteger((int)MQL5_TESTER);
+}
+
+<procs>
+template <typename T>
+void CheckShift(T& a[])
+{
+  if (Shifted)
+    for (int i=0; i<ArraySize(a)-1; i++) a[i] = a[i+1];
+}
+
+template <typename T>
+void ArrayInit(T &a[], int NewSize=0)
+{
+  if (NewSize==0) NewSize = GlobalSize;
+  if (ArraySize(a)<NewSize)
+  {
+    int size = ArraySize(a);
+    ArrayResize(a, NewSize);
+    for (int n=size; n<NewSize; n++)
+      a[n] = 0;
+  }
+  if (GlobalStart==0) ArrayInitialize(a, 0);
+}
+
+double Bid()
+{
+  <?!Traceback>return Symbol.Bid();
+  <~>
+  if (trace_index>0)
+    return Bar.Close(trace_index);
+  else
+    return Symbol.Bid();
+  </>
+}
+
+double Ask()
+{
+  <?!Traceback>return Symbol.Ask();
+  <~>
+  if (trace_index>0)
+    return Bar.Close(trace_index)+Symbol.Spread();
+  else
+    return Symbol.Ask();
+  </>
+}
+
+double High()
+{
+  <?!Traceback>return Symbol.Bid();
+  <~>
+  if (trace_index>0)
+    return Bar.High(trace_index);
+  else
+    return Symbol.Bid();
+  </>
+}
+
+double Low()
+{
+  <?!Traceback>return Symbol.Bid();
+  <~>
+  if (trace_index>0)
+    return Bar.Low(trace_index);
+  else
+    return Symbol.Bid();
+  </>
+}
+
+double Open()
+{
+  <?!Traceback>return Bar.Open(0);
+  <~>return Bar.Open(trace_index);
+  </>
+}
+
+datetime CurTimeTrace()
+{
+  <?!Traceback>return Bar.Time(0);
+  <~>
+    return Bar.Time(trace_index);
+  </>
+}
+
+<?SaveState>
+void syncAll()
+{
+  sync("Work", Work);
+  sync("LastSize", @LastSize);
+  sync("LastTime", @LastTime);
+  <?LinkingTF>
+  sync("InitialTF", InitialTF);
+  sync("TFWarning", TFWarningSend);
+  </>
+  <?Traceback>sync("Traceback", trace_index);</>
+  <?RollOver>sync("RollOver", RollIn);</>
+$sync
+}
+</>
+
+<?Events>
+void OnChartEvent(const int event_id, const long& lparam, const double& dparam, const string& sparam)
+{
+$Events.lines
+}
+</>
+
+<init>
+  Symbol = new CSymbolInfo();
+  Bar.Init(Symbol, Period(), Symbol.Point());
+  Bar.Symbol(Symbol());
+  Symbol.Name(Symbol());
+  Symbol.Refresh();
+  Point = Symbol.Point();
+  BarCache = new CIndicators();
+  Bar.InitIndicators(BarCache);
+  
+  if (FirstRun)
+  {
+    <?LinkingTF>InitialTF = Period();</>
+    FirstRun = false;
+    Work = true;
+  }
+  else
+  {
+    <?LinkingTF>
+    if (InitialTF!=Period())
+    {
+      if (!TFWarningSend)
+      {
+        Alert("Торговля приостановлена. Верните тайм-фрейм "+InitialTF);
+        TFWarningSend = true;
+      }
+      Work = false;
+    }
+    else Work = true;
+    </>
+    return INIT_SUCCEEDED;
+  }
+  
+  <?CheckTradeAllowed>
+  if (!TInfo.IsTradeAllowed())
+  {
+    Alert("Разрешите советнику торговать :(");
+    return INIT_FAILED;
+  }
+  </>
+  <?MaxBufferSize>GlobalSize = $MaxBufferSize;<~>GlobalSize = 0;</>
+  <?Traceback>trace_index = $Traceback;</>
+  
+<lines>
+<?RollOver>
+  if (RollIn>0) return;
+</>
+  if (!Work) return;
+  Symbol.RefreshRates();
+  Bars = Bars(Symbol(), Period());
+  BarCache.Refresh();
+
+<?MinBufferSize>
+  if (Bars<$MinBufferSize)
+<~>
+  if (Bars==0)
+</>
+    return;
+
+<?MaxBufferSize>
+  <?!Traceback>
+    GlobalSize = MathMin($MaxBufferSize, Bars);
+  <~>
+    GlobalSize = MathMin($MaxBufferSize+trace_index, Bars);
+  </>
+<~>
+  GlobalSize = Bars;
+</>
+<?FullRecount>
+  GlobalStart = 0;
+  Shifted = false;
+  // calc newbar
+  datetime @curTime = Bar.Time(0);
+  newbar = false;
+  if (@LastTime==0 || @curTime>@LastTime)
+  {
+    newbar = true;
+    @LastTime = @curTime;
+  }
+  <?WaitNewBar>
+  if (!newbar) return;
+  </>
+<~>
+  <?Traceback>
+  if (trace_index>0)
+  {
+    GlobalStart = 0;
+    Shifted = false;
+    @LastBars = 0;
+    @LastSize = 0;
+  }
+  else
+  {
+  </>
+  // calc newbar
+  datetime @curTime = Bar.Time(0);
+  double @newbar = false;
+  if (@LastTime==0 || @curTime>@LastTime)
+  {
+    @newbar = true;
+    @LastTime = @curTime;
+  }
+  
+  if (@LastSize==0)
+  {
+    GlobalStart = 0;
+    Shifted = false;
+  }
+  else
+  {
+    Shifted = @LastSize<GlobalSize?false:@newbar;
+    GlobalStart = GlobalSize-1-(int)@newbar;
+  }
+  @LastSize = GlobalSize;
+
+  <?WaitNewBar>
+  if (!@newbar) return;
+  </>
+  <?Traceback>
+  }
+  </>
+  
+  <?debug>
+  Print("bars: ",Bars);
+  Print("start: ", GlobalStart, " size: ", GlobalSize," shifted: ",Shifted?"true":"false");
+  </>
+</>
+$CTRL.lines
+
+  <?Traceback>
+  <?debug>if (trace_index>0) Print("trace index is "+trace_index);</>
+  int @globalsize = GlobalSize;
+  for ( ; trace_index>=0; trace_index--)
+  {
+    <?debug>if (trace_index>0) Print("trace step "+trace_index);</>
+    GlobalSize = @globalsize - trace_index;
+    
+$Trace.lines
+  }
+  trace_index = 0;
+  </>
+
+<deinit>
+  switch (reason)
+  {
+    case REASON_CHARTCHANGE:
+      <?LinkingTF>
+      TFWarningSend = false;
+      </>
+    case REASON_TEMPLATE:
+    case REASON_PARAMETERS:
+    case REASON_RECOMPILE:
+      return;
+  }
+  
+<deinit*>
+  delete Symbol;
+  delete BarCache;
+
+<trans>
+<?RollOver>
+  if (transaction.type == TRADE_TRANSACTION_HISTORY_ADD && (int)transaction.deal_type<=1 && (int)transaction.order_type<=1)
+  {
+    if ((int)transaction.deal_type != (int)transaction.order_type)
+      RollIn++;
+    else
+      if (RollIn>0) RollIn--;
+  }
+</>
+   
+[Template]
+$top0
+$top
+
+//---- parameters
+$gvars
+
+//---- functions
+$procs
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                            |
+//+------------------------------------------------------------------+
+int OnInit()
+{
+$init
+  return(INIT_SUCCEEDED);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                          |
+//+------------------------------------------------------------------+
+void OnDeinit(const int reason)
+{
+$deinit
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+void OnTick()
+{
+
+$lines
+$endlines
+}
+
+void OnTradeTransaction(const MqlTradeTransaction& transaction,
+                        const MqlTradeRequest& request,
+                        const MqlTradeResult& result)
+{
+$trans
+}
+
+$attach
+
+[Help]
+Объект можно использовать один раз в одной схеме.\\
+**FullRecount - рекомендуется для рабочего советника, поскольку при внезапном переподключении к серверу брокера информация об уже загруженных барах теряется (!).**

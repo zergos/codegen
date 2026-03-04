@@ -1,0 +1,96 @@
+[Main]
+Deprecated
+Name=Order
+Title=Ордер
+Group=Управление
+
+[Property]
+Symbol=s,Symbol(),символ или Symbol()
+LotSize=n,1,размер лота
+SL=n,0,стоп-лосс в пунктах
+TP=n,0,тейк-профит в пунктах
+Slippage=n,3,проскальзывание
+Cmd=cmd,OP_BUY,тип операции
+OrderStopLevel=n,15,уровень отложенного ордера
+Expiration=n,,количество секунд существования ордера
+Magic=n,0,внутренний код
+Comment=s,,строка с комментарием
+RaiseError=t,1,сообщать об ошибке открытия
+Refresh=t,,обновлять данные рынка перед открытием
+
+[Output]
+Ticket=n,@Ticket
+
+[Code]
+<gvars>
+input double @OrderLotSize = $LotSize;
+input int @OrderSL = $SL;
+input int @OrderTP = $TP;
+int @Ticket;
+
+<lines>
+<?Refresh>
+  RefreshRates();
+</>
+<?Cmd=OP_BUY>
+  double @price = Ask;
+  double @SL = 0;
+  if (@OrderSL>0) @SL = Bid-@OrderSL*Point;
+  double @TP = 0;
+  if (@OrderTP>0) @TP = Ask+@OrderTP*Point;
+  @Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic);
+</>
+<?Cmd=OP_SELL>
+  double @price = Bid;
+  double @SL = 0;
+  if (@OrderSL>0) @SL = Ask+@OrderSL*Point;
+  double @TP = 0;
+  if (@OrderTP>0) @TP = Bid-@OrderTP*Point;
+  @Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic);
+</>
+<?Cmd=OP_BUYSTOP>
+  double @price = Ask+$OrderStopLevel*Point;
+  double @SL = 0;
+  if (@OrderSL>0) @SL = Bid-@OrderSL*Point+$OrderStopLevel*Point;
+  double @TP = 0;
+  if (@OrderTP>0) @TP = Ask+@OrderTP*Point+$OrderStopLevel*Point;
+  //@Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic, <?Expiration>TimeCurrent()+$Expiration<~>0</>);
+  @Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic, <?Expiration>$Expiration<~>0</>);
+</>
+<?Cmd=OP_SELLSTOP>
+  double @price = Bid-$OrderStopLevel*Point;
+  double @SL = 0;
+  if (@OrderSL>0) @SL = Ask+@OrderSL*Point-$OrderStopLevel*Point;
+  double @TP = 0;
+  if (@OrderTP>0) @TP = Bid-@OrderTP*Point-$OrderStopLevel*Point;
+  @Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic, <?Expiration>TimeCurrent()+$Expiration<~>0</>);
+</>
+<?Cmd=OP_BUYLIMIT>
+  double @price = Ask-$OrderStopLevel*Point;
+  double @SL = 0;
+  if (@OrderSL>0) @SL = Bid-@OrderSL*Point-$OrderStopLevel*Point;
+  double @TP = 0;
+  if (@OrderTP>0) @TP = Ask+@OrderTP*Point-$OrderStopLevel*Point;
+  //@Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic, <?Expiration>TimeCurrent()+$Expiration<~>0</>);
+  @Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic, <?Expiration>$Expiration<~>0</>);
+</>
+<?Cmd=OP_SELLLIMIT>
+  double @price = Bid+$OrderStopLevel*Point;
+  double @SL = 0;
+  if (@OrderSL>0) @SL = Ask+@OrderSL*Point+$OrderStopLevel*Point;
+  double @TP = 0;
+  if (@OrderTP>0) @TP = Bid-@OrderTP*Point+$OrderStopLevel*Point;
+  @Ticket = OrderSend($Symbol, $Cmd, @OrderLotSize, @price, $Slippage, @SL, @TP, "$Comment #$Magic", $Magic, <?Expiration>TimeCurrent()+$Expiration<~>0</>);
+</>
+
+
+<?RaiseError>
+  if (@Ticket<0)
+  {
+    Print("OrderSend завершилась с ошибкой #",GetLastError());
+    return (0);
+  }
+</>
+
+[Help]
+Открывает единичный ордер.

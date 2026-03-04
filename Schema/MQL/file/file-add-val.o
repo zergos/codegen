@@ -1,0 +1,21 @@
+[Main]
+Name=FileAddVal
+Title=Записать значение бара
+Group=Файлы
+
+[Property]
+Value=n,0,значение для записи
+
+[Input]
+file=n
+
+[InputPars]
+Size
+
+[Code]
+<lines>
+  FileWrite($file, Time[0], $Value);
+
+[Help]
+Запись значения в CSV файл с привязкой ко времени.
+  

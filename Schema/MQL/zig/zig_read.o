@@ -1,0 +1,65 @@
+[Main]
+Name=ZigRead
+Group=Фигуры
+Title=Считать Зиг
+
+[Property]
+Prefix=s,Trendline ,префикс названий линий
+# пробел тоже учитывается
+Count=n,3,количество линий для чтения
+
+[Input]
+time=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  ArrayInitialize($out, 0);
+
+  int @lx, @rx; double @ly, @ry;
+  int @lx2, @rx2; double @ly2, @ry2;
+  int @px; double @pxx, @py;
+  double @a, @a2;
+
+  // опеределение первой точки
+  @lx = ArrayBsearch($time, ObjectGet("$Prefix"+"1", OBJPROP_TIME1));
+  @ly = ObjectGet("$Prefix"+"1", OBJPROP_PRICE1);
+  @rx = ArrayBsearch($time, ObjectGet("$Prefix"+"1", OBJPROP_TIME2));
+  @ry = ObjectGet("$Prefix"+"1", OBJPROP_PRICE2);
+  @a = (@ly-@ry)/(@lx-@rx);
+  $out[@lx] = @ly;
+
+  // со второй и далее
+  for (int @i=2; @i<=$Count; @i++)
+  {
+    // определить пересечение предыдущей и текущей линий
+    @lx2 = ArrayBsearch($time, ObjectGet("$Prefix"+@i, OBJPROP_TIME1));
+    @ly2 = ObjectGet("$Prefix"+@i, OBJPROP_PRICE1);
+    @rx2 = ArrayBsearch($time, ObjectGet("$Prefix"+@i, OBJPROP_TIME2));
+    @ry2 = ObjectGet("$Prefix"+@i, OBJPROP_PRICE2);
+    @a2 = (@ly2-@ry2)/(@lx2-@rx2);
+    @pxx = (@a*@lx-@a2*@lx2-@ly+@ly2)/(@a-@a2);
+    @px = @pxx+0.5;
+    @py = -@a*(@lx-@pxx)+@ly;
+    $out[@px] = @py;
+
+    @lx = @lx2; @ly = @ly2;
+    @rx = @rx2; @ry = @ry2;
+    @a = @a2;
+  }
+
+  // последняя точка
+  $out[@rx] = @ry;
+
+[Help]
+Восстановление зигзага по указанным интерактивно линиям тренда.\\
+В качестве вершин зигзага берутся пересечения линий.

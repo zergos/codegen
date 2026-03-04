@@ -1,0 +1,46 @@
+[Main]
+Name=PatternLoad
+Group=Паттерны
+Title=Загрузчик
+
+[Property]
+Count=n,,количество входящих рядов в файле
+NeedClose=t,,закрыть файл после чтения
+
+[Input]
+File=s
+
+[Output]
+Pattern=s
+
+[Code]
+<gvars>
+double edges$name[];
+int points$name[];
+int bufs$name[];
+int count$name = $Count;
+int bufcount$name;
+
+<init>
+  int @epos=0;
+  int @cursize;
+
+  ArrayResize(points$name, $Count+1);
+  for (int @i=0; @i<$Count; @i++)
+  {
+    @cursize = FileReadInteger($File);
+    ArrayResize(edges$name, @epos+@cursize*2);
+    points$name[@i] = @epos;
+    FileReadArray($File, edges$name, @epos, @cursize*2);
+    @epos += @cursize*2;
+  }
+  points$name[$Count] = @epos;
+
+  bufcount$name = FileReadInteger($File);
+  ArrayResize(bufs$name, bufcount$name*$Count);
+  FileReadArray($File, bufs$name, 0, bufcount$name*$Count);
+
+  <?NeedClose>needclose$File = true;</>
+
+[Help]
+Загружает заранее просчитанный паттерн

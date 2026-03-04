@@ -1,0 +1,26 @@
+[Main]
+Choice
+Name=CheckProfit
+Title=Проверка профита
+Group=Сделки
+
+[Output]
+profit=c
+loss=c
+
+[Code]
+<lines>
+  if (HubActiveProfit()>0)
+  {
+$profit.lines
+  }
+<?loss>
+  else
+  {
+$loss.lines
+  }
+</>
+  
+[Help]
+Проверяет общий профит сделок по хабу.
+

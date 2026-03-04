@@ -1,0 +1,64 @@
+[Main]
+Choice
+Name=CVSGen
+Title=CSV генератор
+Group=Файлы
+
+[Property]
+Separator=s,;,разделитель
+StartBar=n,1,начальный бар для записи
+
+[Input]
+file=n
+
+[Output]
+add=c
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+CSVHeader=@header
+CSVVals=@vals
+
+[Code]
+<gvars>
+string @header[];
+double @vals[];
+
+<init>
+$work.init
+
+<lines>
+  if ($Start==0)
+  {
+$work.lines
+    FileSeek($file, 0, SEEK_SET);
+    string s = "";
+    for (int i=0; i<ArraySize(@header); i++)
+    {
+      s += @header[i];
+      if (i<ArraySize(@header)-1) s += "$Separator";
+    }
+    FileWrite($file, s);
+    for (int k=$StartBar; k<$Size; k++)
+    {
+      s = "";
+      for (int i=0; i<ArraySize(@header); i++)
+      {
+        if (@header[i]=="Datetime")
+          s += TimeToStr(@vals[i*$Size+k]);
+        else
+          s += @vals[i*$Size+k];
+        if (i<ArraySize(@header)-1) s += "$Separator";
+      }
+      FileWrite($file, s);
+    }
+    FileFlush($file);
+  }
+
+[Help]
+Начинает серию формирования записей в CSV файл.\\
+На вход подавать обычный текстовый файл.
+

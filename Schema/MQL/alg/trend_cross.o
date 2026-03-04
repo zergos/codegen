@@ -1,0 +1,62 @@
+[Main]
+Name=TrendCross
+Title=Пересечения тренда
+Group=Алгоритмы
+
+[Property]
+Deviation=f,1,предел срабатывания в пунктах
+Tail=n,60,сколько предыдущих трендов анализировать (если не указан\, то все)
+SkipTail=n,30,сколько последних трендов не анализировать
+
+[Input]
+in=row
+b1=row
+b0=row
+
+[Output]
+up=row,@zup
+down=row,@zdown
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @zup[];
+double @zdown[];
+
+<lines>
+  ArrayInit(@zup, $Size);
+  ArrayInit(@zdown, $Size);
+
+  if ($Start==0)
+  {
+    ArrayInitialize(@zup, 0);
+    ArrayInitialize(@zdown, 0);
+  }
+  else
+  {
+    CheckShift(@zup);
+    CheckShift(@zdown);
+  }
+  double @step = 1.0;//<?Tail>$Tail<~>$Size</>;
+
+  for (int @n=MathMax($Start,1); @n<$Size; @n++)
+  {
+    double @cup=0, @cdown = 0;
+    <?Tail>for (int @i=MathMax(0, @n-$Tail); @i<@n-$SkipTail; @i++)
+    <~>for (int @i=0; @i<@n-$SkipTail; @i++)</>
+    {
+      if ($b1[@i]==0 && $b0[@i]==0) continue;
+      double @crit = $b1[@i]*@n + $b0[@i];
+      if ($in[@n]-$Deviation*Point > @crit) @cup += @step*(3-$b1[@i]);
+      else if ($in[@n]+$Deviation*Point < @crit) @cdown -= @step*(3-$b1[@i]);
+    }
+    @zup[@n] = @cup;
+    @zdown[@n] = @cdown;
+  }
+
+[Help]
+Считает, сколько трендов лежит ниже текущей точки и сколько выше.\\
+Используется после алгоритма Тренд.

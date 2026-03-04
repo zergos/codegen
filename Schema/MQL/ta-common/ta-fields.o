@@ -1,0 +1,406 @@
+[Main]
+Usable
+Name=TAFields
+Title=Поля поиска
+Group=ТА
+
+[Code]
+<top>
+#include "ta-fields.mqh"
+
+<attach>
+=ta-fields.mqh
+double taMaxCP = 1000; // MaxCP: макс. удалённость СТ
+input int taMinLength12 = 2; // MinLength12: мин. кол. баров между т1 и т2
+input int taMaxLength12 = 64; // MaxLength12: макс. кол. баров между т1 и т2
+input double taMaxLengthCoef = 8.0; // MaxLengthCoef: коэф. макс. удлинения точек
+input int taMinHeightPnts = 40; // MinHeightPnts: мин. кол. пунктов между тт в пунктах
+input double taMinHeightPercent = 0; // MinHeightPercent: мин. кол. тиков между тт в проценте от макс. ширины канала
+input int taMinDist3to2 = 5; // MinDist3to2: мин. кол. баров 2-3 в доле от 1-2
+
+enum TACheckMode
+{
+  ModeC,  // по ценам закрытия
+  ModeHL  // по свечам
+};
+
+class TAFieldQuotes : public RefObject
+{
+  public:
+  double C[], H[], L[], O[];
+  datetime T[];
+  int X;
+  
+  TAFieldQuotes() : RefObject(), X(-1) {};
+  
+  void step(double c, double o, double h, double l, datetime t)
+  {
+    X++;
+    ArrayResize(C, X+1);
+    ArrayResize(O, X+1);
+    ArrayResize(H, X+1);
+    ArrayResize(L, X+1);
+    ArrayResize(T, X+1);
+    C[X] = c; O[X] = o; H[X] = h; L[X] = l; T[X] = t;
+  }
+  
+  double CX() { return C[X]; }
+  double HX() { return H[X]; }
+  double LX() { return L[X]; }
+
+};
+
+class TABaseField : public ChainObject
+{
+  public:
+  static TABaseField *first;
+  
+  int id;
+  int step; // 1..4
+  TABaseField *sub[], *parent;
+  
+  int B[6];
+  int peak, last;
+  
+  double MIN,MAX;
+  
+  TAFieldQuotes *Q;
+  TACheckMode mode;
+  int trend;
+  
+  bool stop;
+  
+  TABaseModel *M;
+  
+  static int counter;
+  
+  int X() { return Q.X; };
+  double L(int i)  { return mode==ModeC?Q.C[i]:Q.L[i]; }
+  double H(int i)  { return mode==ModeC?Q.C[i]:Q.H[i]; }
+  datetime T(int i) { return Q.T[i]; }
+  double LX()  { return L(Q.X); }
+  double HX()  { return H(Q.X); }
+  double LO(int i) { return mode==ModeC?Q.C[i]:trend>0?Q.L[i]:Q.H[i]; }
+  double HO(int i) { return mode==ModeC?Q.C[i]:trend>0?Q.H[i]:Q.L[i]; }
+  double LL(int i) { return trend>0?Q.L[i]:Q.H[i]; }
+  double HH(int i) { return trend>0?Q.H[i]:Q.L[i]; }
+  double CC(int i) { return Q.C[i]; }
+  double OO(int i) { return Q.O[i]; }
+  
+  TABaseField(TACheckMode _mode, int _trend, int _step = 1) : ChainObject(), mode(_mode), trend(_trend), step(_step)
+  {
+    id = counter++;
+    if (_step==1)
+      Q = new TAFieldQuotes();
+    ArrayInitialize(B, 0);
+    last = 0;
+    MIN = 1000000; MAX = 0;
+    stop = false;
+  }
+  
+  ~TABaseField()
+  {
+    if (HasRef(M)) M.Release();
+    Q.Release();
+    for (int i=0; i<ArraySize(sub); i++)
+      if (HasRef(sub[i]))
+        sub[i].Release();
+        
+    if (first==GetPointer(this)) first = next;
+  }
+  
+  virtual ChainObject *getFirst() { return first; }
+  virtual void setFirst(ChainObject *o) { first = o; }
+  
+  void Activate()
+  {
+    add();
+  }
+  
+  <?debug>
+  void Log(string s)
+  {
+    FileWrite(Logger, (trend>0?"^":"v")+(stop?"!":"#")+id+":"+step+" "+Q.T[X()]+" "+s);
+    FileFlush(Logger);
+  }
+  </>
+  
+  virtual TABaseField *new_field()
+  { 
+    return new TABaseField(mode, trend, step+1);
+  }
+  virtual TABaseModel *new_model()
+  {
+    return new TABaseModel();
+  }
+  
+  TABaseField *add_sub()
+  {
+    if (last==peak) return NULL;
+    last = peak;
+    
+    int k = ArraySize(sub);
+    ArrayResize(sub, k+1);
+    sub[k] = new_field();
+    sub[k].Q = Q.AddRef();
+    sub[k].parent = GetPointer(this);
+    for (int i=1; i<step; i++)
+      sub[k].B[i] = B[i];
+    sub[k].B[step] = peak;
+    sub[k].peak = X();
+    sub[k].MIN = MIN; sub[k].MAX = MAX;
+    
+    <?debug>Log("фиксация точки -> "+sub[k].id+" ("+peak+")");</>
+    
+    return sub[k];
+  }
+  
+  void Process(double c, double o, double h, double l, datetime t)
+  {
+    Q.step(c, o, h, l, t); // добавление котировок в поле
+    next_step(); // шаг поиска точек
+  }
+  
+  static void ProcessAll(double c, double o, double h, double l, datetime t)
+  {
+    ForEach(TABaseField, cur)
+        if (cur.check_stop())
+          cur.Release();
+        else
+          cur.Process(c,o,h,l,t);
+  }
+  
+  bool check_stop()
+  {
+    bool stopped = true;
+    for (int i=0; i<ArraySize(sub); i++)
+      if (HasRef(sub[i]))
+        if (sub[i].check_stop())
+        {
+          sub[i].Release();
+          sub[i] = NULL;
+        }
+        else
+          stopped = false;
+        
+    if (stopped)
+    {
+      ArrayResize(sub, 0);
+      return stop;
+    }
+    
+    return false;
+  }
+  
+  void next_step()
+  {
+    for (int i=0; i<ArraySize(sub); i++)
+      if (HasRef(sub[i])) sub[i].next_step();
+      
+    if (stop) return;
+      
+    MIN = fmin(MIN,LX());
+    MAX = fmax(MAX,HX());
+    
+    switch (step)
+    {
+      case 1: // фиксация т.1
+        <?debug>Log("начало отсчёта");</>
+        B[1] = 0;
+        peak = 0;
+        step++;
+        break;
+        
+      case 2: // поиск т.2
+        if (X()>taMaxLength12) // размер модели превышен
+        {
+          stop = true;
+          <?debug>Log("размер модели превышен");</>
+        }
+        else
+        if (trend>0 && LX()<L(0) || trend<0 && HX()>H(0)) // пробита первая точка - конец поиска
+        {
+          stop = true;
+          <?debug>Log("пробита первая точка");</>
+        }
+        else
+        if (trend>0 && HX()>H(peak) || trend<0 && LX()<L(peak)) // обновление вершины
+        {
+          peak = X();
+        }
+        else
+        if (peak<taMinLength12) // т.2 ждёт своего времени
+        {
+          break;
+        }
+        else
+        //if (trend>0 && HX()<H(peak) || trend<0 && LX()>L(peak)) // откат от вершины
+        {
+          if (trend>0 && H(peak)-LX()>=taMinHeightPnts*Point && H(peak)-LX()>=(MAX-MIN)*taMinHeightPercent/100
+           || trend<0 && HX()-L(peak)>=taMinHeightPnts*Point && HX()-L(peak)>=(MAX-MIN)*taMinHeightPercent/100)
+          { // т.2 сформирована
+            add_sub();
+          }
+        }
+        break;
+        
+      case 3: // поиск т.3
+        //if (X()>B[2]*taMaxLengthCoef) // размер модели превышен
+        //{
+        //  stop = true;
+        //  <?debug>Log("размер модели превышен");</>
+        //}
+        //else
+        if (trend>0 && LX()<L(0) || trend<0 && HX()>H(0)) // пробита первая точка - конец поиска
+        {
+          stop = true;
+          <?debug>Log("пробита первая точка");</>
+        }
+        else
+        if (trend>0 && HX()>H(B[2]) || trend<0 && LX()<L(B[2])) // пробита т.2
+        {
+          //if (trend>0 && HX()>H(peak) || trend<0 && LX()<L(peak)) // откат от вершины
+          if (taMinDist3to2==0 || peak-B[2]+1>=B[2]/taMinDist3to2) // проверка расстояния 2-3
+          if (trend>0 && L(peak)<L(B[2]) || trend<0 && H(peak)>H(B[2])) // низ свечи 3 должен быть ниже свечи 2
+            add_sub();
+          stop = true;
+        }
+        else
+        if (trend>0 && LX()<L(peak) || trend<0 && HX()>H(peak)) // обновление вершины
+        {
+          peak = X();
+        }
+        /*else
+        if (trend>0 && HX()>H(peak) || trend<0 && LX()<L(peak)) // откат от вершины
+        {
+          if (trend<0 && H(peak)-LX()>=taMinHeightPnts*Point && H(peak)-LX()>=(MAX-MIN)*taMinHeightPercent/100
+           || trend>0 && HX()-L(peak)>=taMinHeightPnts*Point && HX()-L(peak)>=(MAX-MIN)*taMinHeightPercent/100)
+          { // т.3 сформирована
+            add_sub();
+          }
+        }*/
+        break;
+        
+      case 4: // поиск т.4
+        if (X()>B[3]*taMaxLengthCoef) // размер модели превышен
+        {
+          stop = true;
+          <?debug>Log("размер модели превышен");</>
+        }
+        else
+        if (trend>0 && LX()<L(B[3]) || trend<0 && HX()>H(B[3])) // пробита т.3 - корректировка поиска
+        {
+          stop = true;
+          <?debug>Log("пробита т.3");</>
+        }
+        else
+        if (trend>0 && HX()>H(peak) || trend<0 && LX()<L(peak)) // обновление вершины
+        {
+          peak = X();
+          //stop = true;
+        }
+        else
+        //if (trend>0 && HX()<H(peak) || trend<0 && LX()>L(peak)) // откат от вершины
+        {
+          if (trend>0 && H(peak)-LX()>=taMinHeightPnts*Point && H(peak)-LX()>=(MAX-MIN)*taMinHeightPercent/100
+           || trend<0 && HX()-L(peak)>=taMinHeightPnts*Point && HX()-L(peak)>=(MAX-MIN)*taMinHeightPercent/100)
+          { // т.4 сформирована - сразу же создать модель
+            if (peak!=last)
+              (add_sub()).next_step();
+          }
+        }
+        break;
+        
+      case 5: // обработка готовой модели
+        if (!HasRef(M))
+        {
+          M = new_model();
+          M.F = GetPointer(this);
+          M.B1 = B[1];
+          M.B2 = B[2];
+          M.B3 = B[3];
+          M.B4 = B[4];
+          M.B5 = peak;
+          M.B6 = B[4];
+          M.P1 = LO(B[1]);
+          M.P2 = HO(B[2]);
+          M.P3 = LO(B[3]);
+          M.P4 = HO(B[4]);
+          M.P5 = LO(peak);
+          M.P6 = M.P4;
+          M.P7 = M.P1;
+          M.P8 = M.P6;
+          <?debug>
+          if (id==0)
+            Print("here");
+          </>
+          
+          M.calcK(); // построение линий без выравнивания
+          if (M.stop) // линии провести не удалось
+          {
+            stop = true;
+            <?debug>Log("линии провести не удалось ("+M.id+")");</>
+            break;
+          }
+          
+          M.Detect();
+          if (M.stop)
+          {
+            stop = true; // модель не определена
+            <?debug>Log("модель не определена ("+M.id+")");</>
+            break;
+          }
+          
+          TAModelTypes baseType = M.type;
+          
+          M.calcK(true); // построение линий с выравниванием
+          if (M.stop) // линии провести не удалось
+          {
+            stop = true;
+            <?debug>Log("линии провести не удалось ("+M.id+")");</>
+            break;
+          }
+          
+          M.Detect();
+          if (M.stop)
+          {
+            stop = true; // модель не определена
+            <?debug>Log("модель не определена после выравнвания ("+M.id+")");</>
+            break;
+          }
+          
+          if (M.type!=baseType)
+          {
+            M.stop = true;
+            stop = true;
+            <?debug>Log("после выравнивания поменялся тип модели ("+M.id+")");</>
+            break;
+          }
+          
+          if (!M.Filter())
+          {
+            M.stop = true;
+            stop = true;
+            <?debug>Log("модель отфильтрована ("+M.id+")");</>
+          }
+          else
+          {
+            <?!expert>
+              M.active = true;
+              M.AddRef(); // сохранять модели для индикатора
+              AddRef();
+            </>  
+            M.Draw();
+            M.ProcessBar();
+          }
+        }
+        else
+          M.ProcessBar();
+        if (M.stop && !M.active) stop = true;
+        break;
+    }
+  }
+};
+
+int TABaseField::counter = 0;
+TABaseField *TABaseField::first;

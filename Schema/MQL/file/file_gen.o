@@ -1,0 +1,62 @@
+[Main]
+Title=Генератор
+Group=Файлы
+Name=FileGen
+
+[Property]
+FileName=s,,имя файла
+Mode=filemod,FILE_CSV|FILE_WRITE|FILE_SHARE_READ,режим доступа
+Delimiter=s,;,разделитель
+SeekEnd=t,,перейти в конец файла
+SymbolPrefix=t,,добавлять к имени файла наименование символа
+Reopen=t,,открывать при обращении (открыт только для последующих блоков)
+CheckMinSize=n,,проверять минимальный размер файла при открытии
+
+[Output]
+File=n
+
+[Code]
+<gvars>
+int $File;
+bool needclose$File = false;
+
+<init>
+  $File = 0;
+  
+<lines>
+  if ($File==0)
+  {
+    $File = FileOpen(<?SymbolPrefix>Symbol()+</>"$FileName", $Mode<?Delimiter>, '$Delimiter'</>);
+    if ($File<1)
+    {
+      Print("Файл"+" $FileName "+"не обнаружен, последняя ошибка ", GetLastError());
+      return(-1);
+    }
+    <?SeekEnd>FileSeek($File, 0, SEEK_END);</>
+    <?CheckMinSize>
+    if (FileSize($File)<$CheckMinSize)
+    {
+      Print("Файл $FileName подозрительно мал.");
+      FileClose($File);
+      $File = 0;
+      return 0;
+    }
+    </>
+    <?Reopen>
+    needclose$File = true;
+    </>
+  }
+
+<endlines>
+  if (needclose$File)
+  {
+    needclose$File = false;
+    if ($File>0) FileClose($File);
+    $File = 0;
+  }
+
+<deinit^>
+  if ($File>0) FileClose($File);
+  
+[Help]
+Файл создаётся в папке .\experts\files

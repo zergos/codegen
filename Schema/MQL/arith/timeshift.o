@@ -1,0 +1,33 @@
+[Main]
+Name=TimeShift
+Title=Сдвиг времени
+Group=Арифметика
+
+[Property]
+Operation=s,+
+Value=f,0
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+datetime $out[];
+
+<lines>
+  ArrayInitT($out, $Size);
+  if (Shifted)
+  {
+    int @shift = $Size-$Start-1;
+    for (int @i=0; @i<=$Start; @i++) $out[@i] = $out[@i+@shift];
+  }
+  
+  for (@i=$Start; @i<$Size; @i++)
+    $out[@i] = $in[@i]$Operation$Value;

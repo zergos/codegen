@@ -1,0 +1,34 @@
+[Main]
+Deprecated
+Name=OrderStop
+Title=Стоп уровень
+Group=Сделки
+
+[Property]
+Index=n,,индекс сигнала\, если указан
+
+[Input]
+sig=row
+
+[Property]
+HubState=hubstate
+Level=n,50,уровень тейк-профита в пунктах
+
+[Code]
+<lines>
+  for (int @i=0; @i<ArraySize(hub); @i++)
+  <?HubState>if (hub[@i].state==$HubState)<~>if (hub[@i].state!=HUB_CLOSED)</>
+  <?sig>
+  if ($sig<?Index>[$Index]</>>0)
+    OrderSetStop(@i, Bid-$Level*Point);
+  else if ($sig<?Index>[$Index]</><0)
+    OrderSetStop(@i, Ask+$Level*Point);
+  <~>
+  if (hub[initial].cmd == OP_BUY)
+    OrderSetStop(@i, Bid-$Level*Point);
+  else if (hub[initial].cmd == OP_SELL)
+    OrderSetStop(@i, Ask+$Level*Point);
+  </>
+
+[Help]
+Устанавливание всем ордерам тейк-профит по уровню от текущей цены.

@@ -1,0 +1,46 @@
+[Main]
+Name=ZigDelta
+Title=Зигзаг дельта
+Group=Преобразования
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+
+  int @n, @lastpos;
+  double @last, @cur;
+
+  @last = $in[0];
+  @lastpos=0;
+
+  for (int @i=0; @i<$Size; @i++)
+  {
+    if ($in[@i]!=0)
+    {
+      @cur = $in[@i]-@last;
+      //if (@cur!=0) @cur = MathLog(@cur);
+      for (@n=@lastpos; @n<=@i; @n++) $out[@n] = @cur;
+      @last = $in[@i];
+      @lastpos = @i;
+    }
+  }
+  
+  if (@lastpos<$Size-1)
+    for (@n=@lastpos; @n<$Size; @n++) $out[@n] = $out[@lastpos];
+</>
+
+[Help]
+Разница между двумя вершинами

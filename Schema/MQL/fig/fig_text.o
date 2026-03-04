@@ -1,0 +1,82 @@
+[Main]
+Name=FigText
+Title=Текст
+Group=Фигуры
+
+[Property]
+Text=s
+Font=s,Courier New,шрифт\, например Arial
+FontSize=n,20,размер шрифта
+Angle=n,,угол наклона текста
+Anchor=text_anchor,ANCHOR_RIGHT_UPPER,способ привязки
+Corner=n,1,угол привязки
+X=n
+Y=n
+Color=color,Green
+UseMode=n,0,режим использования (1)
+ColorAlert=color,Red
+PlaySound=t,1,проигрывать при окончании свечи
+CheckMinus=t,,проверять значение на отрицательное
+
+[Input]
+sec=n
+
+[Code]
+<gvars>
+string @name;
+<?UseMode=1><?PlaySound>
+bool @trigger = false;
+</></>
+
+<init>
+  @name = "$name";
+  ObjectCreate(@name, OBJ_LABEL, 0, TimeCurrent(), <?mql5>Symbol.Bid()<~>Bid</>);
+  ObjectSetString(0, @name, OBJPROP_TEXT, "");
+  <?Font>ObjectSetString(0, @name, OBJPROP_FONT, "$Font");</>
+  <?FontSize>ObjectSet(@name, OBJPROP_FONTSIZE, $FontSize);</>
+  <?Angle>ObjectSet(@name, OBJPROP_ANGLE, $Angle);</>
+  <?Corner>ObjectSet(@name, OBJPROP_CORNER, $Corner);</>
+  <?Anchor>ObjectSet(@name, OBJPROP_ANCHOR, $Anchor);</>
+  <?Color>ObjectSet(@name, OBJPROP_COLOR, $Color);</>
+  <?X>ObjectSet(@name, OBJPROP_XDISTANCE, $X);</>
+  <?Y>ObjectSet(@name, OBJPROP_YDISTANCE, $Y);</>
+
+<lines>
+  if (ObjectFind(@name)>=0)
+  {
+  <?UseMode=0>
+    ObjectSetString(0, @name, OBJPROP_TEXT, $Text);
+  </>
+  <?UseMode=1>
+    int @secs = PeriodSeconds();
+    @secs = @secs-TimeCurrent()%@secs;
+    ObjectSetString(0, @name, OBJPROP_TEXT, ""+floor(@secs/60)+":"+StringFormat("%02d", @secs%60));
+    if (@secs<=60) ObjectSet(@name, OBJPROP_COLOR, $ColorAlert);
+    else ObjectSet(@name, OBJPROP_COLOR, $Color);
+    <?PlaySound>
+    if (@secs<=60 && !@trigger)
+    {
+      PlaySound("alert");
+      @trigger = true;
+    }
+    else if (@secs>60) @trigger = false;
+    </>
+  </>
+  <?UseMode=2>
+    ObjectSetString(0, @name, OBJPROP_TEXT, (Ask-Bid)/Point/10);
+  </>
+  <?UseMode=3>
+    ObjectSetString(0, @name, OBJPROP_TEXT, TimeToString($sec, TIME_MINUTES|TIME_SECONDS));
+  </>
+    ChartRedraw();
+  }
+
+<deinit>
+  if (ObjectFind(@name)>=0) ObjectDelete(@name);
+  
+[Help]
+Выводит на экран заданный текст (LABEL).\\
+0 - просто выводит заданный текст\\
+1 - обратный отсчет до конца бара\\
+2 - текущий спред\\
+3 - время из входящего параметра

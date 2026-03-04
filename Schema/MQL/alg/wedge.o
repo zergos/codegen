@@ -1,0 +1,145 @@
+[Main]
+Name=Wedge
+Title=Клин
+Group=Алгоритмы
+
+[Uses]
+common\obj-counter
+
+[Property]
+Deep=n,100
+Draw=t,1
+Color=color,Aqua
+Ray=bool,true
+Single=bool,false
+
+[Input]
+sig=row
+up=row
+down=row
+time=row
+
+[Output]
+bup=row,@breakUp
+bdown=row,@breakDown
+
+[InputPars]
+Start
+Size
+
+[Global]
+<procs>
+bool wedgeOver(int side, double &in[], int &a, int b, double &k)
+{  
+  bool checked = false;
+  for (a=MathMax(b-$Deep,0); a<b-2; a++)
+  {
+    if (side==1 && in[a]<=in[b] || side==-1 && in[a]>=in[b]) continue;
+    k = (in[b]-in[a])/(b-a);
+    double price = in[a]+k;
+    
+    checked = true;
+    int i;
+    for (i = a+1; i<b; i++, price+=k)
+      if (side==1 && in[i]>price || side==-1 && in[i]<price)
+      {
+        checked = false;
+        break;
+      }
+        
+    if (!checked) a = i-1;
+    else break;
+  }
+    
+  return checked;
+}
+
+[Code]
+<gvars>
+<?bup>double @breakUp[], @breakDown[];</>
+<?Draw>ObjCounter *up$name, *down$name;</>
+
+<init>
+  <?Draw>
+  up$name = new ObjCounter("up$name", $Single);
+  down$name = new ObjCounter("down$name", $Single);
+  </>
+  
+<lines>
+  <?bup>
+  ArrayInit(@breakUp, $Size);
+  CheckShift(@breakUp);
+  ArrayInit(@breakDown, $Size);
+  CheckShift(@breakDown);
+  </>
+  
+  <?bup>static double @kup, @kdown, @pup, @pdown;</>
+  
+  if ($Start==0)
+  {
+    <?bup>@kup = 0; @kdown = 0;</>
+    <?Draw>
+    up$name.Clear();
+    down$name.Clear();
+    </>
+  }
+  
+
+  for (int i=$Start; i<$Size-1; i++)
+  {
+    int a, b;
+    double kd, ku;
+    
+    <?bup>
+    if (@kup!=0)
+    {
+      @pup += @kup;
+      if ($sig[i]>@pup) @breakUp[i] = 1; 
+    }
+    if (@kdown!=0)
+    {
+      @pdown += @kdown;
+      if ($sig[i]<@pdown) @breakDown[i] = -1; 
+    }
+    </>
+    
+    // up side
+    if ($up[i]>0)
+    {
+      b = i-$up[i]+1;
+      if (!wedgeOver(1, $sig, a, b, ku)) continue;
+      <?bup>
+      @kup = ku;
+      @pup = $sig[b]+($down[i]-1)*ku;
+      </>
+      <?Draw>
+      string name = up$name.NextName();
+      ObjectCreate(name, OBJ_TREND, ChartWindowFind(), $time[a], $sig[a], $time[b], $sig[b]);
+      ObjectSet(name, OBJPROP_COLOR, $Color);
+      ObjectSet(name, OBJPROP_RAY, $Ray);
+      </>
+    }
+    
+    // down side
+    if ($down[i]>0)
+    {
+      b = i-$down[i]+1;
+      if (!wedgeOver(-1, $sig, a, b, kd)) continue;
+      <?bup>
+      @kdown = kd;
+      @pdown = $sig[b]+($down[i]-1)*kd;
+      </>
+      <?Draw>
+      string name = down$name.NextName();
+      ObjectCreate(name, OBJ_TREND, ChartWindowFind(), $time[a], $sig[a], $time[b], $sig[b]);
+      ObjectSet(name, OBJPROP_COLOR, $Color);
+      ObjectSet(name, OBJPROP_RAY, $Ray);
+      </>
+    }
+  }
+  
+<deinit>
+  <?Draw>
+  delete up$name;
+  delete down$name;
+  </>

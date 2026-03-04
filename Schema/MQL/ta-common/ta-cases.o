@@ -1,0 +1,58 @@
+[Main]
+Usable
+Name=TACases
+Title=Разрешения сделок
+Group=ТА
+
+[Code]
+<top>
+<?expert>
+#include "ta-cases.mqh"
+</>
+
+<attach>
+<?expert>
+=ta-cases.mqh
+class TACases
+{
+  public:
+  int list[];
+  
+  TACases()
+  {
+    int f = FileOpen("cases.lst", FILE_READ|FILE_TXT|FILE_SHARE_READ);
+    if (f==INVALID_HANDLE)
+    {
+      Print("Файл ситуаций не найден (cases.lst). Сделок не будет.");
+    }
+    else
+    {
+      while(!FileIsEnding(f))
+      {
+        string s = FileReadString(f);
+        if (StringSubstr(s, StringLen(s)-1, 1)=="*")
+        {
+          int k = StringToInteger(StringSubstr(s, 0, StringLen(s)-1));
+          ArrayResize(list, k+1);
+          list[k] = true;
+        }
+        else
+        {
+          int k = StringToInteger(s);
+          ArrayResize(list, k+1);
+          list[k] = false;
+        }
+      }
+    }
+    FileClose(f);
+  }
+  
+  bool check(int rule)
+  {
+    return list[rule];
+  }
+};
+
+TACases taCases;
+</>
+

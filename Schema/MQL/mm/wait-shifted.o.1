@@ -1,0 +1,87 @@
+[Main]
+Choice
+Name=WaitShifted
+Title=Ожидание новой свечи
+Group=Управление
+
+[Property]
+Immediate=t,,стартовать сразу и ждать следующую
+SkipLastTrace=t,,пропускать предпоследний бар при ретрейсе
+Manual=t,,управление ожиданием из внешнего блока
+Candles=n,,количество свечей для пропуска (если указано)
+# после множественных проблем с округлением времени было принято решение смотреть
+# время по предыдущему сформированному бару
+
+[Output]
+Shifted=c
+time=n,@nextbar
+
+[InputPars]
+Start
+Trace
+Threads
+
+[Code]
+<gvars>
+datetime @nextbar;
+
+<init>
+  <?Immediate>
+    <?Threads>
+  if (ActiveThreads($Threads)==0) @nextbar = 0;
+  else
+    </>
+  </>
+  
+  <?!Manual>
+    <?Trace>
+      <?SkipLastTrace>
+  if (trace_index<=1)
+    @nextbar = Time[1];
+  else
+      </>
+    @nextbar = Time[1+trace_index];
+    <~>
+    @nextbar = Time[1];
+    </>
+    <?Candles>@nextbar += ($Candles-1)*PeriodSeconds();</>
+    <?debug>Print("$name next bar is "+TimeToStr(@nextbar));</>
+  <~>
+  @nextbar = 0;
+  </>
+  
+<lines>
+  <?Immediate><?!Threads>
+  if ($Start==0) @nextbar = 0;
+  </></>
+  <?Trace>
+  datetime @curtime = Time[1+trace_index];
+  <~>
+  datetime @curtime = Time[1];
+  </>
+  if (@curtime>@nextbar)
+  {
+    <?debug>Print("$name "+TimeToStr(@curtime)+" >= "+TimeToStr(@nextbar));</>
+    <?!Manual>
+    <?Trace>
+    <?SkipLastTrace>
+    if (trace_index<=1)
+      @nextbar = Time[1];
+    else
+    </>
+      @nextbar = Time[1+trace_index];
+    <~>
+      @nextbar = Time[1];
+    </>
+    <?Candles>@nexttime += ($Candles-1)*PeriodSeconds();</>
+    <?debug>Print("$name next bar is "+TimeToStr(@nextbar));</>
+    </>
+$Shifted.lines
+  }
+
+<sync>
+  syncTitle("$name");
+  sync("nextbar", @nextbar);
+  
+[Help]
+Ожидает наступление момента новой свечи.

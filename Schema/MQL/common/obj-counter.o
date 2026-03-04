@@ -1,0 +1,61 @@
+[Main]
+Usable
+Name=ObjCounter
+Title=Счётчик объектов
+Group=Общие
+
+[Code]
+<gvars>
+class ObjCounter
+{
+  public:
+  int counter;
+  bool single;
+  string name;
+  ObjCounter() : counter(1) { }
+  ObjCounter(string _name, bool _single=false) : counter(1), name(_name), single(_single) { }
+  ~ObjCounter()
+  {
+    if (name!="") Clear();
+  }
+  void Set(string _name)
+  {
+    name= _name;
+  }
+  void Clear(string _name="", bool reset=true)
+  {
+    if (_name=="") _name = name;
+    if (!single)
+    {
+      for (int i=1; i<counter; i++)
+        ObjectDelete(_name+i);
+    }
+    else
+    {
+      int i = 1;
+      while (ObjectFind(_name+i)>=0)
+      {
+        ObjectDelete(_name+i);
+        i++;
+      }
+    }
+    if (reset) counter = 1;
+  }
+  int Next()
+  {
+    return single?1:counter++;
+  }
+  string NextName()
+  {
+    if (single)
+    {
+      ObjectDelete(name);
+      return name;
+    }
+    else
+      return name+counter++;
+  }
+};
+
+[Help]
+Счётчик графических объектов.

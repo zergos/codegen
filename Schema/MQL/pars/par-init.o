@@ -1,0 +1,18 @@
+[Main]
+Name=ParSet
+Title=”становка значени€
+Group=ѕараметры
+Size=4
+
+[Property]
+ParName=s,Param,им€ параметра дл€ установки
+ParValue=s,1,значение параметра
+
+[Code]
+<lines>
+  $ParName = $ParValue;
+  <?debug>Print("$ParName = ",$ParValue);</>
+
+[Help]
+ѕрисваивает значение параметру.
+

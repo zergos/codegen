@@ -1,0 +1,39 @@
+[Main]
+Choice
+Name=WaitHour
+Title=Ожидание часа
+Group=Управление
+
+[Property]
+Hour=n,9,час\, с которого начинать
+
+[Output]
+Go=c
+
+[Code]
+<procs>
+datetime @nexthour()
+{
+  datetime day = (CurTime()/86400)*86400;
+  if (TimeHour(CurTime())>=$Hour) return day+86400+$Hour*3600;
+  else return day+$Hour*3600;
+}
+
+<gvars>
+datetime @fixtime;
+
+<init>
+  @fixtime = @nexthour();
+
+<lines>
+  if (CurTime()>=@fixtime)
+  {
+    if (TimeHour(CurTime())>=$Hour)
+    {
+$Go.lines
+    }
+    @fixtime = @nexthour();
+  }
+
+[Help]
+Продолжает выполнение при наступлении указанного часа.

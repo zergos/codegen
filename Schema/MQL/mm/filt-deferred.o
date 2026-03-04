@@ -1,0 +1,73 @@
+[Main]
+Name=FiltDeferred
+Title=‘ильтр отложенных
+Group=—делки
+
+[Property]
+Mode=n,,0 - удал€ть BUY\, 1 - удал€ть SELL\, 2 - по тренду\, 3 - против тренда
+AllThreads=t,,удалить по всем потокам
+Condition=s,,условие удалени€ отложек
+
+[InputPars]
+Threads
+
+[Code]
+<procs>
+<?Condition>
+bool @conditions($Threads *th)
+{
+  return $Condition;
+}
+</>
+
+<?Mode>
+bool @filterDeferred($Threads &thread, CHubOrder *ho)
+{
+  return
+         <?Mode=0>
+         opBUY(ho.cmd)
+         </>
+         <?Mode=1>
+         opSELL(ho.cmd)
+         </>
+         <?Mode=2>
+         thread.trend>0 && opBUY(ho.cmd) || trend<0 && opSELL(ho.cmd)
+         </>
+         <?Mode=3>
+         thread.trend>0 && opSELL(ho.cmd) || trend<0 && opBUY(ho.cmd)
+         </>
+  ;  
+}
+</>
+
+<lines>
+  <?!AllThreads>
+  ForEachL(CHubOrder, ho, firstOrder)
+  {
+    if (ho.state == HUB_CLOSED) continue;
+    if (ho.state == HUB_INITIAL)
+      <?Mode>if (@filterDeferred(this, ho))</>
+        ho.ClosePending();
+  }
+  <~>
+  ForEach(CHubThread, th)
+  <?Condition>if (@conditions(th))</>
+  {
+  ForEach(CHubOrder, ho, th.firstOrder)
+  {
+    if (ho.state == HUB_CLOSED) continue;
+    if (ho.state == HUB_INITIAL)
+      <?Mode>if (@filterDeferred(th, ho))</>
+          ho.ClosePending();
+  }
+    if (th.HubOpenCount(HUB_ACTIVE)==0)
+    {
+      th.hub_state = HUB_CLOSED;
+      th.hub_activated = true;
+    }
+  }
+  </>
+
+
+[Help]
+”даление инициирующих ордеров и активаци€ сетки ордеров по движению

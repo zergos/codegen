@@ -1,0 +1,39 @@
+[Main]
+Name=Compare
+Title=Сравнение
+Group=Арифметика
+Size=4
+
+[Property]
+Mode=siglevel,>,режим сравнения
+Value=n,1,результат успешного сравнения
+Shift=n,,сдвиг индекса второй серии
+
+[Input]
+in1=row
+in2=row
+
+[Output]
+sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $sig[];
+
+<lines>
+  ArrayInit($sig, $Size);
+  CheckShift($sig);
+  for (int i=$Start; i<$Size; i++)
+    <?!Shift>
+    $sig[i] = $in1[i] $Mode $in2[i]?$Value:0;
+    <~>
+    $sig[i] = i>$Shift && $in1[i] $Mode $in2[i-$Shift]?$Value:0;
+    </>
+
+[Help]
+Сравнивает входящие серии поэлементно. В случае успеха присваивает значение **Value**.
+

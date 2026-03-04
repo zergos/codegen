@@ -1,0 +1,654 @@
+[Main]
+Usable
+Name=TAModels
+Title=Модели
+Group=ТА
+
+[Uses]
+arith\pi
+
+[Code]
+<top>
+#include "ta-models-base.mqh"
+
+<attach>
+=ta-models-base.mqh
+input bool taDraw = true; // Draw: рисовать модели
+//input double taMaxHP = 100; // MaxHP: процент макс. удалённости ГТ во времени
+//input double taMaxHPPrice = 100; // MaxHPPrice: процент макс. удалённости по цене
+input double taAlfaCoef = 0.05; // AlfaCoef: приведение цены ко времени
+input double taMinAlpha = 0; // MinAlpha: мин. угол модели в градусах
+input double taMinBeta = 0; // MinBeta: мин. угол ГТ в градусах
+input double taMDRCoef1 = 3.0; // MDRCoef1: коэф. удаленности СТ для МР->МДР
+input double taMDRCoef2 = 7.0; // MDRCoef2: коэф. удаленности СТ для МП->МДР
+input bool taCheck2x5 = true; // Check2x5: проверка тела 5-й свечи
+input bool taCheck1234 = true; // Check1234: проверка пересечения тел для МП
+input bool taCheckSF = true; // CheckSF: фильтрация пропорций как в Skilful
+input int taGapFilterSize = 1000; // GapFilterSize: размер гэпа для фильтра в пп.
+input bool taCombine = true; // Combine: объединять похожие модели
+input bool taCombineBase = true; // CombineBase: объединять по Базе
+input bool taCombineTarget = true; // CombineTarget: объединять по ЛЦ
+input double taPinchSize = 10; // PinchSize: размер внутр. щипка линии
+input int taBreakPoints = 10; // BreakPoints: мин. кол. пп для пробития линии
+input double taBreakPercent = 0.05; // BreakPercent: мин. процент пробития от (1-6)
+input bool taTrendRecheck = false; // TrendRecheck: повт. пробитие тренда для 4=6
+
+#define breakout(up,down) (F.trend>0?(up):(down))
+
+<?debug>
+string taModelNames[] = {"EXP", "DB", "ATTR"};
+</>
+
+enum TAModelTypes
+{
+  M_EXP,
+  M_DB,
+  M_ATTR
+};
+
+class TABaseField;
+class TABaseModel : public ChainObject
+{
+  public:
+  
+  double P1,P2,P3,P4,P5,P6,PC,PH;
+  int B1,B2,B3,B4,B5,B6,BC,BH;
+  bool is5, is6, isH, trOut; // флаги присутствия точек (5,6), Г
+  bool hypOut; int hypB; // флаг пробития ГТ
+  double KT, KR, KH, KHR; // коэффициенты приращения по трендовой и целевой
+  double PT, PR; // текущие цены трендовой и целевой
+  double PTX; // цена пробития трендовой
+  int B1o, B2o, B3o, B4o; // точки для линий
+  int B2h, B3h, B4h; /// точки линии для ГТ
+  double P7; // экстремум после пробития трендовой
+  bool is7;
+  double P8; // экстремум после пробития 6-й
+  double PT1, PT3; // первая и третья цели
+  int Limit; // предельная длина модели
+  
+  double alpha; // угол между линиями
+  double beta; // угол между целевой и гипотетической
+  double gamma; // угол наклона трендовой
+  
+  TABaseField *F; // поле поиска модели
+  
+  int id;
+  TAModelTypes type;
+  
+  bool active, stop, hypostop;
+  bool genesis;
+  TABaseModel *genBase;
+  
+  int sCount; // кол-во скриптов по модели
+  
+  bool strong; // сильная модель
+  bool trend_start; // начало тренда
+  
+  double BP; // пунктов шума при пробитии
+  
+  static int counter;
+  
+  bool tickMode;
+  
+  datetime sleepTo;
+  
+  int X() { return F.X(); }
+  double L(int i)  { return F.L(i); }
+  double H(int i)  { return F.H(i); }
+  double T(int i)  { return F.T(i); }
+  <?expert>
+  //double LX() { return F.mode==ModeC?F.Q.C[F.Q.X]:Low(); }
+  //double HX() { return F.mode==ModeC?F.Q.C[F.Q.X]:High(); }
+  double LX() { return tickMode?Low():F.LX(); }
+  double HX() { return tickMode?High():F.HX(); }
+  <~>
+  double LX() { return F.LX(); }
+  double HX() { return F.HX(); }
+  </>
+  double CX() { return F.Q.C[X()]; }
+  double LO(int i) { return F.LO(i); }
+  double HO(int i) { return F.HO(i); }
+  double LL(int i) { return F.LL(i); }
+  double HH(int i) { return F.HH(i); }
+  double CC(int i) { return F.CC(i); }
+  double OO(int i) { return F.OO(i); }
+  
+  static TABaseModel *first;
+  virtual ChainObject *getFirst() { return first; }
+  virtual void setFirst(ChainObject *o) { first = o; }
+  
+  TABaseModel():ChainObject()
+  {
+    id = counter++;
+    Activate();
+  }
+  
+  ~TABaseModel()
+  {
+    if (first==GetPointer(this)) first = next;
+    DrawKill(id);
+    //F.Release();
+  }
+  
+  void Activate()
+  {
+    int k = ArraySize(taModels);
+    ArrayResize(taModels, k+1);
+    taModels[k] = GetPointer(this);
+    add();
+  }
+  
+  <?debug>
+  void Log(string s)
+  {
+    FileWrite(Logger, "M"+(stop?"!":"#")+id+" "+taModelNames[type]+" "+(HasRef(F)?(string)F.Q.T[X()]:"NULL")+" "+s);
+    FileFlush(Logger);
+  }
+  </>
+  
+  bool fixB3();  
+  bool fixB1();  
+  bool fixB4();
+  bool fixB2();  
+  bool fixB3h();  
+  bool fixB2h();  
+  bool fixB4h();
+    
+  void calcK(bool align=false)
+  {
+    int state = align?30:100;
+    
+    B1o = B1;
+    B2o = B2;
+    B3o = B3;
+    B4o = B4;
+    
+    while (state !=0 && !stop)
+    {
+      switch (state)
+      {
+        case 30:
+          fixB3(); state = 10;
+          break;
+        case 10:
+          state = fixB1()?31:40;
+          break;
+        case 31:
+          state = fixB3()?10:40;
+          break;
+        case 40:
+          fixB4(); state = 20;
+          break;
+        case 20:
+          state = fixB2()?41:0;
+          break;
+        case 41:
+          state = fixB4()?20:0;
+          break;
+        case 100:
+          KT = (LO(B3)-LO(B1))/(B3-B1);
+          KR = (HO(B4)-HO(B2))/(B4-B2);
+          state = 0;
+          break;
+      }
+    }
+    
+    if (stop) return;
+    
+    PT = LO(B1o)+KT*(X()-B1o);
+    PR = HO(B2o)+KR*(X()-B2o);
+    
+    PC = 0;
+    alpha = 0;
+    if (KR==KT) BC=-taMaxCP;
+    else
+    {
+      double BCd = ((HO(B2o)-KR*B2o)-(LO(B1o)-KT*B1o))/(KT-KR);
+      BC = round(BCd);
+      if (fabs(BC)<taMaxCP)
+      {
+        PC = LO(B1o)+KT*(BCd-B1o);
+        double coef = taAlfaCoef/Point;
+        coef *= coef;
+        alpha = acos((1+KT*KR*coef)/sqrt(1+KT*KT*coef)/sqrt(1+KR*KR*coef));
+        alpha = alpha*180/PI;
+        gamma = acos(1/sqrt(1+KT*KT*coef));
+        gamma = gamma*180/PI;
+      }
+    }
+  }
+  
+  void calcHP()
+  {
+    B2h = B2;
+    B3h = B3;  
+    B4h = B4;
+    
+    fixB3h();
+    
+    int state = 20;
+    hypostop = false;
+
+    while (state !=0 && !hypostop)
+    {
+      switch (state)
+      {
+        case 20:
+          fixB2h(); state = 40;
+          break;
+        case 21:
+          state = fixB2h()?40:0;
+          break;
+        case 40:
+          state = fixB4h()?21:0;
+          break;
+      }
+    }
+    
+    if (hypostop) return;
+
+    if (KHR!=KH) // вывод ГТ за границы
+    {
+      beta = acos((1+KHR*KH)/sqrt(1+KHR*KHR)/sqrt(1+KH*KH));
+      beta = beta*180/PI;
+      if (beta>=taMinBeta)
+      {
+        double BHd = ((HO(B2o)-KHR*B2o)-(LO(B3h)-KH*B3h))/(KH-KHR);
+        BH = round(BHd);
+        PH = LO(B3h)+KH*(BHd-B3h);
+        if (BH>B5 && BH<=Limit) isH = true;
+      }
+    }
+  }
+  
+  void calcBP()
+  {
+    BP = fmax(taBreakPoints*Point, fabs(P6-P1)*taBreakPercent);
+  }
+  
+  void Detect()
+  {
+    if (BC<B2 && -BC<taMDRCoef1*(B4-B1))
+    {
+      type = M_EXP;
+      Limit = 4*(B4-BC)+B4;
+      
+      strong = (B3-B1>B1-BC);
+      // проверка на начало тренда
+      /*trend_start = true;
+      int t1 = iBarShift(NULL, 0, F.Q.T[B1]);
+      for (int i=t1; i<t1-BC*2; i++)
+      {
+        if (F.trend>0 && (F.mode==ModeHL?iLow(NULL, 0, i):iClose(NULL, 0, i))<P1 || F.trend<0 && (F.mode==ModeHL?iHigh(NULL, 0, i):iClose(NULL, 0, i))>P1)
+        {
+          trend_start = false;
+          break;
+        }
+      }*/
+      
+      PT3 = 2*P1-P4;
+    }
+    else if (BC>B4 && BC-B4<taMDRCoef2*(B4-B1))
+    {
+      type = M_ATTR;
+      Limit = BC;
+    }
+    else if (BC<0 || BC>B4)
+    {
+      type = M_DB;
+      Limit = 2*B4;
+    }
+    else
+      stop = true;
+      
+    calcBP();
+  }
+  
+  virtual bool Filter()
+  {
+    if (B3o>B4o)
+    {
+      <?debug>Log("точки 3-4 поменялись местами");</>
+      return false; // точки сместились при построении канала
+    }
+    
+    if (taGapFilterSize>0)
+      if (fabs(F.Q.O[B4]-F.Q.C[B4-1])>taGapFilterSize*Point)
+      {
+        <?debug>Log("отмена модели по гэпу");</>
+        return false;
+      }
+  
+    if (taCheck1234 && type == M_ATTR)
+    {
+      if (breakout(
+        /*fmin(CC(B2o),OO(B2o))<=fmax(CC(B1o), OO(B1o)) || */fmin(CC(B3),OO(B3))<=fmin(CC(B1),OO(B1)) || fmin(CC(B4),OO(B4))<=fmin(CC(B2),OO(B2)),
+        /*fmax(CC(B2o),OO(B2o))>=fmin(CC(B1o), OO(B1o)) || */fmax(CC(B3),OO(B3))>=fmax(CC(B1),OO(B1)) || fmax(CC(B4),OO(B4))>=fmax(CC(B2),OO(B2))))
+      {
+        <?debug>Log("отмена МП по 1х2х3х4");</>
+        return false;
+      }
+    }
+    
+    if (type != M_ATTR)
+    {
+      if (breakout(HO(B2o)<P3, HO(B2o)>P3))
+      {
+        <?debug>Log("отмена модели по P2'<P3");</>
+        return false;
+      }
+      if (breakout(LO(B3o)>P2,LO(B3o)<P2))
+      {
+        <?debug>Log("отмена модели по P3'>P2");</>
+        return false;
+      }
+      // проверка щипков (наличие 3-х точек на линиях)
+      // ЛЦ
+      double PinchSize = taPinchSize*Point;
+      double price = HO(B2o)+KR;
+      for (int i=B2o+1; i<B4o; i++, price+=KR)
+      if (breakout(HO(i)+PinchSize>=price, HO(i)-PinchSize<=price))
+      {
+        <?debug>Log("есть точка на ЛЦ");</>
+        return false;
+      }
+      // ЛТ
+      price = LO(B1o)+KT;
+      for (int i=B1o+1; i<B3o; i++, price+=KT)
+      if (breakout(LO(i)-PinchSize<=price, LO(i)+PinchSize>=price))
+      {
+        <?debug>Log("есть точка на ЛТ");</>
+        return false;
+      }
+    }
+    
+    if (!taCombine) return true;
+    
+    // поиск похожей модели
+    for (int i=0; i<ArraySize(taModels); i++)
+    {
+    TABaseModel *S = taModels[i];
+    if (HasRef(S) && HasRef(S.F) && S.id != id)
+    {
+      if (taCombineBase &&
+        S.F.Q.T[0] == F.Q.T[0] && // поиск модели по базе
+        S.B1 == B1 &&
+        S.B2 == B2 &&
+        S.B3 == B3)
+      {
+        <?expert>
+        if (S.active && S.type==M_EXP)
+        {
+          <?debug>Log("отмена модели по повтору Базы");</>
+          return false;
+        }
+        else if (type!=M_ATTR)
+        {
+          <?debug>Log("зачатие широкой модели");</>
+          genesis = true;
+          genBase = S;
+        }
+        else 
+        <~>
+        if (type==M_ATTR)
+        </>
+        {
+          // новая модель расширяет цели
+          S.stop = true;
+          DrawKill(S.id);
+        }
+      }
+      else
+      if (taCombineTarget &&
+        !S.stop &&
+        S.F.Q.T[0] != F.Q.T[0] && // поиск модели по целевой
+         ((S.F.Q.T[S.B2o] == F.Q.T[B2o] &&
+           S.F.Q.T[S.B4o] == F.Q.T[B4o]) ||
+          (S.F.Q.T[S.B2] == F.Q.T[B2] &&
+           S.F.Q.T[S.B4] == F.Q.T[B4])))
+      {
+        <?debug>Log("повторяется ЛЦ ("+S.id+")");</>
+        return false;
+      }
+      else
+      if (!S.stop &&
+        S.F.Q.T[0] == F.Q.T[0] && // поиск модели по построению
+        S.B1o == B1o &&
+        S.B2o == B2o &&
+        S.B3o == B3o &&
+        S.B4o == B4o)
+      {
+        double cost = fabs(B1o-B1) + fabs(B2o-B2) + fabs(B3o-B3) + fabs(B4o-B4);
+        double icost = fabs(S.B1o-S.B1) + fabs(S.B2o-S.B2) + fabs(S.B3o-S.B3) + fabs(S.B4o-S.B4);
+        
+        if (icost<cost) // старая модель сильней
+        {
+          <?debug>Log("отмена модели по совпадению конструкции");</>
+          return false;
+        }
+        
+        // новая модель победила
+        <?debug>Log("новая модель победила по констукции ("+taModels[i].id+")");</>
+        S.stop = true;
+        DrawKill(S.id);
+        
+        break;
+      }
+    }
+    }
+    return true;
+  }
+  
+  void FilterByGen()
+  {
+    // поиск похожей модели
+    for (int i=0; i<ArraySize(taModels); i++)
+    {
+    TABaseModel *S = taModels[i];
+    if (HasRef(S) && HasRef(S.F) && S.id != id)
+    {
+      if (S.F.Q.T[0] == F.Q.T[0] && // поиск модели по базе
+        S.B1 == B1 &&
+        S.B2 == B2 &&
+        S.B3 == B3 &&
+        S.B4 < B4)
+      {
+        if (!S.active)
+        {
+        // новая модель расширяет цели
+        <?debug>Log("фильтрация после созревания ("+i+")");</>
+        S.stop = true;
+        DrawKill(S.id);
+        }
+        else
+        {
+          <?debug>Log("отмена после созревания ("+i+")");</>
+          stop = true;
+          return;
+        }
+      }
+    }
+    }
+  }
+  
+  void ProcessBar()
+  {
+    if (X()>Limit)
+    {
+      stop = true;
+      <?!expert>active = false;</>
+    }
+  
+    PT += KT;
+    PR += KR;
+    
+    ProcessTick(false);
+  }
+    
+  void ProcessTick(bool _tickMode = true)
+  {
+    tickMode = _tickMode;
+  
+    if (!stop<?expert> || active</>)
+    {
+      // поиск т.5-6
+      if (!trOut)
+      {
+        if ((!taTrendRecheck || type!=M_EXP || B6>B4) && breakout(LX()<PT-BP, HX()>PT+BP))
+        {
+          trOut = true;
+          is6 = true;
+          PTX = PT;
+          PT1 = 2*PT-P6;
+        }
+        else
+        if (!is5)
+        {
+          if (breakout(LX()<P5, HX()>P5)) // обновление вершины
+          {
+            B5 = X();
+            P5 = F.trend>0?LX():HX();
+          }
+          else
+          if (X()>B5 && breakout(HX()>=P6, LX()<=P6)) // откат до т.4
+          { // т.5 сформирована
+            is5 = true;
+            <?debug>Log("5-я точка сформирована на "+P5);</>
+            B6 = X();
+            P6 = HO(B6);
+            P8 = P6;
+            calcBP();
+            
+            isH = false;
+            calcHP();
+            
+            if (taCheck2x5)
+            {
+              if (breakout(
+                fmin(CC(B5),OO(B5))<=fmax(CC(B2), OO(B2)),
+                fmax(CC(B5),OO(B5))>=fmin(CC(B2), OO(B2))))
+               {
+                 //stop = true;
+                 <?debug>Log("отмена ГТ по пересечению тел 2х5");</>
+                 //DrawKill(id);
+                 isH = false;
+               }
+            }
+            
+            if (taCheckSF && (type==M_EXP || type==M_DB))
+            {
+              // т.5 внутри бара т.4
+              /*if (P5>L(B4) || P5<H(B4))
+              {
+                 stop = true;
+                 ?debug>Log("отмена модели по попаданию т.5 внутрь бара т.4");/>
+                 DrawKill(id);
+                 return;
+              }*/
+              
+              // соотношение базы и целей
+              if (fabs(P5-P4)>fabs(P2-P1) || B5-B4>B3-B1 || fabs(P5-P4)*3>=fabs(P2-P1) && (B5-B4+1)*3>=B3-B1+1)
+              {
+                //  фильтр пройден
+              }
+              else
+              {
+                 stop = true;
+                 <?debug>Log("отмена модели по фильтру пропорций");</>
+                 DrawKill(id);
+                 return;
+              }
+              
+              // т.3' вышла за базу
+              if (breakout(LO(B3h)>HO(B2),LO(B3h)<HO(B2)))
+              {
+                <?debug>Log("т.3' вышла за базу - отмена ГТ");</>
+                isH = false;
+              }
+            }
+            
+            if (!stop && genesis)
+            {
+              FilterByGen();
+              genesis = false;
+            }
+
+            if (isH)
+            {
+              Draw();
+              // проверка раннего пробития ГТ
+              if (breakout(H(X())>=PH,L(X())<=PH))
+              {
+                hypOut = true;
+                hypB = X();
+              }
+              //if (hypOut && breakout(L(X())<P4,H(X())>P4)) is6 = true;
+            }
+  
+          }
+        } // is5
+        else
+        { 
+          if (isH && !hypOut && breakout(HX()>PH, HX()<PH)) // пробитие ГТ
+          {
+            hypOut = true;
+            hypB = X();
+          }
+          else if (isH && hypOut && !is6 && X()>hypB && breakout(LX()<P4, HX()>P4)) // пробитие т.4 обратно
+          {
+            is6 = true;
+          }
+          
+          if (!is6 && breakout(HX()>H(B6), LX()<L(B6))) // обновление т.6
+          {
+            B6 = X();
+            P6 = F.trend>0?HX():LX();
+            calcBP();
+          }
+        }
+      } //trOut
+      else if (!is7 && breakout(LX()<P7, HX()>P7))
+      {
+        P7 = F.trend>0?LX():HX();
+      }
+      
+      if (breakout(HX()>P8, LX()<P8))
+      {
+        if (trOut || P1!=P7) is7 = true;
+        P8 = F.trend>0?HX():LX();
+      }
+    } //active
+        
+    <?expert>
+    if (genesis && (!HasRef(genBase) || (genBase.stop && !genBase.active)))
+    {
+      <?debug>Log("созревание по освобождению базы");</>
+      FilterByGen();
+      genesis = false;
+    }
+    if (!genesis && (!stop || active) && CurTime()>=sleepTo) Trade();
+    </>
+  }
+  
+  virtual color Color();  
+  void Draw();
+  static void DrawKill(int id);
+  
+  <?!expert>
+  bool fixed;
+  static int filter_type;
+  static bool filter_h, filter_4, filter_56, filter_strong, filter_start, filter_plain;
+  
+  static void DrawShow(int i, bool show);
+  static void ShowFiltered();
+  </>
+  
+  <?expert>
+  virtual void Trade() { }
+  virtual int EstimatePlan() { return 0; }
+  </>
+};
+
+int TABaseModel::counter = 0;
+TABaseModel *taModels[];
+TABaseModel *TABaseModel::first;

@@ -1,0 +1,53 @@
+[Main]
+Name=VLines
+Title=Вертикали
+Group=Фигуры
+
+[Uses]
+common\obj-counter
+
+[Property]
+Color1=color,Red,цвет линий (не обязательно)
+Color2=color,Green
+Style=buf_style,,стиль линий
+Back=bool,true,задний фон
+
+[Input]
+in=row
+time=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+ObjCounter *$name;
+
+<init>
+  $name = new ObjCounter("$name");
+
+<lines>
+  if ($Start==0) $name.Clear();
+
+  for (int i=$Start; i<$Size; i++)
+  {
+    if ($in[i]!=0)
+    {
+      string name = $name.NextName();
+      ObjectCreate(name, OBJ_VLINE, 0, $time[i], 0);
+      <?Color1>
+      if ($in[i]>0)
+        ObjectSet(name,  OBJPROP_COLOR, $Color1);
+      else
+        ObjectSet(name,  OBJPROP_COLOR, $Color2);
+      </>
+      <?Style>ObjectSet(name, OBJPROP_STYLE, $Style);</>
+      <?Back>ObjectSet(name, OBJPROP_BACK, $Back);</>
+      string t = $in[i];
+      ObjectSetText(name, t);
+    }
+  }
+  
+<deinit>
+  delete $name;

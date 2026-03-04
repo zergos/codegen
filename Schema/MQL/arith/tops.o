@@ -1,0 +1,40 @@
+[Main]
+Name=Tops
+Title=Вершины
+Group=Арифметика
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++)
+    if ($close[@i]>$open[@i])
+      $out[@i] = $high[@i];
+    else if ($close[@i]<$open[@i])
+      $out[@i] = $low[@i];
+    else
+      $out[@i] = ($high[@i]+$low[@i])/2;
+
+[Help]
+Генератор серии вершин
+<code>
+out = high when close>open
+      low when close<open
+      (high+low)/2
+</code>

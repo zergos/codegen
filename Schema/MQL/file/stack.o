@@ -1,0 +1,73 @@
+[Main]
+Name=Stack
+Title=Стек
+Group=Файлы
+
+[Property]
+MulFactor=n,1,дублировать значения при загрузке
+
+[Input]
+file=n
+
+[InputPars]
+Sync
+
+[Global]
+<gvars>
+struct CStack
+{
+  bool loaded;
+  double stack[];
+  int pos;
+  
+  void load(int file, int mul=1)
+  {
+    int count = FileReadNumber(file);
+    ArrayResize(stack, count*mul);
+    for (int i=0; i<count; i++)
+    {
+      stack[i*mul] = FileReadNumber(file);
+      for (int k=1; k<mul; k++)
+        stack[i*mul+k] = stack[i*mul];
+      <?debug>Print("$name ",stack[i*mul]);</>
+    }
+    loaded = true;
+  }
+  
+  double get()
+  {
+    double res = stack[pos];
+    pos = (pos+1)%ArraySize(stack);
+    return res;
+  }
+  
+  <?Sync>
+  void sync()
+  {
+    sync("loaded", loaded);
+    sync("stack", stack);
+    sync("pos", pos);
+  }
+  </>
+  
+  CStack()
+  {
+    loaded = false;
+    pos = 0;
+  }
+};
+
+[Code]
+<gvars>
+CStack $name;
+
+<lines>
+  if (!$name.loaded)   
+    $name.load($file, $MulFactor);
+
+<sync>
+  syncTitle("$name");
+  $name.sync();
+    
+[Help]
+Считывает стек из файла. Очередное значение извлекается методом **get()**.

@@ -1,0 +1,31 @@
+[Main]
+Choice
+Name=CheckValue
+Title=Проверка числа
+Group=Управление
+
+[Property]
+CheckCondition=s,>0,условие проверки
+
+[Input]
+Var=n
+
+[Output]
+True=c
+False=c
+
+[Code]
+<lines>
+  if ($Var$CheckCondition)
+  {
+    <?debug>Print($Var,"$CheckCondition");</>
+$True.lines
+  }
+  else
+  {
+$False.lines
+  }
+  
+[Help]
+Проверка значения с помощью статического выражения.
+

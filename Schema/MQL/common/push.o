@@ -1,0 +1,35 @@
+[Main]
+Name=Push
+Title=Добавить в серию
+Group=Общие
+Size=4
+
+[Property]
+Value=n
+Shift=n
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+Series
+
+[Code]
+<gvars>
+<?!Series>
+double $name[];
+</>
+
+<init>
+<?!Series>
+  ArrayInit($name, $Size);
+</>
+
+<lines>
+<?!Series>
+  $name[ti<?Shift>-$Shift</>] = $Value;
+<~>
+  $Series[ti<?Shift>-$Shift</>] = $Value;
+</>

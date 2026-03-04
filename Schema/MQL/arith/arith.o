@@ -1,0 +1,28 @@
+[Main]
+Name=Arith
+Title=Вычисление
+Group=Арифметика
+
+[Property]
+Operation=oper,+
+
+[Input]
+in1=row
+in2=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++)
+    $out[@i] = $in1[@i]$Operation$in2[@i];

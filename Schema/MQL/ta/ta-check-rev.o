@@ -1,0 +1,30 @@
+[Main]
+Choice
+Name=TACheckRev
+Title=EA Торг. контроль
+Group=ТА
+
+[Output]
+work=c
+
+[Code]
+<lines>
+  taCur.Advise();
+  if (taCur.stop)
+  {
+    OrderForceClose(hid);
+    taCur.Release();
+    hub_state = HUB_CLOSED;
+    hub_activated = true;
+  }
+  else
+  {
+      if (hid>=0 && norm(taCur.tp)!=hub[hid].ftp)
+        OrderSetTP(hid, norm(taCur.tp));
+      if (hid>=0 && norm(taCur.sl)!=hub[hid].fsl)
+        OrderSetSL(hid, norm(taCur.sl));
+$work.lines
+  }
+
+[Help]
+Обработка закрытий и коррект. уровней.

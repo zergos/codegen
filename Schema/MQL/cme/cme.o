@@ -1,0 +1,15 @@
+[Main]
+Unit
+Group=CME
+Title=Модуль
+Name=CmeUnit
+
+[Code]
+<top>
+#import "cme_get.dll"
+bool CMEReadStrikes(datetime SetDate, string Section, string Option, int SplitDays, int Mode, int &datas[], int &start, int &size);
+#import
+
+[Help]
+Обязательно подключать при использовании функционала CME
+

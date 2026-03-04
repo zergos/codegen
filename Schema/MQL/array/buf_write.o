@@ -1,0 +1,33 @@
+[Main]
+Name=ArrayWrite
+Title=Запись в массив
+Group=Массивы
+
+[Property]
+Window=n,1,количество значений для записи
+
+[Input]
+in=row
+buf=row
+
+[InputPars]
+Size
+Start
+
+[Code]
+<lines>
+  if (size$buf-wpos$buf < ($Size-$Start)*$Window)
+  {
+    if (ArrayResize($buf, ($Size-$Start)*$Window+wpos$buf)==-1) return (-1);
+    size$buf = ($Size-$Start)*$Window+wpos$buf;
+  }
+
+  for (int @i=0; @i<$Window; @i++)
+  {
+    for (int @n=$Start; @n<=$Size-$Window; @n++)
+    {
+      $buf[wpos$buf] = $in[@n+@i];
+      wpos$buf++;
+    }
+    dim$buf++;
+  }

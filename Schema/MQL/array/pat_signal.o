@@ -1,0 +1,63 @@
+[Main]
+Name=PatSignal
+Group=Паттерны
+Title=Сигнал
+
+[Input]
+buf=row
+Pattern=s
+
+[Output]
+sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $sig[];
+int @temp[];
+
+<init>
+  ArrayResize(@temp, count$Pattern);
+
+<lines>
+  ArrayInit($sig, $Size);
+  CheckShift($sig);
+
+  int @count = wpos$buf/dim$buf;
+
+  for (int @i=$Start; @i<$Size; @i++) // цикл по точкам
+  {
+    for (int @n=0; @n<dim$buf; @n++) // цикл по рядам
+    {
+      double @cur = $buf[@n*@count+(@i-$Start)];
+      bool @f = false;
+      int @lpos = 0;
+      for (int @k=points$Pattern[@n]; @k<points$Pattern[@n+1] && !@f; @k+=2, @lpos++) // по граням ряда
+      {
+        if (edges$Pattern[@k] == edges$Pattern[@k+1]) @f = (@cur==edges$Pattern[@k]);
+        else if (@k == points$Pattern[@n+1]-2 || (@k < points$Pattern[@n+1]-2 && edges$Pattern[@k+1]<edges$Pattern[@k+2]))
+          @f = (@cur >= edges$Pattern[@k] && @cur <= edges$Pattern[@k+1]);
+	else
+          @f = (@cur >= edges$Pattern[@k] && @cur < edges$Pattern[@k+1]);
+      }
+      if (@f) @temp[@n] = @lpos;
+      else @temp[@n] = 0;
+    }
+    
+    // поиск среди буферов
+    @f = false;
+    for (@n=0; @n<bufcount$Pattern && !@f; @n++)
+    {
+      int @bpos = @n*count$Pattern;
+      @f = true;
+      for (@k=0; @k<dim$buf && @f; @k++, @bpos++)
+        if (bufs$Pattern[@bpos]!=0)
+          @f = @f && (bufs$Pattern[@bpos] == @temp[@k]);
+    }
+
+    if (@f) $sig[@i] = 1.0;
+    else $sig[@i] = 0;
+  }

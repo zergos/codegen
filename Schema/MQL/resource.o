@@ -1,0 +1,15 @@
+[Main]
+Unit
+Name=Resource
+Title=Ресурс
+Group=Программы
+
+[Property]
+Path=s,,путь к файлу
+
+[Code]
+<top>
+#resource "$Path"
+
+[Help]
+Включение файла как ресурса в любую MQL программу.

@@ -1,0 +1,132 @@
+[Main]
+Name=HrLevels2
+Title=Уровни (вер.2)
+Group=Объёмы
+
+[Property]
+LookStep=n,3,количество этажей на поиск локального максимума
+#CheckPlusMinus=t,1,проверять отдельно положительные и отрицательные
+#CheckSum=t,1,проверять отдельно сумму
+Mode=n,1,режим проверки (1 - отдельно плюс/минус\, 2 - сумму\, 3 - модуль разности)
+Threshold=n,5,минимальное значение для проверки
+ClearOut=t,1,удалять при отключении
+ColorPlus=color,Green
+ColorMinus=color,Red
+SetWidth=n,,присваивать значение ширине линии (параметр - коэффициент уменьшения)
+
+[Input]
+V=row
+
+[InputPars]
+Start
+
+[Global]
+<procs>
+void ClearVLevels(int start, int size)
+{
+  for (int i=0; i<size; i++)
+  {
+    string name = "hrlevel"+(start-i);
+    if (ObjectFind(name)>=0) ObjectDelete(name);
+  }
+}
+
+[Code]
+<procs>
+<?LookStep>
+<?Mode=1>
+bool checkTop$name(int &V[], int pos)
+{
+  int cur = V[pos];
+  //check before
+  for (int i=pos-$LookStep; i<=pos+$LookStep; i++)
+    if (V[i]>cur) return false;
+  if (cur==0) return false;
+  return true;
+}
+</>
+<?Mode=2>
+bool checkSum$name(int pos)
+{
+  int cur = VP[pos]+VM[pos];
+  //check before
+  for (int i=pos-$LookStep-1; i<=pos+$LookStep; i++)
+    if (plus$V[i]+minus$V[i]>cur) return false;
+  if (cur==0) return false;
+  return true;
+}
+</>
+<?Mode=3>
+bool checkDiff$name(int pos)
+{
+  int cur = MathAbs(plus$V[pos]-minus$V[pos]);
+  //check before
+  for (int i=pos-$LookStep-1; i<=pos+$LookStep; i++)
+    if (MathAbs(plus$V[i]-minus$V[i])>cur) return false;
+  if (cur==0) return false;
+  return true;
+}
+</>
+</>
+
+<gvars>
+int @maxstart = 0, @maxsize = 0;
+
+<lines>
+  if ($Start==0)
+  {
+    ClearVLevels(@maxstart, @maxsize);
+    @maxstart = start$V;
+    @maxsize = size$V;
+    for (int @i=0; @i<size$V; @i++)
+    {
+      bool @mflag = false, @pflag = false;
+      <?Mode=1>
+        @pflag = plus$V[@i]>$Threshold<?LookStep> && checkTop$name(plus$V, @i)</>;
+        @mflag = minus$V[@i]>$Threshold<?LookStep> && checkTop$name(minus$V, @i)</>;
+      </>
+      <?Mode=2>
+        @mflag = false;
+        @pflag = @pflag && (plus$V[@i]+minus$V[@i]>$Threshold<?LookStep> && checkSum$name(@i)</>);
+      </>
+      <?Mode=3>
+        @pflag = (MathAbs(plus$V[@i]-minus$V[@i])>$Threshold<?LookStep> && checkDiff$name(@i)</>);
+        if (@pflag)
+          if (plus$V[@i]<minus$V[@i])
+          {
+            @pflag = false;
+            @mflag = true;
+          }
+      </>
+      if (@pflag || @mflag)
+      {
+        string @name = "hrlevel"+(start$V-@i);
+        <?Mode=1>
+        double @shift = HrVolStep*Point/2;
+        </>
+        <?Mode=2>
+        double @shift;
+        if (@pflag && @mflag) @shift = HrVolStep*Point/2;
+        else if (@pflag) @shift = (HrVolStep-1)*Point;
+        </>
+        <?Mode=3>
+        double @shift = HrVolStep*Point/2;
+        </>
+        ObjectCreate(@name, OBJ_HLINE, 0, 0, (@start$V-@i)*HrVolStep*Point-@shift);
+        if (@pflag) ObjectSet(@name, OBJPROP_COLOR, $ColorPlus);
+        else ObjectSet(@name, OBJPROP_COLOR, $ColorMinus);
+        ObjectSet(@name, OBJPROP_BACK, true);
+        
+        <?SetWidth>ObjectSet(@name, OBJPROP_WIDTH, MathMax(1,(plus$V[@i]+minus$V[@i])/$SetWidth));</>
+      }
+    }
+  }
+
+<deinit>
+<?ClearOut>
+  ClearVLevels(@maxstart, @maxsize);
+</>
+  
+[Help]
+Выявление уровней на основании данных горизонтальных объёмов.
+

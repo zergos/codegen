@@ -1,0 +1,45 @@
+[Main]
+Name=PriceGen
+Title=Ген. цены
+Group=Генераторы
+
+[Property]
+Price=applied_price,0
+
+[Input]
+open=row
+close=row,,d
+high=row
+low=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Global]
+<top>
+#define PA0(o,c,h,l) (c)
+#define PA1(o,c,h,l) (o)
+#define PA2(o,c,h,l) (h)
+#define PA3(o,c,h,l) (l)
+#define PA4(o,c,h,l) ((h+l)/2)
+#define PA5(o,c,h,l) ((h+l+c)/3)
+#define PA6(o,c,h,l) ((h+l+c+c)/4)
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = PA$Price($open[i],$close[i],$high[i],$low[i]);
+
+[Help]
+Получает на выходе усреднённую цену свечи в соотвествии с алгоритмом.
+

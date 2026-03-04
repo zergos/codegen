@@ -1,0 +1,31 @@
+[Main]
+Group=Преобразования
+Title=Сдвиг
+Name=Shift
+
+[Property]
+ShiftValue=n,1,значение сдвига
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[OutputPars]
+Size=($Size-$ShiftValue)
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size-$ShiftValue);
+  ArrayCopy($out, $in, 0, $ShiftValue, $Size-$ShiftValue);
+
+[Help]
+Сдвиг значений массива.\\
+Нужно, например, для срабатывания советника с запаздыванием.

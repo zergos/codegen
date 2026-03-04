@@ -1,0 +1,4269 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xlat>
+  <meta>
+    <version>3</version>
+    <tool>amTranslationManager</tool>
+    <toolversion>2.6.9482.36873</toolversion>
+  </meta>
+  <options>
+    <stringlisthandling>2</stringlisthandling>
+    <omitdonttranslate>True</omitdonttranslate>
+    <sorted>True</sorted>
+    <omitnewstate>True</omitnewstate>
+    <transient>False</transient>
+  </options>
+  <project sourcefile=".\CodeGen.exe" stringsymbolfile=".\CodeGen.drc" language="ru-RU">
+    <targetlanguages>
+      <language language="en"/>
+      <language language="ru-RU"/>
+    </targetlanguages>
+    <modules>
+      <module name="resourcestrings" type="strings">
+        <items>
+          <item name="ComConst_SDCOMNotInstalled">
+            <properties>
+              <property status="skip">
+                <value>DCOM not installed</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComConst_SNoMethod">
+            <properties>
+              <property status="skip">
+                <value>Method '%s' not supported by automation object</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComConst_SOleError">
+            <properties>
+              <property status="skip">
+                <value>OLE error %.8x</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComConst_STooManyParams">
+            <properties>
+              <property status="skip">
+                <value>Dispatch methods do not support more than 64 parameters</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComConst_SVarNotObject">
+            <properties>
+              <property status="skip">
+                <value>Variant does not reference an automation object</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComStrs_sTabFailClear">
+            <properties>
+              <property status="skip">
+                <value>Failed to clear tab control</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComStrs_sTabFailDelete">
+            <properties>
+              <property status="skip">
+                <value>Failed to delete tab at index %d</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComStrs_sTabFailGetObject">
+            <properties>
+              <property status="skip">
+                <value>Failed to get object at index %d</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComStrs_sTabFailRetrieve">
+            <properties>
+              <property status="skip">
+                <value>Failed to retrieve tab at index %d</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComStrs_sTabFailSet">
+            <properties>
+              <property status="skip">
+                <value>Failed to set tab "%s" at index %d</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComStrs_sTabFailSetObject">
+            <properties>
+              <property status="skip">
+                <value>Failed to set object at index %d</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ComStrs_sTabMustBeMultiLine">
+            <properties>
+              <property status="skip">
+                <value>MultiLine must be True when TabPosition is tpLeft or tpRight</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SAbortButton">
+            <properties>
+              <property status="skip">
+                <value>Abort</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SAllButton">
+            <properties>
+              <property status="skip">
+                <value>&amp;All</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SCancelButton">
+            <properties>
+              <property status="skip">
+                <value>Cancel</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SCannotDragForm">
+            <properties>
+              <property status="skip">
+                <value>Cannot drag a form</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SCannotFocus">
+            <properties>
+              <property status="skip">
+                <value>Cannot focus a disabled or invisible window</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SCannotOpenClipboard">
+            <properties>
+              <property status="skip">
+                <value>Cannot open clipboard</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SCannotShowModal">
+            <properties>
+              <property status="skip">
+                <value>Cannot make a visible window modal</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SChangeIconSize">
+            <properties>
+              <property status="skip">
+                <value>Cannot change the size of an icon</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SCloseButton">
+            <properties>
+              <property status="skip">
+                <value>&amp;Close</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SControlParentSetToSelf">
+            <properties>
+              <property status="skip">
+                <value>A control cannot have itself as its parent</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SDockedCtlNeedsName">
+            <properties>
+              <property status="skip">
+                <value>Docked control must have a name</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SDockTreeRemoveError">
+            <properties>
+              <property status="skip">
+                <value>Error removing control from dock tree</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SDockZoneHasNoCtl">
+            <properties>
+              <property status="skip">
+                <value> - Dock zone has no control</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SDockZoneNotFound">
+            <properties>
+              <property status="skip">
+                <value> - Dock zone not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SDuplicateMenus">
+            <properties>
+              <property status="skip">
+                <value>Menu '%s' is already being used by another form</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SErrorSettingCount">
+            <properties>
+              <property status="skip">
+                <value>Error setting %s.Count</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SGroupIndexTooLow">
+            <properties>
+              <property status="skip">
+                <value>GroupIndex cannot be less than a previous menu item's GroupIndex</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SHelpButton">
+            <properties>
+              <property status="skip">
+                <value>&amp;Help</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SIconToClipboard">
+            <properties>
+              <property status="skip">
+                <value>Clipboard does not support Icons</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SIgnoreButton">
+            <properties>
+              <property status="skip">
+                <value>&amp;Ignore</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SImageIndexError">
+            <properties>
+              <property status="skip">
+                <value>Invalid ImageList Index</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SImageReadFail">
+            <properties>
+              <property status="skip">
+                <value>Failed to read ImageList data from stream</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SImageWriteFail">
+            <properties>
+              <property status="skip">
+                <value>Failed to write ImageList data to stream</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInsertLineError">
+            <properties>
+              <property status="skip">
+                <value>Unable to insert a line</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidBitmap">
+            <properties>
+              <property status="skip">
+                <value>Bitmap image is not valid</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidClipFmt">
+            <properties>
+              <property status="skip">
+                <value>Invalid clipboard format</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidIcon">
+            <properties>
+              <property status="skip">
+                <value>Icon image is not valid</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidImageList">
+            <properties>
+              <property status="skip">
+                <value>Invalid ImageList</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidImageSize">
+            <properties>
+              <property status="skip">
+                <value>Invalid image size</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidMemoSize">
+            <properties>
+              <property status="skip">
+                <value>Text exceeds memo capacity</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidMetafile">
+            <properties>
+              <property status="skip">
+                <value>Metafile is not valid</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidTabPosition">
+            <properties>
+              <property status="skip">
+                <value>Tab position incompatible with current tab style</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SInvalidTabStyle">
+            <properties>
+              <property status="skip">
+                <value>Tab style incompatible with current tab position</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SKeyCaption">
+            <properties>
+              <property status="skip">
+                <value>Key</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SKeyConflict">
+            <properties>
+              <property status="skip">
+                <value>A key with the name of "%s" already exists</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SKeyNotFound">
+            <properties>
+              <property status="skip">
+                <value>Key "%s" not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SListBoxMustBeVirtual">
+            <properties>
+              <property status="skip">
+                <value>Listbox (%s) style must be virtual in order to set Count</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMaskEditErr">
+            <properties>
+              <property status="skip">
+                <value>Invalid input value.  Use escape key to abandon changes</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMaskErr">
+            <properties>
+              <property status="skip">
+                <value>Invalid input value</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMDIChildNotVisible">
+            <properties>
+              <property status="skip">
+                <value>Cannot hide an MDI Child Form</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMenuIndexError">
+            <properties>
+              <property status="skip">
+                <value>Menu index out of range</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMenuNotFound">
+            <properties>
+              <property status="skip">
+                <value>Sub-menu is not in menu</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMenuReinserted">
+            <properties>
+              <property status="skip">
+                <value>Menu inserted twice</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcAlt">
+            <properties>
+              <property status="skip">
+                <value>Alt+</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcBkSp">
+            <properties>
+              <property status="skip">
+                <value>BkSp</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcCtrl">
+            <properties>
+              <property status="skip">
+                <value>Ctrl+</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcDel">
+            <properties>
+              <property status="skip">
+                <value>Del</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcDown">
+            <properties>
+              <property status="skip">
+                <value>Down</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcEnd">
+            <properties>
+              <property status="skip">
+                <value>End</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcEnter">
+            <properties>
+              <property status="skip">
+                <value>Enter</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcEsc">
+            <properties>
+              <property status="skip">
+                <value>Esc</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcHome">
+            <properties>
+              <property status="skip">
+                <value>Home</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcIns">
+            <properties>
+              <property status="skip">
+                <value>Ins</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcLeft">
+            <properties>
+              <property status="skip">
+                <value>Left</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcPgDn">
+            <properties>
+              <property status="skip">
+                <value>PgDn</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcPgUp">
+            <properties>
+              <property status="skip">
+                <value>PgUp</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcRight">
+            <properties>
+              <property status="skip">
+                <value>Right</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcShift">
+            <properties>
+              <property status="skip">
+                <value>Shift+</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcSpace">
+            <properties>
+              <property status="skip">
+                <value>Space</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcTab">
+            <properties>
+              <property status="skip">
+                <value>Tab</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SmkcUp">
+            <properties>
+              <property status="skip">
+                <value>Up</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgAbort">
+            <properties>
+              <property status="skip">
+                <value>&amp;Abort</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgAll">
+            <properties>
+              <property status="skip">
+                <value>&amp;All</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgCancel">
+            <properties>
+              <property status="skip">
+                <value>Cancel</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgConfirm">
+            <properties>
+              <property status="skip">
+                <value>Confirm</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgError">
+            <properties>
+              <property status="skip">
+                <value>Error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgHelp">
+            <properties>
+              <property status="skip">
+                <value>&amp;Help</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgIgnore">
+            <properties>
+              <property status="skip">
+                <value>&amp;Ignore</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgInformation">
+            <properties>
+              <property status="skip">
+                <value>Information</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgNo">
+            <properties>
+              <property status="skip">
+                <value>&amp;No</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgNoToAll">
+            <properties>
+              <property status="skip">
+                <value>N&amp;o to All</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgOK">
+            <properties>
+              <property status="skip">
+                <value>OK</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgRetry">
+            <properties>
+              <property status="skip">
+                <value>&amp;Retry</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgWarning">
+            <properties>
+              <property status="skip">
+                <value>Warning</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgYes">
+            <properties>
+              <property status="skip">
+                <value>&amp;Yes</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SMsgDlgYesToAll">
+            <properties>
+              <property status="skip">
+                <value>Yes to &amp;All</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SNoButton">
+            <properties>
+              <property status="skip">
+                <value>&amp;No</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SNoCanvasHandle">
+            <properties>
+              <property status="skip">
+                <value>Canvas does not allow drawing</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SNoColumnMoving">
+            <properties>
+              <property status="skip">
+                <value>goColMoving is not a supported option</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SNoEqualsInKey">
+            <properties>
+              <property status="skip">
+                <value>Key may not contain equals sign ("=")</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SNoMDIForm">
+            <properties>
+              <property status="skip">
+                <value>Cannot create form. No MDI forms are currently active</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SNoTimers">
+            <properties>
+              <property status="skip">
+                <value>Not enough timers available</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SOKButton">
+            <properties>
+              <property status="skip">
+                <value>OK</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SOleGraphic">
+            <properties>
+              <property status="skip">
+                <value>Invalid operation on TOleGraphic</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SOutOfResources">
+            <properties>
+              <property status="skip">
+                <value>Out of system resources</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SParentGivenNotAParent">
+            <properties>
+              <property status="skip">
+                <value>Parent given is not a parent of '%s'</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SParentRequired">
+            <properties>
+              <property status="skip">
+                <value>Control '%s' has no parent window</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SPropertyOutOfRange">
+            <properties>
+              <property status="skip">
+                <value>%s property out of range</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SReplaceImage">
+            <properties>
+              <property status="skip">
+                <value>Unable to Replace Image</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SRetryButton">
+            <properties>
+              <property status="skip">
+                <value>&amp;Retry</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SSeparator">
+            <properties>
+              <property status="skip">
+                <value>Separator</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SUnknownClipboardFormat">
+            <properties>
+              <property status="skip">
+                <value>Unsupported clipboard format</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SValueCaption">
+            <properties>
+              <property status="skip">
+                <value>Value</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SVBitmaps">
+            <properties>
+              <property status="skip">
+                <value>Bitmaps</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SVEnhMetafiles">
+            <properties>
+              <property status="skip">
+                <value>Enhanced Metafiles</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SVIcons">
+            <properties>
+              <property status="skip">
+                <value>Icons</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SVisibleChanged">
+            <properties>
+              <property status="skip">
+                <value>Cannot change Visible in OnShow or OnHide</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SVMetafiles">
+            <properties>
+              <property status="skip">
+                <value>Metafiles</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SWindowClass">
+            <properties>
+              <property status="skip">
+                <value>Error creating window class</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SWindowDCError">
+            <properties>
+              <property status="skip">
+                <value>Error creating window device context</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Consts_SYesButton">
+            <properties>
+              <property status="skip">
+                <value>&amp;Yes</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clName3DDkShadow">
+            <properties>
+              <property status="skip">
+                <value>3D Dark Shadow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clName3DLight">
+            <properties>
+              <property status="skip">
+                <value>3D Light</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameActiveBorder">
+            <properties>
+              <property status="skip">
+                <value>Active Border</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameActiveCaption">
+            <properties>
+              <property status="skip">
+                <value>Active Caption</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameAppWorkSpace">
+            <properties>
+              <property status="skip">
+                <value>Application Workspace</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameAqua">
+            <properties>
+              <property status="skip">
+                <value>Aqua</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameBackground">
+            <properties>
+              <property status="skip">
+                <value>Background</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameBlack">
+            <properties>
+              <property status="skip">
+                <value>Black</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameBlue">
+            <properties>
+              <property status="skip">
+                <value>Blue</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameBtnFace">
+            <properties>
+              <property status="skip">
+                <value>Button Face</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameBtnHighlight">
+            <properties>
+              <property status="skip">
+                <value>Button Highlight</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameBtnShadow">
+            <properties>
+              <property status="skip">
+                <value>Button Shadow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameBtnText">
+            <properties>
+              <property status="skip">
+                <value>Button Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameCaptionText">
+            <properties>
+              <property status="skip">
+                <value>Caption Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameCream">
+            <properties>
+              <property status="skip">
+                <value>Cream</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameDefault">
+            <properties>
+              <property status="skip">
+                <value>Default</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameFuchsia">
+            <properties>
+              <property status="skip">
+                <value>Fuchsia</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameGray">
+            <properties>
+              <property status="skip">
+                <value>Gray</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameGrayText">
+            <properties>
+              <property status="skip">
+                <value>Gray Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameGreen">
+            <properties>
+              <property status="skip">
+                <value>Green</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameHighlight">
+            <properties>
+              <property status="skip">
+                <value>Highlight Background</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameHighlightText">
+            <properties>
+              <property status="skip">
+                <value>Highlight Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameInactiveBorder">
+            <properties>
+              <property status="skip">
+                <value>Inactive Border</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameInactiveCaption">
+            <properties>
+              <property status="skip">
+                <value>Inactive Caption</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameInactiveCaptionText">
+            <properties>
+              <property status="skip">
+                <value>Inactive Caption Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameInfoBk">
+            <properties>
+              <property status="skip">
+                <value>Info Background</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameInfoText">
+            <properties>
+              <property status="skip">
+                <value>Info Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameLime">
+            <properties>
+              <property status="skip">
+                <value>Lime</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameMaroon">
+            <properties>
+              <property status="skip">
+                <value>Maroon</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameMedGray">
+            <properties>
+              <property status="skip">
+                <value>Medium Gray</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameMenu">
+            <properties>
+              <property status="skip">
+                <value>Menu Background</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameMenuText">
+            <properties>
+              <property status="skip">
+                <value>Menu Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameMoneyGreen">
+            <properties>
+              <property status="skip">
+                <value>Money Green</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameNavy">
+            <properties>
+              <property status="skip">
+                <value>Navy</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameNone">
+            <properties>
+              <property status="skip">
+                <value>None</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameOlive">
+            <properties>
+              <property status="skip">
+                <value>Olive</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNamePurple">
+            <properties>
+              <property status="skip">
+                <value>Purple</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameRed">
+            <properties>
+              <property status="skip">
+                <value>Red</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameScrollBar">
+            <properties>
+              <property status="skip">
+                <value>Scroll Bar</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameSilver">
+            <properties>
+              <property status="skip">
+                <value>Silver</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameSkyBlue">
+            <properties>
+              <property status="skip">
+                <value>Sky Blue</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameTeal">
+            <properties>
+              <property status="skip">
+                <value>Teal</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameWhite">
+            <properties>
+              <property status="skip">
+                <value>White</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameWindow">
+            <properties>
+              <property status="skip">
+                <value>Window Background</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameWindowFrame">
+            <properties>
+              <property status="skip">
+                <value>Window Frame</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameWindowText">
+            <properties>
+              <property status="skip">
+                <value>Window Text</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ExtCtrls_clNameYellow">
+            <properties>
+              <property status="skip">
+                <value>Yellow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="HelpIntfs_hNoContext">
+            <properties>
+              <property status="skip">
+                <value>No context-sensitive help installed</value>
+              </property>
+            </properties>
+          </item>
+          <item name="HelpIntfs_hNoTableOfContents">
+            <properties>
+              <property status="skip">
+                <value>Unable to find a Table of Contents</value>
+              </property>
+            </properties>
+          </item>
+          <item name="HelpIntfs_hNothingFound">
+            <properties>
+              <property status="skip">
+                <value>No help found for %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="HelpIntfs_hNoTopics">
+            <properties>
+              <property status="skip">
+                <value>No topic-based help system installed</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSInvalidServiceName">
+            <properties>
+              <property status="skip">
+                <value>%s is not a valid service.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSSetSizeExceeded">
+            <properties>
+              <property status="skip">
+                <value>Set Size Exceeded.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEACCES">
+            <properties>
+              <property status="skip">
+                <value>Access denied.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEADDRINUSE">
+            <properties>
+              <property status="skip">
+                <value>Address already in use.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEADDRNOTAVAIL">
+            <properties>
+              <property status="skip">
+                <value>Cannot assign requested address.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEAFNOSUPPORT">
+            <properties>
+              <property status="skip">
+                <value>Address family not supported by protocol family.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEALREADY">
+            <properties>
+              <property status="skip">
+                <value>Operation already in progress.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEBADF">
+            <properties>
+              <property status="skip">
+                <value>Bad file number.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackECONNABORTED">
+            <properties>
+              <property status="skip">
+                <value>Software caused connection abort.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackECONNREFUSED">
+            <properties>
+              <property status="skip">
+                <value>Connection refused.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackECONNRESET">
+            <properties>
+              <property status="skip">
+                <value>Connection reset by peer.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEDESTADDRREQ">
+            <properties>
+              <property status="skip">
+                <value>Destination address required.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEFAULT">
+            <properties>
+              <property status="skip">
+                <value>Bad address.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEHOSTDOWN">
+            <properties>
+              <property status="skip">
+                <value>Host is down.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEHOSTUNREACH">
+            <properties>
+              <property status="skip">
+                <value>No route to host.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEINPROGRESS">
+            <properties>
+              <property status="skip">
+                <value>Operation now in progress.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEINTR">
+            <properties>
+              <property status="skip">
+                <value>Interrupted system call.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEINVAL">
+            <properties>
+              <property status="skip">
+                <value>Invalid argument.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEISCONN">
+            <properties>
+              <property status="skip">
+                <value>Socket is already connected.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackELOOP">
+            <properties>
+              <property status="skip">
+                <value>Too many levels of symbolic links.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEMFILE">
+            <properties>
+              <property status="skip">
+                <value>Too many open files.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEMSGSIZE">
+            <properties>
+              <property status="skip">
+                <value>Message too long.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENAMETOOLONG">
+            <properties>
+              <property status="skip">
+                <value>File name too long.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENETDOWN">
+            <properties>
+              <property status="skip">
+                <value>Network is down.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENETRESET">
+            <properties>
+              <property status="skip">
+                <value>Net dropped connection or reset.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENETUNREACH">
+            <properties>
+              <property status="skip">
+                <value>Network is unreachable.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENOBUFS">
+            <properties>
+              <property status="skip">
+                <value>No buffer space available.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENOPROTOOPT">
+            <properties>
+              <property status="skip">
+                <value>Bad protocol option.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENOTCONN">
+            <properties>
+              <property status="skip">
+                <value>Socket is not connected.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENOTEMPTY">
+            <properties>
+              <property status="skip">
+                <value>Directory not empty</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackENOTSOCK">
+            <properties>
+              <property status="skip">
+                <value>Socket operation on non-socket.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEOPNOTSUPP">
+            <properties>
+              <property status="skip">
+                <value>Operation not supported on socket.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEPFNOSUPPORT">
+            <properties>
+              <property status="skip">
+                <value>Protocol family not supported.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEPROTONOSUPPORT">
+            <properties>
+              <property status="skip">
+                <value>Protocol not supported.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEPROTOTYPE">
+            <properties>
+              <property status="skip">
+                <value>Protocol wrong type for socket.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackError">
+            <properties>
+              <property status="skip">
+                <value>Socket Error # %d&amp;#13;&amp;#10;%s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackESHUTDOWN">
+            <properties>
+              <property status="skip">
+                <value>Cannot send or receive after socket is closed.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackESOCKTNOSUPPORT">
+            <properties>
+              <property status="skip">
+                <value>Socket type not supported.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackETIMEDOUT">
+            <properties>
+              <property status="skip">
+                <value>Connection timed out.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackETOOMANYREFS">
+            <properties>
+              <property status="skip">
+                <value>Too many references, cannot splice.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackEWOULDBLOCK">
+            <properties>
+              <property status="skip">
+                <value>Operation would block. </value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSStackHOST_NOT_FOUND">
+            <properties>
+              <property status="skip">
+                <value>Host not found.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSUnevenSizeInDecodeStream">
+            <properties>
+              <property status="skip">
+                <value>Uneven size in DecodeToStream.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSUnevenSizeInEncodeStream">
+            <properties>
+              <property status="skip">
+                <value>Uneven size in Encode.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSWinsockInitializationError">
+            <properties>
+              <property status="skip">
+                <value>Winsock Initialization Error.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSWS2CallError">
+            <properties>
+              <property status="skip">
+                <value>Error on call Winsock2 library function %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="IdResourceStrings_RSWS2LoadError">
+            <properties>
+              <property status="skip">
+                <value>Error on loading Winsock2 library (%s)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="LogFrm_RSClose">
+            <properties>
+              <property>
+                <value>Закрыть</value>
+                <translations>
+                  <translation language="en" status="proposed">Close</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Main_RSFleNotFound">
+            <properties>
+              <property>
+                <value>Извините, файл не существует</value>
+                <translations>
+                  <translation language="en" status="proposed">Sorry, file is absent</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Main_RSToolsUpdated">
+            <properties>
+              <property>
+                <value>Инструменты обновлены</value>
+                <translations>
+                  <translation language="en" status="proposed">Tools updated</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSAnyFile">
+            <properties>
+              <property>
+                <value>Любой файл</value>
+                <translations>
+                  <translation language="en" status="proposed">Any file</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSCompiled">
+            <properties>
+              <property>
+                <value>Скомпилирован</value>
+                <translations>
+                  <translation language="en" status="proposed">Compilation finished</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSEmpty">
+            <properties>
+              <property>
+                <value>&lt;пусто&gt;</value>
+                <translations>
+                  <translation language="en" status="proposed">&lt;empty&gt;</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSFileWasChanged">
+            <properties>
+              <property>
+                <value>Файл "%s" был изменён. Сохранить изменения?</value>
+                <translations>
+                  <translation language="en" status="proposed">File "%s" was changed. Save changes?</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSGenerate">
+            <properties>
+              <property>
+                <value>Генерация</value>
+                <translations>
+                  <translation language="en" status="proposed">Generate</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSLayerLocation">
+            <properties>
+              <property>
+                <value>&lt;объект слоя&gt;</value>
+                <translations>
+                  <translation language="en" status="proposed">&lt;layers objects&gt;</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSLayers">
+            <properties>
+              <property>
+                <value>Слои</value>
+                <translations>
+                  <translation language="en" status="proposed">Layers</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSMainLayer">
+            <properties>
+              <property>
+                <value>главный</value>
+                <translations>
+                  <translation language="en" status="proposed">main</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSNew">
+            <properties>
+              <property>
+                <value>новый</value>
+                <translations>
+                  <translation language="en" status="proposed">new</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSNoDescription">
+            <properties>
+              <property>
+                <value>Описание отсутствует</value>
+                <translations>
+                  <translation language="en" status="proposed">Description missed</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSProtectionError">
+            <properties>
+              <property>
+                <value>Ошибка снятия защиты</value>
+                <translations>
+                  <translation language="en" status="proposed">Can not unset protection</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSRemoveLayer">
+            <properties>
+              <property>
+                <value>Удалить слой %s?</value>
+                <translations>
+                  <translation language="en" status="proposed">Delete layer %s?</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSSaveNewFile">
+            <properties>
+              <property>
+                <value>Сохранить новый файл?</value>
+                <translations>
+                  <translation language="en" status="proposed">Save new file?</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSSchemaLocation">
+            <properties>
+              <property>
+                <value>&lt;объект схемы&gt;</value>
+                <translations>
+                  <translation language="en" status="proposed">&lt;object of scheme&gt;</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MDIEditForm_RSSourcesNotFound">
+            <properties>
+              <property>
+                <value>Исходник не найден. Нельзя снять защиту.</value>
+                <translations>
+                  <translation language="en" status="proposed">Original file missed. Can't unset protection.</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectFrm_RSFileExists">
+            <properties>
+              <property>
+                <value>Файл %s.o существует. Перезаписать?</value>
+                <translations>
+                  <translation language="en" status="proposed">File %s.o exists. Overwrite?</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectFrm_RSParametersMissed">
+            <properties>
+              <property>
+                <value>Не все параметры заданы</value>
+                <translations>
+                  <translation language="en" status="proposed">Some parameters is missed</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="OleConst_SCannotActivate">
+            <properties>
+              <property status="skip">
+                <value>OLE control activation failed</value>
+              </property>
+            </properties>
+          </item>
+          <item name="OleConst_SInvalidLicense">
+            <properties>
+              <property status="skip">
+                <value>License information for %s is invalid</value>
+              </property>
+            </properties>
+          </item>
+          <item name="OleConst_sNoRunningObject">
+            <properties>
+              <property status="skip">
+                <value>Unable to retrieve a pointer to a running object registered with OLE for %s/%s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="OleConst_SNotLicensed">
+            <properties>
+              <property status="skip">
+                <value>License information for %s not found. You cannot use this control in design mode</value>
+              </property>
+            </properties>
+          </item>
+          <item name="OleConst_SNoWindowHandle">
+            <properties>
+              <property status="skip">
+                <value>Could not obtain OLE control window handle</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Refactory_RSParametersMissed">
+            <properties>
+              <property status="skip">
+                <value>Не все параметры заданы</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SAncestorNotFound">
+            <properties>
+              <property status="skip">
+                <value>Ancestor for '%s' not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SAssignError">
+            <properties>
+              <property status="skip">
+                <value>Cannot assign a %s to a %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SBitsIndexError">
+            <properties>
+              <property status="skip">
+                <value>Bits index out of range</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SCantWriteResourceStreamError">
+            <properties>
+              <property status="skip">
+                <value>Can't write to a read-only resource stream</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SCheckSynchronizeError">
+            <properties>
+              <property status="skip">
+                <value>CheckSynchronize called from thread $%x, which is NOT the main thread</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SClassNotFound">
+            <properties>
+              <property status="skip">
+                <value>Class %s not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SDuplicateClass">
+            <properties>
+              <property status="skip">
+                <value>A class named %s already exists</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SDuplicateItem">
+            <properties>
+              <property status="skip">
+                <value>List does not allow duplicates ($0%x)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SDuplicateName">
+            <properties>
+              <property status="skip">
+                <value>A component named %s already exists</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SDuplicateString">
+            <properties>
+              <property status="skip">
+                <value>String list does not allow duplicates</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SFCreateErrorEx">
+            <properties>
+              <property status="skip">
+                <value>Cannot create file "%s". %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SFixedColTooBig">
+            <properties>
+              <property status="skip">
+                <value>Fixed column count must be less than column count</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SFixedRowTooBig">
+            <properties>
+              <property status="skip">
+                <value>Fixed row count must be less than row count</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SFOpenErrorEx">
+            <properties>
+              <property status="skip">
+                <value>Cannot open file "%s". %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SGridTooLarge">
+            <properties>
+              <property status="skip">
+                <value>Grid too large for operation</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SIndexOutOfRange">
+            <properties>
+              <property status="skip">
+                <value>Grid index out of range</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SIniFileWriteError">
+            <properties>
+              <property status="skip">
+                <value>Unable to write to %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SInvalidImage">
+            <properties>
+              <property status="skip">
+                <value>Invalid stream format</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SInvalidName">
+            <properties>
+              <property status="skip">
+                <value>''%s'' is not a valid component name</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SInvalidProperty">
+            <properties>
+              <property status="skip">
+                <value>Invalid property value</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SInvalidPropertyPath">
+            <properties>
+              <property status="skip">
+                <value>Invalid property path</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SInvalidPropertyValue">
+            <properties>
+              <property status="skip">
+                <value>Invalid property value</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SInvalidRegType">
+            <properties>
+              <property status="skip">
+                <value>Invalid data type for '%s'</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SInvalidStringGridOp">
+            <properties>
+              <property status="skip">
+                <value>Cannot insert or delete rows from grid</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SListCapacityError">
+            <properties>
+              <property status="skip">
+                <value>List capacity out of bounds (%d)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SListCountError">
+            <properties>
+              <property status="skip">
+                <value>List count out of bounds (%d)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SListIndexError">
+            <properties>
+              <property status="skip">
+                <value>List index out of bounds (%d)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SMemoryStreamError">
+            <properties>
+              <property status="skip">
+                <value>Out of memory while expanding memory stream</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SPropertyException">
+            <properties>
+              <property status="skip">
+                <value>Error reading %s%s%s: %s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SReadError">
+            <properties>
+              <property status="skip">
+                <value>Stream read error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SReadOnlyProperty">
+            <properties>
+              <property status="skip">
+                <value>Property is read-only</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SRegGetDataFailed">
+            <properties>
+              <property status="skip">
+                <value>Failed to get data for '%s'</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SRegSetDataFailed">
+            <properties>
+              <property status="skip">
+                <value>Failed to set data for '%s'</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SResNotFound">
+            <properties>
+              <property status="skip">
+                <value>Resource %s not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SSeekNotImplemented">
+            <properties>
+              <property status="skip">
+                <value>%s.Seek not implemented</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SSortedListError">
+            <properties>
+              <property status="skip">
+                <value>Operation not allowed on sorted list</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_STooManyDeleted">
+            <properties>
+              <property status="skip">
+                <value>Too many rows or columns deleted</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SUnknownGroup">
+            <properties>
+              <property status="skip">
+                <value>%s not in a class registration group</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SUnknownProperty">
+            <properties>
+              <property status="skip">
+                <value>Property %s does not exist</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RTLConsts_SWriteError">
+            <properties>
+              <property status="skip">
+                <value>Stream write error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="Scripts_RSLayerRelatedBlock">
+            <properties>
+              <property>
+                <value>Блок, предназначенный для интеграции слоя</value>
+                <translations>
+                  <translation language="en" status="proposed">Layers related block</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Scripts_RSMainLayer">
+            <properties>
+              <property>
+                <value>главный</value>
+                <translations>
+                  <translation language="en" status="proposed">main</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Scripts_RSOpenError">
+            <properties>
+              <property>
+                <value>Ошибка открытия</value>
+                <translations>
+                  <translation language="en" status="proposed">Open error</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="Scripts_RSSchemaIsUndefined">
+            <properties>
+              <property>
+                <value>Схема неопределена</value>
+                <translations>
+                  <translation language="en" status="proposed">Schema is unknown</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SAbstractError">
+            <properties>
+              <property status="skip">
+                <value>Abstract Error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SAccessDenied">
+            <properties>
+              <property status="skip">
+                <value>File access denied</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SAccessViolationArg3">
+            <properties>
+              <property status="skip">
+                <value>Access violation at address %p. %s of address %p</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SAccessViolationNoArg">
+            <properties>
+              <property status="skip">
+                <value>Access violation</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SArgumentMissing">
+            <properties>
+              <property status="skip">
+                <value>No argument for format '%s'</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SAssertError">
+            <properties>
+              <property status="skip">
+                <value>%s (%s, line %d)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SAssertionFailed">
+            <properties>
+              <property status="skip">
+                <value>Assertion failed</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SControlC">
+            <properties>
+              <property status="skip">
+                <value>Control-C hit</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SDiskFull">
+            <properties>
+              <property status="skip">
+                <value>Disk full</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SDispatchError">
+            <properties>
+              <property status="skip">
+                <value>Variant method calls not supported</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SDivByZero">
+            <properties>
+              <property status="skip">
+                <value>Division by zero</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SEndOfFile">
+            <properties>
+              <property status="skip">
+                <value>Read beyond end of file</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SException">
+            <properties>
+              <property status="skip">
+                <value>Exception %s in module %s at %p.&amp;#13;&amp;#10;%s%s&amp;#13;&amp;#10;</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SExceptTitle">
+            <properties>
+              <property status="skip">
+                <value>Application Error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SExternalException">
+            <properties>
+              <property status="skip">
+                <value>External exception %x</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SFileNotFound">
+            <properties>
+              <property status="skip">
+                <value>File not found</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInOutError">
+            <properties>
+              <property status="skip">
+                <value>I/O error %d</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SIntfCastError">
+            <properties>
+              <property status="skip">
+                <value>Interface not supported</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SIntOverflow">
+            <properties>
+              <property status="skip">
+                <value>Integer overflow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidBoolean">
+            <properties>
+              <property status="skip">
+                <value>'%s' is not a valid boolean value</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidCast">
+            <properties>
+              <property status="skip">
+                <value>Invalid class typecast</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidDate">
+            <properties>
+              <property status="skip">
+                <value>'%s' is not a valid date</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidDateTime">
+            <properties>
+              <property status="skip">
+                <value>'%s' is not a valid date and time</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidFilename">
+            <properties>
+              <property status="skip">
+                <value>Invalid filename</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidFloat">
+            <properties>
+              <property status="skip">
+                <value>'%s' is not a valid floating point value</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidFormat">
+            <properties>
+              <property status="skip">
+                <value>Format '%s' invalid or incompatible with argument</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidInput">
+            <properties>
+              <property status="skip">
+                <value>Invalid numeric input</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidInteger">
+            <properties>
+              <property status="skip">
+                <value>'%s' is not a valid integer value</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidOp">
+            <properties>
+              <property status="skip">
+                <value>Invalid floating point operation</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidPointer">
+            <properties>
+              <property status="skip">
+                <value>Invalid pointer operation</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidTime">
+            <properties>
+              <property status="skip">
+                <value>'%s' is not a valid time</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidVarCast">
+            <properties>
+              <property status="skip">
+                <value>Invalid variant type conversion</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidVarNullOp">
+            <properties>
+              <property status="skip">
+                <value>Invalid NULL variant operation</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidVarOp">
+            <properties>
+              <property status="skip">
+                <value>Invalid variant operation</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SInvalidVarOpWithHResultWithPrefix">
+            <properties>
+              <property status="skip">
+                <value>Invalid variant operation (%s%.8x)&amp;#10;%s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongDayNameFri">
+            <properties>
+              <property status="skip">
+                <value>Friday</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongDayNameMon">
+            <properties>
+              <property status="skip">
+                <value>Monday</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongDayNameSat">
+            <properties>
+              <property status="skip">
+                <value>Saturday</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongDayNameSun">
+            <properties>
+              <property status="skip">
+                <value>Sunday</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongDayNameThu">
+            <properties>
+              <property status="skip">
+                <value>Thursday</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongDayNameTue">
+            <properties>
+              <property status="skip">
+                <value>Tuesday</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongDayNameWed">
+            <properties>
+              <property status="skip">
+                <value>Wednesday</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameApr">
+            <properties>
+              <property status="skip">
+                <value>April</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameAug">
+            <properties>
+              <property status="skip">
+                <value>August</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameDec">
+            <properties>
+              <property status="skip">
+                <value>December</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameFeb">
+            <properties>
+              <property status="skip">
+                <value>February</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameJan">
+            <properties>
+              <property status="skip">
+                <value>January</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameJul">
+            <properties>
+              <property status="skip">
+                <value>July</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameJun">
+            <properties>
+              <property status="skip">
+                <value>June</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameMar">
+            <properties>
+              <property status="skip">
+                <value>March</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameMay">
+            <properties>
+              <property status="skip">
+                <value>May</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameNov">
+            <properties>
+              <property status="skip">
+                <value>November</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameOct">
+            <properties>
+              <property status="skip">
+                <value>October</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SLongMonthNameSep">
+            <properties>
+              <property status="skip">
+                <value>September</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SModuleAccessViolation">
+            <properties>
+              <property status="skip">
+                <value>Access violation at address %p in module '%s'. %s of address %p</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SOSError">
+            <properties>
+              <property status="skip">
+                <value>System Error.  Code: %d.&amp;#13;&amp;#10;%s</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SOutOfMemory">
+            <properties>
+              <property status="skip">
+                <value>Out of memory</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SOverflow">
+            <properties>
+              <property status="skip">
+                <value>Floating point overflow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SPrivilege">
+            <properties>
+              <property status="skip">
+                <value>Privileged instruction</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SRangeError">
+            <properties>
+              <property status="skip">
+                <value>Range check error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SReadAccess">
+            <properties>
+              <property status="skip">
+                <value>Read</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SSafecallException">
+            <properties>
+              <property status="skip">
+                <value>Exception in safecall method</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortDayNameFri">
+            <properties>
+              <property status="skip">
+                <value>Fri</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortDayNameMon">
+            <properties>
+              <property status="skip">
+                <value>Mon</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortDayNameSat">
+            <properties>
+              <property status="skip">
+                <value>Sat</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortDayNameSun">
+            <properties>
+              <property status="skip">
+                <value>Sun</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortDayNameThu">
+            <properties>
+              <property status="skip">
+                <value>Thu</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortDayNameTue">
+            <properties>
+              <property status="skip">
+                <value>Tue</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortDayNameWed">
+            <properties>
+              <property status="skip">
+                <value>Wed</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameApr">
+            <properties>
+              <property status="skip">
+                <value>Apr</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameAug">
+            <properties>
+              <property status="skip">
+                <value>Aug</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameDec">
+            <properties>
+              <property status="skip">
+                <value>Dec</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameFeb">
+            <properties>
+              <property status="skip">
+                <value>Feb</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameJan">
+            <properties>
+              <property status="skip">
+                <value>Jan</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameJul">
+            <properties>
+              <property status="skip">
+                <value>Jul</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameJun">
+            <properties>
+              <property status="skip">
+                <value>Jun</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameMar">
+            <properties>
+              <property status="skip">
+                <value>Mar</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameMay">
+            <properties>
+              <property status="skip">
+                <value>May</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameNov">
+            <properties>
+              <property status="skip">
+                <value>Nov</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameOct">
+            <properties>
+              <property status="skip">
+                <value>Oct</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SShortMonthNameSep">
+            <properties>
+              <property status="skip">
+                <value>Sep</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SStackOverflow">
+            <properties>
+              <property status="skip">
+                <value>Stack overflow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_STooManyOpenFiles">
+            <properties>
+              <property status="skip">
+                <value>Too many open files</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SUnderflow">
+            <properties>
+              <property status="skip">
+                <value>Floating point underflow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SUnkOSError">
+            <properties>
+              <property status="skip">
+                <value>A call to an OS function failed</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarArrayBounds">
+            <properties>
+              <property status="skip">
+                <value>Variant or safe array index out of bounds</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarArrayCreate">
+            <properties>
+              <property status="skip">
+                <value>Error creating variant or safe array</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarArrayLocked">
+            <properties>
+              <property status="skip">
+                <value>Variant or safe array is locked</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarBadType">
+            <properties>
+              <property status="skip">
+                <value>Invalid variant type</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarInvalid">
+            <properties>
+              <property status="skip">
+                <value>Invalid argument</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarNotImplemented">
+            <properties>
+              <property status="skip">
+                <value>Operation not supported</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarOverflow">
+            <properties>
+              <property status="skip">
+                <value>Variant overflow</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarTypeConvertOverflow">
+            <properties>
+              <property status="skip">
+                <value>Overflow while converting variant of type (%s) into type (%s)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarTypeCouldNotConvert">
+            <properties>
+              <property status="skip">
+                <value>Could not convert variant of type (%s) into type (%s)</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SVarUnexpected">
+            <properties>
+              <property status="skip">
+                <value>Unexpected variant error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SWriteAccess">
+            <properties>
+              <property status="skip">
+                <value>Write</value>
+              </property>
+            </properties>
+          </item>
+          <item name="SysConst_SZeroDivide">
+            <properties>
+              <property status="skip">
+                <value>Floating point division by zero</value>
+              </property>
+            </properties>
+          </item>
+          <item name="UseFull_RSConfirmation">
+            <properties>
+              <property>
+                <value>Подтверждение</value>
+                <translations>
+                  <translation language="en" status="proposed">Confirmation</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="WinHelpViewer_hNoKeyword">
+            <properties>
+              <property status="skip">
+                <value>No help keyword specified.</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ZLibConst_sError">
+            <properties>
+              <property status="skip">
+                <value>Error</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ZLibConst_sInvalidStreamOp">
+            <properties>
+              <property status="skip">
+                <value>Invalid stream operation</value>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+      <module name="TABOUTBOX" type="form">
+        <items>
+          <item name="AboutBox" type="TAboutBox">
+            <properties>
+              <property name="Caption">
+                <value>О программе</value>
+                <translations>
+                  <translation language="en" status="proposed">About</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="AboutBox.Label4" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Версия:</value>
+                <translations>
+                  <translation language="en" status="proposed">Version:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="AboutBox.LabelVersion" type="TLabel">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>1.0</value>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="AboutBox.OKButton" type="TButton">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>OK</value>
+              </property>
+            </properties>
+          </item>
+          <item name="AboutBox.Panel1.Label1" type="TLabel">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>CodeGen</value>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>System</value>
+              </property>
+            </properties>
+          </item>
+          <item name="AboutBox.Panel1.Label2" type="TLabel">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>by</value>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>System</value>
+              </property>
+            </properties>
+          </item>
+          <item name="AboutBox.Panel1.Label3" type="TLabel">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>Zergos</value>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>System</value>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+      <module name="TCONFIRMFORM" type="form">
+        <items>
+          <item name="ConfirmForm" type="TConfirmForm">
+            <properties>
+              <property name="Caption">
+                <value>Подтверждение</value>
+                <translations>
+                  <translation language="en" status="proposed">Confirmation</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="ConfirmForm.Button1" type="TButton">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Да</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Yes</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="ConfirmForm.Button2" type="TButton">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Нет</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;No</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="ConfirmForm.Button3" type="TButton">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Отмена</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Cancel</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+      <module name="TEDITFORM" type="form">
+        <items>
+          <item name="EditForm" type="TEditForm">
+            <properties>
+              <property name="Caption">
+                <value>&lt;без имени&gt;</value>
+                <translations>
+                  <translation language="en" status="proposed">&lt;no name&gt;</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actCopy" type="TEditCopy">
+            <properties>
+              <property name="Caption">
+                <value>Копировать</value>
+                <translations>
+                  <translation language="en" status="proposed">Copy</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+              <property name="Hint" status="skip">
+                <value>Copy|Copies the selection and puts it on the Clipboard</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actCut" type="TEditCut">
+            <properties>
+              <property name="Caption">
+                <value>Вырезать</value>
+                <translations>
+                  <translation language="en" status="proposed">Cut</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+              <property name="Hint" status="skip">
+                <value>Cut|Cuts the selection and puts it on the Clipboard</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actDelete" type="TEditDelete">
+            <properties>
+              <property name="Caption">
+                <value>Удалить</value>
+                <translations>
+                  <translation language="en" status="proposed">Delete</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+              <property name="Hint" status="skip">
+                <value>Delete|Erases the selection</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actGo" type="TAction">
+            <properties>
+              <property name="Caption">
+                <value>Перейти</value>
+                <translations>
+                  <translation language="en" status="proposed">Follow</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actPaste" type="TEditPaste">
+            <properties>
+              <property name="Caption">
+                <value>Вставить</value>
+                <translations>
+                  <translation language="en" status="proposed">Paste</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+              <property name="Hint" status="skip">
+                <value>Paste|Inserts Clipboard contents</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actRedo" type="TAction">
+            <properties>
+              <property name="Caption">
+                <value>Вернуть</value>
+                <translations>
+                  <translation language="en" status="proposed">Redo</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actSelectAll" type="TEditSelectAll">
+            <properties>
+              <property name="Caption">
+                <value>Выбрать все</value>
+                <translations>
+                  <translation language="en" status="proposed">Select all</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+              <property name="Hint" status="skip">
+                <value>Select All|Selects the entire document</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.ActionList.actUndo" type="TEditUndo">
+            <properties>
+              <property name="Caption">
+                <value>Отменить</value>
+                <translations>
+                  <translation language="en" status="proposed">Undo</translation>
+                </translations>
+              </property>
+              <property name="Category" status="skip">
+                <value>Edit</value>
+              </property>
+              <property name="Hint" status="skip">
+                <value>Undo|Reverts the last action</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnEdit" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Правка</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Edit</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnEdit.mnColorLinks" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Раскрасить связи</value>
+                <translations>
+                  <translation language="en" status="proposed">Color the chains</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnEdit.mnEditProtect" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Установить/снять защиту</value>
+                <translations>
+                  <translation language="en" status="proposed">Set/unset protection</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnEdit.mnFlatLine3" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnEdit.mnHConnect" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Соединить горизонтали</value>
+                <translations>
+                  <translation language="en" status="proposed">Connect horizontal slots</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnEdit.N2" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Файл</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;File</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileClose" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Закрыть</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Close</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Закрыть текущее окно</value>
+                <translations>
+                  <translation language="en" status="proposed">Close active window</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileCloseall" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Закрыть &amp;все</value>
+                <translations>
+                  <translation language="en" status="proposed">Close &amp;all</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Закрыть все окна</value>
+                <translations>
+                  <translation language="en" status="proposed">Close all windows</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileCompile" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Компилировать</value>
+                <translations>
+                  <translation language="en" status="proposed">Compile</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileExit" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Выход</value>
+                <translations>
+                  <translation language="en" status="proposed">E&amp;xit</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Выйти из программы</value>
+                <translations>
+                  <translation language="en" status="proposed">Exit app</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileExport" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Генерация MQL4</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Generate MQL4</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileHist" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&lt;история&gt;</value>
+                <translations>
+                  <translation language="en" status="proposed">&lt;last files&gt;</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileLine1" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileLine2" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileNew" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Создать...</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;New...</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Создать новый файл</value>
+                <translations>
+                  <translation language="en" status="proposed">Create new file</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileNewObject" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Создать объект</value>
+                <translations>
+                  <translation language="en" status="proposed">Create new tool</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileOpen" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Открыть...</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Open...</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Открыть существующий файл</value>
+                <translations>
+                  <translation language="en" status="proposed">Open available file</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileRefactory" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Рефакторинг</value>
+                <translations>
+                  <translation language="en" status="proposed">Refactoring</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileRefresh" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Обновить инструменты</value>
+                <translations>
+                  <translation language="en" status="proposed">Refresh tools</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileRun" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Запустить</value>
+                <translations>
+                  <translation language="en" status="proposed">Run</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileSave" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>С&amp;охранить</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Save</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Сохранить файл</value>
+                <translations>
+                  <translation language="en" status="proposed">Save</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFileSaveAs" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Сохранить &amp;как...</value>
+                <translations>
+                  <translation language="en" status="proposed">Save &amp;as...</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Сохранить файл под новым именем</value>
+                <translations>
+                  <translation language="en" status="proposed">Save with a new name</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFlatLine2" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.MainMenu1.mnFile.mnFlatLine4" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain" type="TGroupBox">
+            <properties>
+              <property name="Caption">
+                <value>Свойства</value>
+                <translations>
+                  <translation language="en" status="proposed">Properties</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain.Panel.cbProtected" type="TCheckBox">
+            <properties>
+              <property name="Caption">
+                <value>Защита</value>
+                <translations>
+                  <translation language="en" status="proposed">Protection</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain.Panel.chDebug" type="TCheckBox">
+            <properties>
+              <property name="Caption">
+                <value>Отладка</value>
+                <translations>
+                  <translation language="en" status="proposed">Debug</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain.Panel.EditObject" type="TEdit">
+            <properties>
+              <property name="Text" status="skip">
+                <value>EditObject</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain.Panel.Label1" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Пар. объект:</value>
+                <translations>
+                  <translation language="en" status="proposed">Obj. props:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain.Panel.Label2" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Объект:</value>
+                <translations>
+                  <translation language="en" status="proposed">Object name:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain.Panel.Label3" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Пар. вход:</value>
+                <translations>
+                  <translation language="en" status="proposed">Prop. in:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.GroupMain.Panel.Label4" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Коммент.:</value>
+                <translations>
+                  <translation language="en" status="proposed">Comment.:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.PanelTools.SpeedButtonDown" type="TSpeedButton">
+            <properties>
+              <property name="Hint">
+                <value>Переместить объект вниз</value>
+                <translations>
+                  <translation language="en" status="proposed">Move object down</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.PanelTools.SpeedButtonUp" type="TSpeedButton">
+            <properties>
+              <property name="Hint">
+                <value>Переместить объект вверх</value>
+                <translations>
+                  <translation language="en" status="proposed">Move object up</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelMain.ScrollBox.PaintBox" type="TPaintBox">
+            <properties>
+              <property name="Font.Name" status="skip">
+                <value>Tahoma</value>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelRight.GroupLayers" type="TGroupBox">
+            <properties>
+              <property name="Caption">
+                <value>Слои</value>
+                <translations>
+                  <translation language="en" status="proposed">Layers</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelRight.GroupLayers.SpeedButtonAdd" type="TSpeedButton">
+            <properties>
+              <property name="Hint">
+                <value>Переместить объект вверх</value>
+                <translations>
+                  <translation language="en" status="proposed">Move object up</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelRight.GroupLayers.SpeedButtonDel" type="TSpeedButton">
+            <properties>
+              <property name="Hint">
+                <value>Переместить объект вверх</value>
+                <translations>
+                  <translation language="en" status="proposed">Move object up</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelRight.GroupLayers.SpeedButtonLDown" type="TSpeedButton">
+            <properties>
+              <property name="Hint">
+                <value>Переместить объект вниз</value>
+                <translations>
+                  <translation language="en" status="proposed">Move object down</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelRight.GroupLayers.SpeedButtonLUp" type="TSpeedButton">
+            <properties>
+              <property name="Hint">
+                <value>Переместить объект вверх</value>
+                <translations>
+                  <translation language="en" status="proposed">Move object up</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelRight.GroupPars" type="TGroupBox">
+            <properties>
+              <property name="Caption">
+                <value>Параметры</value>
+                <translations>
+                  <translation language="en" status="proposed">Parameters</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.PanelRight.GroupPars.ValueListEditor" type="TValueListEditor">
+            <properties>
+              <property name="TitleCaptions.Strings[0]">
+                <value>Параметр</value>
+                <translations>
+                  <translation language="en" status="proposed">Parameter</translation>
+                </translations>
+              </property>
+              <property name="TitleCaptions.Strings[1]">
+                <value>Значение</value>
+                <translations>
+                  <translation language="en" status="proposed">Value</translation>
+                </translations>
+              </property>
+              <property name="TitleCaptions.Strings[2]">
+                <value>Описание</value>
+                <translations>
+                  <translation language="en" status="proposed">Description</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="EditForm.SaveDialog" type="TSaveDialog">
+            <properties>
+              <property name="DefaultExt" status="skip">
+                <value>html</value>
+              </property>
+              <property name="Filter">
+                <value>Файлы MQ4|*.mq4|Любой файл|*.*</value>
+                <translations>
+                  <translation language="en" status="proposed">Files MQ4|*.mq4|Any file|*.*</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+      <module name="TLOGFORM" type="form">
+        <items>
+          <item name="LogForm" type="TLogForm">
+            <properties>
+              <property name="Caption">
+                <value>Сообщения компиляции</value>
+                <translations>
+                  <translation language="en" status="proposed">Compiler messages</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="LogForm.btnClose" type="TButton">
+            <properties>
+              <property name="Caption">
+                <value>Закрыть</value>
+                <translations>
+                  <translation language="en" status="proposed">Close</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="LogForm.Label1" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Ошибок:</value>
+                <translations>
+                  <translation language="en" status="proposed">Errors counter:</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="LogForm.stErrors" type="TStaticText">
+            <properties>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+      <module name="TMAINFORM" type="form">
+        <items>
+          <item name="MainForm" type="TMainForm">
+            <properties>
+              <property name="Caption">
+                <value>Редактор кодовых схем</value>
+                <translations>
+                  <translation language="en" status="proposed">Code scheme editor</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar1" type="TToolBar">
+            <properties>
+              <property name="Caption">
+                <value>Объекты</value>
+                <translations>
+                  <translation language="en" status="proposed">Objects</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar1.ToolArrow" type="TToolButton">
+            <properties>
+              <property name="Hint" status="skip">
+                <value>CTRL+1</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar1.ToolLink" type="TToolButton">
+            <properties>
+              <property name="Hint" status="skip">
+                <value>CTRL+2</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar1.ToolObject" type="TToolButton">
+            <properties>
+              <property name="Hint" status="skip">
+                <value>CTRL+3</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar2" type="TToolBar">
+            <properties>
+              <property name="Caption">
+                <value>Стандартная</value>
+                <translations>
+                  <translation language="en" status="proposed">Common</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar2.ToolNew" type="TToolButton">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>ToolNew</value>
+              </property>
+              <property name="Hint">
+                <value>Создать</value>
+                <translations>
+                  <translation language="en" status="proposed">New</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar2.ToolOpen" type="TToolButton">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>ToolOpen</value>
+              </property>
+              <property name="Hint">
+                <value>Открыть</value>
+                <translations>
+                  <translation language="en" status="proposed">Open</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.ControlBar1.ToolBar2.ToolSave" type="TToolButton">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>ToolSave</value>
+              </property>
+              <property name="Hint">
+                <value>Сохранить</value>
+                <translations>
+                  <translation language="en" status="proposed">Save</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Файл</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;File</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileExit" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Выход</value>
+                <translations>
+                  <translation language="en" status="proposed">E&amp;xit</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Выйти из программы</value>
+                <translations>
+                  <translation language="en" status="proposed">Exit app</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileHistory" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&lt;история&gt;</value>
+                <translations>
+                  <translation language="en" status="proposed">&lt;last files&gt;</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileLine" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileNew" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Создать...</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;New...</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Создать новый файл</value>
+                <translations>
+                  <translation language="en" status="proposed">Create new file</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileNewObject" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Создать объект</value>
+                <translations>
+                  <translation language="en" status="proposed">Create new tool</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileOpen" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Открыть...</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Open...</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Открыть существующий файл</value>
+                <translations>
+                  <translation language="en" status="proposed">Open available file</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileRefactory" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Рефакторинг</value>
+                <translations>
+                  <translation language="en" status="proposed">Refactoring</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFileRefresh" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Обновить инструменты</value>
+                <translations>
+                  <translation language="en" status="proposed">Refresh tools</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFlatLine2" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnFile.mnFlatLine3" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnHelp" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Справка</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Help</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnHelp.mnHelpAbout" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;О программе</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;About</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Опции</value>
+                <translations>
+                  <translation language="en" status="proposed">Options</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnLanguage" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Язык сборки</value>
+                <translations>
+                  <translation language="en" status="proposed">Builder language</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnLanguage.mnEnglish" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>English</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnLanguage.mnRussian" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Русский</value>
+                <translations>
+                  <translation language="en" status="proposed">Russian</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnOptionsCollect" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Сохранять пакетно</value>
+                <translations>
+                  <translation language="en" status="proposed">Save as package</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnOptionsHardChains" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Сложные цепи</value>
+                <translations>
+                  <translation language="en" status="proposed">Nice chains</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnOptionsSnap" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Привязывать к сетке</value>
+                <translations>
+                  <translation language="en" status="proposed">Snap to grid</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnOptionsSub" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Отладочная компиляция</value>
+                <translations>
+                  <translation language="en" status="proposed">Compile in debug mode</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnOptionsSub.mnOptionsDebug" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Режим полной отладки</value>
+                <translations>
+                  <translation language="en" status="proposed">Compile in debug-everywhere mode</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnOptionsSub.mnOptionsPrints" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Отображение порядка выполнения</value>
+                <translations>
+                  <translation language="en" status="proposed">Compile with trace execution</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnOptions.mnOptionsSub.mnOptionsTags" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Разделение блоков</value>
+                <translations>
+                  <translation language="en" status="proposed">Separate blocks in generated code</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Вид</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;View</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView.mnViewParamEditor" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Редактор параметров</value>
+                <translations>
+                  <translation language="en" status="proposed">Parameters editor</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView.mnViewPropertyeditor" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Редактор свойств</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Properties editor</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Вкл/выкл панели Редактора Свойств</value>
+                <translations>
+                  <translation language="en" status="proposed">Show/hide properties editor panel</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView.mnViewResetScale" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Сбросить масштаб (16х16)</value>
+                <translations>
+                  <translation language="en" status="proposed">Reset scale (16х16)</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView.mnViewShowall" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Показать все панели инструментов</value>
+                <translations>
+                  <translation language="en" status="proposed">Show all tool panels</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView.mnViewShowNames" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Выводить имена блоков</value>
+                <translations>
+                  <translation language="en" status="proposed">Show blocks names</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView.mnViewTools" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Список объектов</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Tools list</translation>
+                </translations>
+              </property>
+              <property name="Hint">
+                <value>Вкл/выкл панели списка объектов</value>
+                <translations>
+                  <translation language="en" status="proposed">Show/hide objects list</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnView.N1" type="TMenuItem">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>-</value>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnWindow" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Окно</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Window</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnWindow.mnWindowArrangeicons" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>&amp;Разместить свёрнутые</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Tile minimized</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnWindow.mnWindowCascade" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Окна &amp;каскадом</value>
+                <translations>
+                  <translation language="en" status="proposed">&amp;Cascade</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.MainMenu1.mnWindow.mnWindowTile" type="TMenuItem">
+            <properties>
+              <property name="Caption">
+                <value>Окна свер&amp;ху вниз</value>
+                <translations>
+                  <translation language="en" status="proposed">From &amp;up to down</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.OpenDialog" type="TOpenDialog">
+            <properties>
+              <property name="Filter">
+                <value>Схема CodeGen|*.gen|Все файлы|*.*</value>
+                <translations>
+                  <translation language="en" status="proposed">Scheme CodeGen|*.gen|All files|*.*</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.SaveDialog" type="TSaveDialog">
+            <properties>
+              <property name="DefaultExt" status="skip">
+                <value>fdt</value>
+              </property>
+              <property name="Filter">
+                <value>Схема CodeGen|*.gen|Все файлы|*.*</value>
+                <translations>
+                  <translation language="en" status="proposed">Scheme CodeGen|*.gen|All files|*.*</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="MainForm.StatusBar" type="TStatusBar">
+            <properties>
+              <property name="Font.Name" status="skip">
+                <value>Tahoma</value>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+      <module name="TNEWOBJECTFORM" type="form">
+        <items>
+          <item name="NewObjectForm" type="TNewObjectForm">
+            <properties>
+              <property name="Caption">
+                <value>Новый объект</value>
+                <translations>
+                  <translation language="en" status="proposed">New tool</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectForm.btnCreate" type="TButton">
+            <properties>
+              <property name="Caption">
+                <value>Создать</value>
+                <translations>
+                  <translation language="en" status="proposed">New</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectForm.Label1" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Схема:</value>
+                <translations>
+                  <translation language="en" status="proposed">Scheme:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectForm.Label2" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Каталог:</value>
+                <translations>
+                  <translation language="en" status="proposed">Directory:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectForm.Label3" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Группа:</value>
+                <translations>
+                  <translation language="en" status="proposed">Group:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectForm.Label4" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Имя файла:</value>
+                <translations>
+                  <translation language="en" status="proposed">File name:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectForm.Label5" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Имя объекта:</value>
+                <translations>
+                  <translation language="en" status="proposed">Tool name:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="NewObjectForm.Label6" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Имя польз.:</value>
+                <translations>
+                  <translation language="en" status="proposed">User tool name:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+      <module name="TREFACTORYFORM" type="form">
+        <items>
+          <item name="RefactoryForm" type="TRefactoryForm">
+            <properties>
+              <property name="Caption">
+                <value>Рефакторинг</value>
+                <translations>
+                  <translation language="en" status="proposed">Refactoring</translation>
+                </translations>
+              </property>
+              <property name="Font.Name" status="skip">
+                <value>MS Sans Serif</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.btnDo" type="TButton">
+            <properties>
+              <property name="Caption">
+                <value>Выполнить</value>
+                <translations>
+                  <translation language="en" status="proposed">Execute</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.btnPath" type="TButton">
+            <properties>
+              <property name="Caption" status="skip">
+                <value>...</value>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.GroupBox1" type="TGroupBox">
+            <properties>
+              <property name="Caption">
+                <value>Исходный объект</value>
+                <translations>
+                  <translation language="en" status="proposed">Source object</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.GroupBox1.Label2" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Группа:</value>
+                <translations>
+                  <translation language="en" status="proposed">Group:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.GroupBox1.Label3" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Файл:</value>
+                <translations>
+                  <translation language="en" status="proposed">File:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.GroupBox2" type="TGroupBox">
+            <properties>
+              <property name="Caption">
+                <value>Новый объект</value>
+                <translations>
+                  <translation language="en" status="proposed">New tool</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.GroupBox2.Label4" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Группа:</value>
+                <translations>
+                  <translation language="en" status="proposed">Group:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.GroupBox2.Label5" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Файл:</value>
+                <translations>
+                  <translation language="en" status="proposed">File:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.Label1" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Схема:</value>
+                <translations>
+                  <translation language="en" status="proposed">Scheme:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.Label6" type="TLabel">
+            <properties>
+              <property name="Caption">
+                <value>Путь к моделям:</value>
+                <translations>
+                  <translation language="en" status="proposed">Path to models:</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+          <item name="RefactoryForm.OpenDialog1" type="TOpenDialog">
+            <properties>
+              <property name="Filter">
+                <value>Файлы моделей (*.gen)|*.gen</value>
+                <translations>
+                  <translation language="en" status="proposed">Models files (*.gen)|*.gen</translation>
+                </translations>
+              </property>
+            </properties>
+          </item>
+        </items>
+      </module>
+    </modules>
+  </project>
+</xlat>

@@ -1,0 +1,75 @@
+[Main]
+Name=ZigDow
+Title=ЗагЗаг по теории Доу
+Group=Алгоритмы
+
+[Input]
+in=row
+
+[Output]
+top=row,@top
+bot=row,@bot
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @top[], @bot[];
+int @prev, @last;
+int @dir;
+
+<lines>
+  ArrayInit(@top, $Size);
+  ArrayInitialize(@top, 0);
+  ArrayInit(@bot, $Size);
+  ArrayInitialize(@bot, 0);
+  
+  if ($in[1]>$in[0]) @dir = 1;
+  else @dir = -1;
+  @prev = 0;
+  @last = 0;
+  
+  for (int i=1; i<$Size; i++)
+  {
+    if (@dir==1)
+    {
+      if ($in[i]>$in[@last]) // обновление вершины
+      {
+        @prev = @last;
+        @last = i;
+        // расчёт промежуточного экстремума
+        for (int k=@prev+1; k<i; k++)
+          if ($in[k]<$in[@prev]) @prev = k;
+      }
+      else if ($in[i]<$in[@prev]) // фиксация вершины
+      {
+        @top[@last] = $in[@last];
+        @prev = @last;
+        @last = i;
+        @dir = -@dir;
+      }
+    }
+    else
+    {
+      if ($in[i]<$in[@last]) // обновление вершины
+      {
+        @prev = @last;
+        @last = i;
+        // расчёт промежуточного экстремума
+        for (int k=@prev+1; k<i; k++)
+          if ($in[k]>$in[@prev]) @prev = k;
+      }
+      else if ($in[i]>$in[@prev]) // фиксация вершины
+      {
+        @bot[@last] = $in[@last];
+        @prev = @last;
+        @last = i;
+        @dir = -@dir;
+      }
+    }
+  }
+  
+[Help]
+Строит зигзаг по пробитию предыдущих эстремумов.

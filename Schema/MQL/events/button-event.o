@@ -1,0 +1,43 @@
+[Main]
+Choice
+Name=EventButton
+Title=Событие "кнопка"
+Group=События
+
+[Property]
+X1=n,20
+Y1=n,20
+X2=n,120
+Y2=n,40
+Text=s,Text
+ClickMode=t,1
+
+[Output]
+click=c
+
+[OutputPars]
+Button=$name
+
+[Global]
+<top>
+#include <Controls\Button.mqh>
+
+[Code]
+<gvars>
+CButton $name;
+
+<init>
+  ObjectDelete("$name");
+  $name.Create(0, "$name", 0, $X1, $Y1, $X2, $Y2);
+  $name.Text("$Text");
+
+<lines>
+  if (event_id == CHARTEVENT_OBJECT_CLICK && sparam == "$name")
+  {
+$click.lines
+    <?ClickMode>$name.Pressed(false);</>
+  }
+  
+[Help]
+Обработка нажатия кнопки.
+

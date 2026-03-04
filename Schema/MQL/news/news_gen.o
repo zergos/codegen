@@ -1,0 +1,36 @@
+[Main]
+Name=NewsGen
+Title=Генератор
+Group=Новости
+
+[Property]
+NSize=n,100,предел новостей
+Symbol=s,,если не указан\, используется текущий
+Importance=fxim,0,фильтр важности
+
+[Input]
+time=row
+
+[Output]
+ids=row,@Ids
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+int @Times[$NSize];
+int @NIds[$NSize];
+int @Ids[$Size];
+
+<lines>
+  <?Symbol>
+    NewsList($time[$Size-1], "$Symbol", $Importance, $NSize, @Times, @NIds);
+  <~>
+    NewsList($time[$Size-1], Symbol(), $Importance, $NSize, @Times, @NIds);
+  </>
+  ArrayInitialize(@Ids, 0);
+  for (int @n=0; @n<$NSize; @n++)
+    for (int @i=0; @i<$Size-1; @i++)
+      if ($time[@i]<=@Times[@n] && @Times[@n]<$time[@i+1]) @Ids[@i] = @NIds[@n];
+  

@@ -1,0 +1,32 @@
+[Main]
+Name=Fix
+Title=Размер серии
+Group=Общие
+Size=4
+
+[Property]
+FixSize=n,2
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=start$name
+Size=size$name
+
+[Code]
+<gvars>
+int size$name, start$name;
+
+<init>
+  size$name = MathMin($FixSize, $Size);
+  start$name = 0;
+
+<lines>
+  size$name = MathMin($FixSize, $Size);
+  start$name = size$name-NewBar;
+
+[Help]
+Фиксация нового размера серии.
+  

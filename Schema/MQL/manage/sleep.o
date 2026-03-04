@@ -1,0 +1,35 @@
+[Main]
+Name=Sleep
+Title=Ожидание
+Group=Управление
+
+[Property]
+Sec=n,5,количество секунд ожидания
+ExpertMode=t,,без проверки сдвигов серий\, с трассировкой
+
+[InputPars]
+Start
+Trace
+
+[Code]
+<gvars>
+datetime @fixTime;
+
+<init>
+  @fixTime = 0;
+
+<lines>
+  <?!ExpertMode>
+  if (@fixTime==0 || $Start==0 || Shifted || @fixTime<=<?!Trace>CurTime()<~>CurTimeTrace()</>)
+  {
+    @fixTime = CurTime()+$Sec;
+  <~>
+  if (@fixTime==0 || @fixTime<=CurTimeTrace())
+  {
+    @fixTime = CurTimeTrace()+$Sec;
+  </>
+$CTRL.lines
+  }
+
+[Help]
+Не продолжает работу, пока не истечёт время

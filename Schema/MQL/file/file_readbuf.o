@@ -1,0 +1,38 @@
+[Main]
+Title=Чтение массива
+Group=Файлы
+Name=FileArray
+
+[Property]
+BufSize=n,,блина буфера
+DimSize=n,1,размерность буфера
+ReadOnce=t,,считать единожды
+NeedClose=t,,закрыть файл после чтения
+
+[Input]
+buf=row
+File=n
+
+[Code]
+<gvars>
+<?ReadOnce>bool loaded$name = false;</>
+
+<lines>
+<?BufSize>
+  int size$name = $BufSize;
+<~>
+  int size$name = size$buf;
+</>
+
+  <?ReadOnce>if (!loaded$name) {</>
+    if (ArraySize($buf)-wpos$buf < size$name*$DimSize)
+      if (ArrayResize($buf, size$name*$DimSize + wpos$buf)==-1) return (0);
+    FileReadArray($File, $buf, wpos$buf, size$name*$DimSize);
+    <?NeedClose>needclose$File = true;</>
+    <?ReadOnce>loaded$name = true; }</>
+
+  wpos$buf += size$name*$DimSize;
+  dim$buf = $DimSize;
+
+[Help]
+Чтение массива из файла

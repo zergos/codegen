@@ -1,0 +1,45 @@
+[Main]
+Group=Фильтры
+Title=Сигнал (уровень)
+Name=SignalLevel
+
+[Property]
+Mode=siglevel,>,режим сравнения
+Level=n,0,уровень срабатывания сигнала
+Res=f,1,сигнал срабатывания
+
+[Input]
+in=row
+
+[Output]
+S=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $S[];
+
+<lines>
+  ArrayInit($S, $Size);
+
+  if ($Start==0)
+    ArrayInitialize($S, 0);
+  else
+    CheckShift($S);
+
+  int @i;
+  for (@i=$Start; @i<$Size; @i++)
+  {
+    if ($in[@i]$Mode$Level) $S[@i] = $Res;
+    else $S[@i] = 0;
+  }
+
+[Help]
+Генератор сигнала по любому простому условию:
+<code>
+Sig = |**Res**, **x** <условие> **Level**
+      |0
+</code>

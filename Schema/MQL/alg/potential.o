@@ -1,0 +1,67 @@
+[Main]
+Name=Potential
+Title=Потенциал
+Group=Алгоритмы
+
+[Property]
+Deviation=n,20,мин. ожидаемая прибыль
+Proposal=n,5,максимальная просадка в пунктах
+
+[Input]
+high=row
+low=row
+
+[Output]
+sell=row,@psell
+buy=row,@pbuy
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double @psell[], @pbuy[];
+extern int @PotDeviation = $Deviation;
+extern int @PotProposal = $Proposal;
+
+<lines>
+  ArrayInit(@psell, $Size);
+  ArrayInit(@pbuy, $Size);
+
+  int @n;
+  for (int @i=0; @i<$Size; @i++)
+  {
+    int @best=@i;
+    double @bestrange;
+<?sell>
+    @bestrange = $low[@i];
+    for (@n=@i+1; @n<$Size; @n++)
+    {
+      if ($low[@n]<@bestrange)
+      {
+        @bestrange = $low[@n];
+	@best = @n;
+      }
+      if ($high[@n] - @bestrange > @PotProposal*Point) break;
+    }
+    @psell[@i] = ($high[@i] - @bestrange)/Point;
+    if (@best==@i || @psell[@i]<@PotDeviation) @psell[@i] = 0;//-@PotProposal;
+</>
+<?buy>
+    @bestrange = $high[@i];
+    for (@n=@i+1; @n<$Size; @n++)
+    {
+      if ($high[@n]>@bestrange)
+      {
+        @bestrange = $high[@n];
+	@best = @n;
+      }
+      if (@bestrange - $low[@n] > @PotProposal*Point) break;
+    }
+    @pbuy[@i] = (@bestrange - $low[@i])/Point;
+    if (@best==@i || @pbuy[@i]<@PotDeviation) @pbuy[@i] = 0;//-@PotProposal;
+</>
+  }
+
+[Help]
+Оценка максимальной прибыли в каждой точке

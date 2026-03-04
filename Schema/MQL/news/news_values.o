@@ -1,0 +1,23 @@
+[Main]
+Name=NewsValues
+Title=Извлечь коэф.
+Group=Новости
+
+[Input]
+ids=row
+
+[Output]
+vals=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double $vals[];
+int @no_im[1] = {-1};
+
+<lines>
+  ArrayInit($vals, $Size);
+  ArrayInitialize($vals, 0);
+  NewsValues($Size, $ids, $vals, @no_im);

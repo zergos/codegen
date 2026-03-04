@@ -1,0 +1,111 @@
+[Main]
+Name=FigGrid
+Title=Сетка
+Group=Фигуры
+
+[Property]
+TimeStep=n,1,шаг для времени
+PriceStep=n,100,шаг для цены
+Color=color,LigthGray
+
+[Input]
+time=row
+high=row
+low=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @min, @max;
+datetime @times[];
+
+<procs>
+void @clear()
+{
+  for (int i=0; i<ArraySize(@times); i++)
+    ObjectDelete("$name"+@times[i]);
+  double price = @min;
+  while (price<=@max)
+  {
+    ObjectDelete("$name"+price);
+    price+=$PriceStep*Point;
+  }
+  ArrayResize(@times, 0);
+}
+
+<lines>
+  int @i;
+  double @price;
+  if ($Start==0)
+  {
+    @clear();
+    @max = ceil($high[ArrayMaximum($high)]/Point/$PriceStep)*$PriceStep*Point;
+    @min = floor($low[ArrayMinimum($low)]/Point/$PriceStep)*$PriceStep*Point;
+    @price = @min;
+    while (@price <= @max)
+    {
+      ObjectCreate("$name"+@price, OBJ_HLINE, 0, 0, @price);
+      ObjectSet("$name"+@price, OBJPROP_COLOR, $Color);
+      ObjectSet("$name"+@price, OBJPROP_BACK, 1);
+      @price += $PriceStep*Point;
+    }
+    
+    for (@i=0; @i<$Size; @i++)
+    {
+      ObjectCreate("$name"+$time[@i], OBJ_VLINE, 0, $time[@i], 0);
+      ObjectSet("$name"+$time[@i], OBJPROP_COLOR, $Color);
+      ObjectSet("$name"+$time[@i], OBJPROP_BACK, 1);
+      ArrayResize(@times, ArraySize(@times)+1);
+      @times[ArraySize(@times)-1] = $time[@i];
+    }
+  }
+  else
+  {
+    for (@i=$Start; @i<$Size; @i++)
+    {
+      if ($high[@i] > @max)
+      {
+        @price = @max+$PriceStep*Point;
+        double @newmax = ceil($high[@i]/Point/$PriceStep)*$PriceStep*Point;
+        while (@price<=@newmax)
+        {
+          ObjectCreate("$name"+@price, OBJ_HLINE, 0, 0, @price);
+          ObjectSet("$name"+@price, OBJPROP_COLOR, $Color);
+          ObjectSet("$name"+@price, OBJPROP_BACK, 1);
+          @price += $PriceStep*Point;
+        }
+        @max = @newmax;
+      }
+      if ($low[@i] < @min)
+      {
+        @price = @min-$PriceStep*Point;
+        double @newmin = floor($low[@i]/Point/$PriceStep)*$PriceStep*Point;
+        while (@price>=@newmin)
+        {
+          ObjectCreate("$name"+@price, OBJ_HLINE, 0, 0, @price);
+          ObjectSet("$name"+@price, OBJPROP_COLOR, $Color);
+          ObjectSet("$name"+@price, OBJPROP_BACK, 1);
+          @price -= $PriceStep*Point;
+        }
+        @max = @newmax;
+      }
+      
+      if ($time[@i]>@times[ArraySize(@times)-1])
+      {
+        ObjectCreate("$name"+$time[@i], OBJ_VLINE, 0, $time[@i], 0);
+        ObjectSet("$name"+$time[@i], OBJPROP_COLOR, $Color);
+        ObjectSet("$name"+$time[@i], OBJPROP_BACK, 1);
+        ArrayResize(@times, ArraySize(@times)+1);
+        @times[ArraySize(@times)-1] = $time[@i];
+      }
+    }
+  }
+
+<deinit>
+  @clear();
+  
+[Help]
+Рисует сетку с заданным шагом.

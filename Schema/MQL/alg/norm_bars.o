@@ -1,0 +1,37 @@
+[Main]
+Name=NormBars
+Title=Норма баров
+Group=Алгоритмы
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+vol=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  double @prev = ($high[0]+$low[0])/2;
+  $out[0] = @prev;
+  for (int @i=1; @i<$Size; @i++)
+  {
+    if ($close[@i] >= $open[@i])
+      @prev += ($high[@i] - $low[@i])/$vol[@i];
+    else
+      @prev -= ($high[@i] - $low[@i])/$vol[@i];
+    $out[@i] = @prev;
+  }
+
+[Help]
+Конвертация баров на единицу объёма

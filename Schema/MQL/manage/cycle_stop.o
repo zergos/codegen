@@ -1,0 +1,12 @@
+[Main]
+Name=CycleStop
+Title=Остановка цикла
+Group=Управление
+
+[Code]
+<lines>
+  break;
+  
+[Help]
+Выход из цикла.
+

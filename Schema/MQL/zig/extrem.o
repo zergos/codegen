@@ -1,0 +1,105 @@
+[Main]
+Name=Extrem
+Title=Экстремумы
+Group=Алгоритмы
+
+[Property]
+MinCandles=n,4,мин. свечей для определения экстремума
+OnlyLeft=t,,проверять только слева
+Redraw=t,,передвигать экстремум
+
+[Input]
+high=row
+low=row
+
+[Output]
+top=row,@top
+bot=row,@bot
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @top[];
+double @bot[];
+<?strong>int @dir;</>
+
+<lines>
+  ArrayInit(@top, $Size);
+  CheckShift(@top);
+  ArrayInit(@bot, $Size);
+  CheckShift(@bot);
+  
+  for (int i=$Start; i<$Size-1-$MinCandles; i++)
+  {
+    bool fix = true;
+    for (int k=i-$MinCandles; k<=<?!OnlyLeft>i+$MinCandles<~>i-1</>; k++)
+      if (k>=0 && $high[k]>$high[i]) { fix = false; break; }
+    @top[i] = fix?$high[i]:0;
+    <?Redraw>
+    if (fix)
+    for (int k=i-$MinCandles; k<i; k++)
+      @top[k] = 0;
+    </>
+    fix = true;
+    for (int k=i-$MinCandles; k<=<?!OnlyLeft>i+$MinCandles<~>i-1</>; k++)
+      if (k>=0 && $low[k]<$low[i]) { fix = false; break; }
+    @bot[i] = fix?$low[i]:0;
+    <?Redraw>
+    if (fix)
+    for (int k=i-$MinCandles; k<i; k++)
+      @bot[k] = 0;
+    </>
+  }
+  
+  <?strong>
+  if ($Start==0)
+  {
+    ArrayInitialize(@top, 0);
+    ArrayInitialize(@bottom, 0);
+    if ($high[1]>$high[0]) @dir = 1; // верх
+    else @dir = -1; // низ
+  }
+  
+  if ($Start==0 || Shifted)
+  {
+    int pos = $Start==0?0:$Size-2-$MinCandles;
+    while (pos<$Size-1-$MinCandles)
+    {
+  if (@dir==1)
+  {
+    // вычисление максимума
+    for (int i=pos; i<$Size-1-$MinCandles && !found; i++)
+    {
+      while (i<$Size-1-$MinCanles && $high[i]>=$high[pos]) pos = i;
+      bool found = true;
+      for (int k=1; k<=$MinCandles; k++)
+        if ($high[pos+k]>=$high[pos]) { found = false; break; }
+      if (!found) pos += k;
+    }
+    @top[pos] = $high[pos];
+    @dir = -@dir;
+  }
+  else
+  {
+    // вычисление минимума
+    for (int i=pos; i<$Size-1-$MinCandles && !found; i++)
+    {
+      while (i<$Size-1-$MinCandles && $low[i]<=$low[pos]) pos = i;
+      bool found = true;
+      for (int k=1; k<=$MinCandles; k++)
+        if ($low[pos+k]<=$low[pos]) { found = false; break; }
+      if (!found) pos += k;
+    }
+    @bottom[pos] = $low[pos];
+    @dir = -@dir;
+  }
+      pos++;
+    }
+  }
+  </>  
+
+[Help]
+Поиск экстеремумов.

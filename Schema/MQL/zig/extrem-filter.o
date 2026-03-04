@@ -1,0 +1,72 @@
+[Main]
+Name=ExtremFilter
+Title=Экстремумы (фильтр)
+Group=Алгоритмы
+
+[Property]
+FracCount=n,3,количество экстремумов ниже
+Depth=n,2,количество последних свечей для проверки
+
+[Input]
+up=row
+down=row
+
+[Output]
+up=row,@up
+down=row,@down
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @up[];
+double @down[];
+
+<lines>
+  ArrayInit(@up, $Size);
+  CheckShift(@up);
+  ArrayInit(@down, $Size);
+  CheckShift(@down);
+  
+  if ($Start==0)
+  {
+    ArrayInitialize(@up, 0);
+    ArrayInitialize(@down, 0);
+  }
+  
+  if ($Start==0 || Shifted)
+  for (int i=MathMax($Start-$Depth,$Depth); i<$Size; i++)
+  {
+    if ($up[i]>0)
+    {
+      int count = 0;
+      for (int k=i-1; k>=0; k--)
+        if ($up[k]>0 && $up[k]<$up[i])
+        {
+          count++;
+          if (count==$FracCount) break;
+        }
+        else
+          if ($up[k]>=$up[i]) break;
+      if (count==$FracCount) @up[i] = $up[i];
+    }
+    if ($down[i]>0)
+    {
+      int count = 0;
+      for (int k=i-1; k>=0; k--)
+        if ($down[k]>$down[i])
+        {
+          count++;
+          if (count==$FracCount) break;
+        }
+        else
+          if ($down[k]>0 && $down[k]<=$down[i]) break;
+      if (count==$FracCount) @down[i] = $down[i];
+    }
+  }
+  
+[Help]
+Поиск экстремумов из экстремумов.
+

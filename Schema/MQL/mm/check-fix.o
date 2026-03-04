@@ -1,0 +1,33 @@
+[Main]
+Choice
+Name=CheckFix
+Title=ѕроверка фикс.
+Group=—делки
+
+[Property]
+LevelCheck=n,50,количество пунктов\, которые должна пройти цена
+Reverse=t
+
+[Input]
+fix=n
+level=n
+
+[Output]
+check=c
+
+[Code]
+<lines>
+  if ((<?Reverse>-</>trend>0 && (Bid-$fix)/Point>=<?level>$level<~>$LevelCheck</>) || (<?Reverse>-</>trend<0 && ($fix-Bid)/Point>=<?level>$level<~>$LevelCheck</>))
+  {
+  <?debug>
+    Print("FIXED at price ",Bid," as ",(<?Reverse>-</>trend>0?(Bid-$fix)/Point:($fix-Bid)/Point)+" >= "+<?level>$level<~>$LevelCheck</>);
+  </>
+$check.lines
+  }
+  <?debug>
+  else
+    Print("no fix "+(<?Reverse>-</>trend>0?"BUY "+(Bid-$fix)/Point:"SELL "+($fix-Bid)/Point)+" < "+<?level>$level<~>$LevelCheck</>);
+  </>
+  
+[Help]
+ѕровер€ет, на сколько сдвинулась цена от фиксированной.

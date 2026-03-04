@@ -1,0 +1,18 @@
+[Main]
+Name=PosStops
+Title=Позиционные стопы
+Group=Сделки
+
+[Property]
+SL=n
+TP=n
+
+[Code]
+<lines>
+  if (PositionSelect(Symbol()))
+  {
+    if ((ENUM_POSITION_TYPE)PositionGetInteger(POSITION_TYPE)==POSITION_TYPE_BUY)
+      trade.PositionModify(Symbol(), <?SL>Symbol.Bid()-Symbol.Point()*$SL<~>0</>, <?TP>Symbol.Bid()+Symbol.Point()*$TP<~>0</>);
+    else
+      trade.PositionModify(Symbol(), <?SL>Symbol.Ask()+Symbol.Point()*$SL<~>0</>, <?TP>Symbol.Ask()-Symbol.Point()*$TP<~>0</>);
+  }

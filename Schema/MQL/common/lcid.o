@@ -1,0 +1,20 @@
+[Main]
+Usable
+Name=lcid
+Title=Определение языка
+Group=Общие
+
+[Code]
+<top>
+#include "lcid.h"
+
+<attach>
+=lcid.h
+#import "kernel32.dll"
+   int GetUserDefaultLCID();
+#import
+
+bool IsRussian()
+{
+   return GetUserDefaultLCID()==1049;
+}

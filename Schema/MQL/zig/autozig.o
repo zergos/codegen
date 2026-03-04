@@ -1,0 +1,50 @@
+[Main]
+Deprecated
+Name=AutoZig
+Title=ЗигЗаг авто
+Group=Алгоритмы
+
+[Input]
+high=row
+low=row
+
+[Output]
+out=row
+top=row
+bot=row
+
+[InputPars]
+Start
+Size
+
+[Global]
+<gvars>
+double autozig_bot[];
+double
+<procs>
+int autozig(double &high[], double &low[], double &mask[])
+{
+  for (int @i
+}
+
+[Code]
+<gvars>
+double $out[];
+<?top>double top$out[];</>
+<?bot>double bot$out[];</>
+
+<lines>
+  ArrayInit($out, $Size);
+  <?top>ArrayInit(top$out, $Size);</>
+  <?bot>ArrayInit(bot$out, $Size);</>
+  
+  // поиск методом деления отрезка пополам
+  int @left, @right, @min, @max;
+  double @deep;
+  
+  @min = ArrayMinimum($low); @max = ArrayMaximum($high);
+  @deep = ($high[@max]-$low[@min])/Point;
+  if 
+  
+[Help]
+ЗигЗаг с постоянной автонастраиваемой плотностью вершин (около 5). Применим в качестве универсального трендового распознавателя.

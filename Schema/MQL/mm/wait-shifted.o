@@ -1,0 +1,52 @@
+[Main]
+Choice
+Name=WaitShifted
+Title=ќжидание новой свечи
+Group=”правление
+
+[Property]
+Immediate=t,,стартовать сразу и ждать следующую
+SkipLastTrace=t,,пропускать предпоследний бар при ретрейсе
+Manual=t,,управление ожиданием из внешнего блока
+Candles=n,,количество свечей дл€ пропуска (если указано)
+
+[Output]
+Shifted=c
+time=n,@nextbar
+
+[InputPars]
+Start
+Trace
+
+[Code]
+<gvars>
+datetime @nextbar;
+
+<init>
+  @nextbar = 0;
+  
+<lines>
+  <?indicator>
+  if ($Start==0) @nextbar = 0;
+  </>
+  <?Trace>
+  datetime @curtime = <?mql4>iTime(NULL,0,trace_index)<~>Bar.Time(trace_index)</>;
+  <~>
+  datetime @curtime = <?mql4>iTime(NULL,0,0)<~>Bar.Time(0)</>;
+  </>
+  if (@curtime>@nextbar)
+  {
+    <?debug>Print("$name "+TimeToStr(@curtime)+" >= "+TimeToStr(@nextbar));</>
+    <?!Manual>
+    @nextbar = @curtime;
+    <?Candles>@nexttime += ($Candles-1)*PeriodSeconds();</>
+    <?debug>Print("$name next bar is "+TimeToStr(@nextbar));</>
+    </>
+$Shifted.lines
+  }
+
+<sync>
+  sync("$name", @nextbar);
+  
+[Help]
+ќжидает наступление момента новой свечи.

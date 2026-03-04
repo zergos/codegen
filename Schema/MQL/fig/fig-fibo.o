@@ -1,0 +1,37 @@
+[Main]
+Name=FiboLevels
+Title=Фибо
+Group=Фигуры
+
+[Property]
+Color=color,Olive
+BarIndex=n,1,номер бара от конца для начала фигуры
+FiboSize=n,10,размер фибы в пунктах
+Leave=t,,оставить при деинициализации
+
+[Input]
+high=row
+low=row
+time=row
+
+[Output]
+levels=c
+
+[Code]
+<lines>
+  if (ObjectFind("$name")>=0) ObjectDelete("$name");
+  ObjectCreate("$name", OBJ_FIBO, 0, $time[$BarIndex], $high[$BarIndex], $time[$BarIndex]+PeriodSeconds()*$FiboSize, $low[$BarIndex]);
+  ObjectSet("$name", OBJPROP_LEVELCOLOR, $Color);
+  
+  <?levels>
+  int level$name = 0;
+$levels.lines
+  </>
+  
+<deinit>
+<?!Leave>
+  ObjectDelete("$name");
+</>
+
+[Help]
+Подсветка сигнального бара нужным цветом.

@@ -1,0 +1,37 @@
+[Main]
+Choice
+Group=Фильтры
+Title=Фильтр гэпа
+Name=FilterGap
+
+[Property]
+StartHour=n,12,начальный час
+Enabled=t,1
+
+[Output]
+work=c
+false=c
+
+[Code]
+<lines>
+<?Enabled>
+  MqlDateTime @cur;
+  TimeCurrent(@cur);
+  //if (@cur.hour<$StartHour)
+  if ((@cur.hour<$StartHour && @cur.day_of_week==5) || @cur.day_of_week<5)
+  {
+  <?debug>Print("time passed");</>
+$work.lines
+  }
+<?false>
+  else
+  {
+$false.lines
+  }
+</>
+<~>
+$work.lines
+</>
+  
+[Help]
+Продолжает выполнение только при попадании текущего времени в диапозон.

@@ -1,0 +1,37 @@
+[Main]
+Usable
+Name=stdlib
+Title=stdlib
+Group=Common
+
+[Code]
+<top>
+#include "stdlib.mqh"
+
+<attach>
+=stdlib.mqh
+<?mql4>
+#import "stdlib.ex4"
+   string IntegerToHexString(int a0);
+#import
+<~>
+//+------------------------------------------------------------------+
+//| convert integer to string contained input's hexadecimal notation |
+//+------------------------------------------------------------------+
+string IntegerToHexString(int integer_number)
+  {
+   string hex_string="00000000";
+   int    value, shift=28;
+//   Print("Parameter for IntegerHexToString is ",integer_number);
+//----
+   for(int i=0; i<8; i++)
+     {
+      value=(integer_number>>shift)&0x0F;
+      if(value<10) StringSetCharacter(hex_string, i, value+'0');
+      else         StringSetCharacter(hex_string, i, (value-10)+'A');
+      shift-=4;
+     }
+//----
+   return(hex_string);
+}
+</>

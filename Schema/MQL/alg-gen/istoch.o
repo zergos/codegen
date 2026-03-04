@@ -1,0 +1,32 @@
+[Main]
+Name=IStoch
+Title=Stochastic
+Group=Алгоритмы (ген)
+
+[Property]
+Kperiod=n,5,период 
+Dperiod=n,3
+Slowing=n,3
+Method=ima,MODE_SMA
+mode=line_index,MODE_MAIN,индекс линии
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out);
+  CheckShift($out);
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = iStochastic(NULL, 0, $Kperiod, $Dperiod, $Slowing, $Method, 0, $mode, $Size-1-i);
+    
+[Help]
+Генератор линий канала Боллинжера.
+

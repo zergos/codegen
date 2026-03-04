@@ -1,0 +1,12 @@
+[Main]
+BlockOut
+Name=OV
+Title=Выход (значение)
+Group=Слои
+Size=3
+
+[Input]
+out=n
+
+[Help]
+Служебный блок для построения слоя.

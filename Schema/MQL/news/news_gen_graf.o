@@ -1,0 +1,162 @@
+[Main]
+Name=NewsGenGraf
+Title=График
+Group=Новости
+
+[Property]
+NSize=n,100,предел новостей
+Symbol=s,,если не указан\, используется текущий
+TimeUpStart=session_time1,,час начала реакции на прямые новости
+TimeUpEnd=session_time2,,час окончания реакции на прямые новости
+TimeDownStart=session_time1,,час начала реакции на кроссовые новости
+TimeDownEnd=session_time2,,час окончания реакции на кроссовые новости
+SessionWait=t,,начинать отсчёт от начала сессии
+SessionCoef=f,,коэффициент усиления в период сессии
+HighLen=n,1
+MiddleLen=n,1/2
+LowLen=n,1/4
+
+[Input]
+time=row
+
+[Output]
+plus=row,@Plus
+minus=row,@Minus
+
+[InputPars]
+Start
+Size
+
+[Global]
+<top>
+#define iters_max 20
+#define day_len 86400
+
+[Code]
+<gvars>
+datetime @Times[$NSize];
+int @NIds[$NSize];
+double @Vals[$NSize];
+int @im[$NSize];
+
+double @iters[iters_max], @steps[iters_max];
+int @active[iters_max];
+
+double @Plus[];
+double @Minus[];
+
+<lines>
+  ArrayInit(@Plus, $Size);
+  ArrayInit(@Minus, $Size);
+
+  <?Symbol>
+    NewsList($time[$Size-1], "$Symbol", 0, $NSize, @Times, @NIds);
+  <~>
+    NewsList($time[$Size-1], Symbol(), 0, $NSize, @Times, @NIds);
+  </>
+  //for (int @aa=0; @aa<$NSize; @aa++) Print(@NIds[@aa]);
+
+  ArrayInitialize(@Vals, 0);
+  NewsValues($NSize, @NIds, @Vals, @im);
+
+  int @news_lim, @last_news;
+  int @k;
+
+  if ($Start==0)
+  {
+    ArrayInitialize(@Plus, 0);
+    ArrayInitialize(@Minus, 0);
+    ArrayInitialize(@iters, 0);
+    ArrayInitialize(@steps, 0);
+    ArrayInitialize(@active, 0);
+    @news_lim = 0;
+    @last_news = 0;
+    
+    <?debug>
+\#property strict
+    for (@k=0; @k<$NSize; @k++)
+      Print("news at "+TimeToString(@Times[@k])+" value "+@Vals[@k]);
+    </>
+  }
+  else
+  {
+    CheckShift(@Plus);
+    CheckShift(@Minus);
+    @news_lim = ArrayBsearch(@NIds, @last_news)+1;
+    //Print(@news_lim);
+  }
+
+  for (int @i=$Start+1; @i<$Size; @i++)
+  {
+    // process new info
+    for (int @n=@news_lim; @n<$NSize; @n++)
+    if (@Vals[@n]!=0 && $time[@i-1]<@Times[@n] && @Times[@n]<=$time[@i]) 
+    {
+      // find slot
+      //Print("slotting");
+      for (@k=0; @k<iters_max; @k++) if (@steps[@k]<=0) break;
+      if (@k==iters_max)
+      {
+        Print("expand \@iters_max");
+        continue;
+      }
+      @iters[@k] = @Vals[@n];
+      switch (@im[@n])
+      {
+        case 1:
+          @steps[@k] = day_len*$LowLen;
+          break;
+        case 2:
+          @steps[@k] = day_len*$MiddleLen;
+          break;
+        case 3:
+          @steps[@k] = day_len*$HighLen;
+          break;
+      }
+      @active[@k] = MathSign(@NIds[@n]);
+      //Print("activate ",TimeToStr($time[@i],TIME_DATE)," ",TimeToStr($time[@i],TIME_MINUTES)," to ",@Vals[@n],",",@im[@n]);
+    }
+
+    // process activity
+    int @h = TimeHour($time[@i]);
+
+    <?SessionWait>
+    for (@k=0; @k<iters_max; @k++)
+    if (@steps[@k]>0 && MathAbs(@active[@k])<2)
+      if ((@active[@k]>0 && @h>=$TimeUpStart && @h<$TimeUpEnd) || (@active[@k]<0 && @h>=$TimeDownStart && @h<$TimeDownEnd))
+      @active[@k] = @active[@k]*2;
+    </>
+
+    // sum all & process iteratorz
+    double @sum_p = 0, @sum_m = 0;
+    for (@k=0; @k<iters_max; @k++)
+    if (@steps[@k]>0)
+    {
+      <?SessionWait>
+      if (MathAbs(@active[@k])==2) 
+      { </>
+      <?!SessionCoef>
+        if (@iters[@k]>=0) @sum_p += @iters[@k]; else @sum_m += @iters[@k];
+      <~>
+        if ((@active[@k]>0 && @h>=$TimeUpStart && @h<$TimeUpEnd) || (@active[@k]<0 && @h>=$TimeDownStart && @h<$TimeDownEnd))
+          { if (@iters[@k]>=0) @sum_p += @iters[@k]*$SessionCoef; else @sum_m += @iters[@k]*$SessionCoef; }
+        else
+          { if (@iters[@k]>=0) @sum_p += @iters[@k]; else @sum_m += @iters[@k]; }
+      </>
+        @steps[@k] -= $time[@i]-$time[@i-1];
+      <?SessionWait>
+      } </>
+    }
+    @Plus[@i] = @sum_p;
+    @Minus[@i] = @sum_m;
+  }
+
+  // fix reactor
+  @news_lim = iters_max;
+  @last_news = @NIds[iters_max-1];
+
+[Help]
+Генерирует графики влияния новостей. Положительные и негативные влияния считаются отдельно.\\
+Параметр **SessionWait** устанавливаеися для активации ожидания эффекта новости при наступлении периода сессии.\\
+Требует включения модуля **новостей** и модуля **математики**.\\
+Часы реакции на начало/окончание сессий применяются только совместно с **SessionWait** или **SessionCoef**.

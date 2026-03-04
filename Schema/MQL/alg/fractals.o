@@ -1,0 +1,262 @@
+[Main]
+Name=Fractals
+Title=Фракталы
+Group=Алгоритмы
+
+[Property]
+SkipZeros=t,,не учитывать нулевые значения тиков
+UseLast=t,,брать только последний фрактал в группе повторяющихся
+UseFilter=t,,адаптивный фильтр
+
+[Input]
+high=row
+low=row
+
+[Output]
+ohigh=row,@fhigh
+olow=row,@flow
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=@NewStart
+
+[Code]
+<gvars>
+double @fhigh[];
+double @flow[];
+
+<lines>
+  ArrayInit(@fhigh, $Size);
+  ArrayInit(@flow, $Size);
+
+  int @NewStart = <?SkipZeros>0;<~>MathMax(0, $Start-10);</>
+  if (@NewStart==0)
+  {
+    ArrayInitialize(@fhigh, 0);
+    ArrayInitialize(@flow, 0);
+  }
+  else
+  {
+    CheckShift(@fhigh);
+    CheckShift(@flow);
+  }
+
+  int @mode, @i, @k;
+  double @cur;
+  <?ohigh>
+  for (@i=@NewStart; @i<$Size; @i++)
+  {
+    <?SkipZeros>if ($high[@i]==0) continue;</>
+
+    // process left
+    @mode = 0;
+    @cur = $high[@i];
+    for (@k=@i-1; @k>=0 && @mode>=0 && @mode<2; @k--)
+    {
+      <?SkipZeros>if ($high[@k]==0) continue;</>
+      if ($high[@k]<=@cur)
+      {
+        //@cur = $high[@k];
+	@mode++;
+      }
+      else if ($high[@k]>@cur) @mode=-1;
+    }
+
+    // process right
+    @cur = $high[@i];
+    if (@mode==2) @mode=0;
+    for (@k=@i+1; @k<$Size && @mode>=0 && @mode<2; @k++)
+    {
+      <?SkipZeros>if ($high[@k]==0) continue;</>
+      if ($high[@k]<=@cur)
+      {
+        //@cur = $high[@k];
+	@mode++;
+      }
+      else if ($high[@k]>@cur) @mode=-1;
+    }
+
+    if (@mode==2)
+    {
+      @fhigh[@i] = $high[@i];
+      @i++;
+    }
+  }
+  </>
+  <?olow>
+  for (@i=@NewStart; @i<$Size; @i++)
+  {
+    <?SkipZeros>if ($low[@i]==0) continue;</>
+    // process left
+    @mode = 0;
+    @cur = $low[@i];
+    for (@k=@i-1; @k>=0 && @mode>=0 && @mode<2; @k--)
+    {
+      <?SkipZeros>if ($low[@k]==0) continue;</>
+      if ($low[@k]>=@cur)
+      {
+        //@cur = $low[@k];
+	@mode++;
+      }
+      else if ($low[@k]<@cur) @mode=-1;
+    }
+
+    // process right
+    @cur = $low[@i];
+    if (@mode==2) @mode=0;
+    for (@k=@i+1; @k<$Size && @mode>=0 && @mode<2; @k++)
+    {
+      <?SkipZeros>if ($low[@k]==0) continue;</>
+      if ($low[@k]>=@cur)
+      {
+        //@cur = $low[@k];
+	@mode++;
+      }
+      else if ($low[@k]<@cur) @mode=-1;
+    }
+
+    if (@mode==2 && @flow[@i-1]==0)
+    {
+      @flow[@i] = $low[@i];
+      @i++;
+    }
+  }
+  </>
+
+  <?ohigh><?olow>
+
+  <?UseLast>
+  for (@i=@NewStart; @i<$Size; @i++)
+    if ($ohigh[@i]!=0) { @mode = 1; break;}
+    else if ($olow[@i]!=0) { @mode = -1; break;}
+  @k = @i;
+  for (@i=@k+1; @i<$Size; @i++)
+  {
+    if (@mode==1)
+    {
+      if ($ohigh[@i]!=0)
+      {
+        if ($ohigh[@i]>$ohigh[@k])
+        {
+          $ohigh[@k] = 0;
+          @k = @i;
+        }
+        else $ohigh[@i] = 0;
+      }
+      if ($olow[@i]!=0)
+      {
+        @mode = -1;
+        @k = @i;
+      }
+    }
+    else
+    {
+      if ($olow[@i]!=0)
+      {
+        if ($olow[@i]<$olow[@k])
+        {
+          $olow[@k] = 0;
+          @k = @i;
+        }
+        else $olow[@i] = 0;
+      }
+      if ($ohigh[@i]!=0)
+      {
+        @mode = 1;
+        @k = @i;
+      }
+    }
+  }
+  </>
+
+  <?UseFilter>
+  int @n = -1;
+  @k = -1;
+  for (@i=@NewStart; @i<$Size; @i++)
+  {
+    if ($olow[@i]!=0) @k = @i;
+    if ($ohigh[@i]!=0) @n = @i;
+    if (@k>=0 && @n>=0 && (MathAbs(@k-@n)<=1 || $ohigh[@n]-$olow[@k]<=$UseFilter*Point))
+    {
+      //if (@i<20) Print("Progress ", @k, " ",$olow[@k],", ",@n, " ",$ohigh[@n]);
+      // поиск лучшего удаления
+      int @x[4];
+      double @d[5];
+      @d[4] = $ohigh[@n]-$olow[@k];
+      for (int @p=0; @p<=3; @p++) {@d[@p] = 10000; @x[@p] = -1;}
+
+      // поиск слева
+      for (@p=MathMin(@k,@n)-1; @p>=0; @p--)
+      {
+        if ($olow[@p]!=0)
+        {
+          @x[0] = @p; @d[0] = $ohigh[@n]-$olow[@p];
+          break;
+        }
+        if ($ohigh[@p]!=0)
+        {
+          @x[1] = @p; @d[1] = $ohigh[@p]-$olow[@k];
+          break;
+        }
+      }
+
+      // поиск справа
+      for (@p = MathMax(@k, @n)+1; @p<$Size; @p++)
+      {
+        if ($olow[@p]!=0)
+        {
+          @x[2] = @p; @d[2] = $ohigh[@n]-$olow[@p];
+          break;
+        }
+        if ($ohigh[@p]!=0)
+        {
+          @x[3] = @p; @d[3] = $ohigh[@p]-$olow[@k];
+          break;
+        }
+      }
+
+      // сравнение
+      //if (@i<20) for (@p=0; @p<=4; @p++) Print(@d[@p]);
+      @p = ArrayMinimum(@d);
+      switch (@p)
+      {
+        case 0: //ll
+          $olow[@x[0]] = 0;
+          $ohigh[@n] = 0;
+          break;
+        case 1: //lh
+          $ohigh[@x[1]] = 0;
+          $olow[@k] = 0;
+          break;
+        case 2: //rl
+          $olow[@x[2]] = 0;
+          $ohigh[@n] = 0;
+          break;
+        case 3: //rr
+          $ohigh[@x[3]] = 0;
+          $olow[@k] = 0;
+          break;
+        case 4:
+          $ohigh[@n] = 0;
+          $olow[@k] = 0;
+      }
+      if (@p<2)
+      {
+        if (@x[@p]<@NewStart) @NewStart = @x[@p];
+        @i = @x[@p]-1;
+      }
+      else @i = MathMin(@n,@k)-1;
+      
+      @n = -1; @k = -1;
+    }
+  }
+  </>
+
+  </></>
+
+[Help]
+**SkipZeros** помогает, например, применить фракталы дважды.\\
+**UseLast** и **UseFilter** работают только при всех задействованных выходах.

@@ -1,0 +1,97 @@
+[Main]
+Name=Pendulum
+Group=Алгоритмы
+Title=Маятник
+
+[Property]
+VibraCount=n,100,макс. количество учавствующих частот колебаний
+LoadLimit=n,,предел закрузки первых тиков для расчёта
+VibraStepAmp=f,0.99,шаг уменьшения амплитуды по времени
+VibraStepFreq=f,0.999,шаг уменьшения частоты по времени
+PhasisCoef=f,0.0001,ширина волны = амплитуда / коэф.
+MinAmp=f,0.0001
+Eps=f,0.0001
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+double @vibra_amp[$VibraCount];
+double @vibra_freq[$VibraCount];
+int @vibra_start[$VibraCount];
+double @middle;
+
+<lines>
+  ArrayInit($out, $Size);
+
+  double @cur_vib;
+  int @pos;
+
+  if ($Start==0)
+  {
+    ArrayInitialize(@vibra_amp, 0);
+    ArrayInitialize(@vibra_freq, 0);
+    
+    double sum = 0;
+    for (int i=0; i<<?LoadLimit>$LoadLimit<~>$Size-1</>; i++)
+      sum += $in[i];
+    @middle = sum/ <?LoadLimit>$LoadLimit<~>$Size-1</>;
+  }
+
+  for (int n=$Start; n<<?LoadLimit>$LoadLimit<~>$Size-1</>; n++)
+  {
+    // count next vibra prediction
+    @cur_vib = @middle;
+    for (int i=0; i<$VibraCount; i++)
+    {
+      if (MathAbs(@vibra_amp[i])<$MinAmp) continue;
+      @vibra_amp[i] *= $VibraStepAmp;
+      //@vibra_freq[i] *= $VibraStepFreq;
+      @vibra_freq[i] = @vibra_amp[i] / $PhasisCoef;
+      @cur_vib += @vibra_amp[i]*MathCos(PI/2/@vibra_freq[i]*(n-@vibra_start[i]));
+    }
+
+    $out[n] = @cur_vib;
+    if (MathAbs(@cur_vib-$in[n])>=$Eps)
+    {
+      // find free pos
+      @pos = -1;
+      for (int i=0; i<$VibraCount; i++)
+      if (MathAbs(@vibra_amp[i])<$MinAmp)
+      {
+        @pos = i;
+        break;
+      }
+      if (@pos>=0)
+      {
+        @vibra_start[@pos] = n;
+        @vibra_amp[@pos] = $in[n]-@cur_vib;
+        @vibra_freq[@pos] = MathAbs(@cur_vib-$in[n]) / $PhasisCoef;
+      }
+    }
+  }
+
+<?LoadLimit>
+  // достроить выход
+  for (int n=$LoadLimit; n<$Size; n++)
+  {
+    @cur_vib = @middle;//$out[n-1];
+    for (int i=0; i<$VibraCount; i++)
+    {
+      if (MathAbs(@vibra_amp[i])<$MinAmp) continue;
+      @vibra_amp[i] *= $VibraStepAmp;
+      @vibra_freq[i] = @vibra_amp[i] / $PhasisCoef;
+      @cur_vib += @vibra_amp[i]*MathCos(PI/2/@vibra_freq[i]*(n-@vibra_start[i]));
+    }
+    $out[n] = @cur_vib;
+  }
+</>

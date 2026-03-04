@@ -1,0 +1,27 @@
+[Main]
+Name=ArrayZoom
+Title=Расширитель
+Group=Массивы
+
+[Property]
+Enabled=t,1
+
+[Input]
+buf=row
+z=row
+
+[Output]
+out=row,$buf
+
+[Code]
+<lines>
+<?Enabled>
+  int @i, @n, @p;
+  int @count = wpos$buf/dim$buf;
+  for (@i=0; @i<dim$z; @i++)
+    for (@n=0; @n<@count; @n++)
+    {
+      @p = @i*@count + @n;
+      $buf[@p] = $z[@i*2+1]*$buf[@p] + $z[@i*2];
+    }
+</>

@@ -1,0 +1,17 @@
+[Main]
+Name=CheckFigDelete
+Title=Проверка удаления объекта
+Group=Управление
+
+[Property]
+Name=s
+
+[Code]
+<lines>
+  if (ObjectFind($Name)<0)
+  {
+$CTRL.lines
+  }
+
+[Help]
+Передаёт управление при удалении фигуры.

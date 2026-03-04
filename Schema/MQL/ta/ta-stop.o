@@ -1,0 +1,9 @@
+[Main]
+Name=TAStop
+Title=EA Остановка модели
+Group=ТА
+
+[Code]
+<lines>
+  taCur.M.active = false;
+  taCur.M.stop = true;

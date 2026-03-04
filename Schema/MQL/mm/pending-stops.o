@@ -1,0 +1,37 @@
+[Main]
+Deprecated
+Name=PendStops
+Title=Отложенные стопы
+Group=Сделки
+
+[Property]
+Lot=f
+SL=n
+TP=n
+
+[Code]
+<lines>
+  CHubOrder @ho_sl = NewOrder();
+  CHubOrder @ho_tp = NewOrder();
+  @ho_sl.lots = $Lots;
+  @ho_tp.lots = $Lots;
+  if (trend>0)
+  {
+    @ho_sl.cmd = ENUM_ORDER_TYPE_SELL_LIMIT;
+    @ho_tp.cmd = ENUM_ORDER_TYPE_SELL_STOP;
+    @ho_tp.price = Symbol.Bid()+Point*$TP;
+    @ho_sl.price = Symbol.Bid()-Point*$SL;
+  }  
+  else
+  {
+    @ho_sl.cmd = ENUM_ORDER_TYPE_BUY_LIMIT;
+    @ho_tp.cmd = ENUM_ORDER_TYPE_BUY_STOP;
+    @ho_tp.price = Symbol.Ask()-Point*$TP;
+    @ho_sl.price = Symbol.Ask()+Point*$SL;
+  }
+  @ho_sl.SendPending();
+  @ho_tp.SendPending();
+  
+[Help]
+Создат стоповые уровни с помощью отложенных ордеров.
+

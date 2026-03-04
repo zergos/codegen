@@ -1,0 +1,33 @@
+[Main]
+Name=SetSigFile
+Title=Сигнал в файл
+Group=Файлы
+
+[Property]
+FileName=s,,имя файла
+CommonFile=t,1,файл в общей папке
+SymbolPrefix=t,1,добавлять к имени файла наименование символа
+
+[Code]
+<gvars>
+int @file;
+
+<init>
+  @file = 0;
+
+<lines>
+  if (@file==0)
+    @file = FileOpen(<?SymbolPrefix>Symbol()+</>"$FileName", FILE_TXT|FILE_WRITE|FILE_SHARE_READ|FILE_SHARE_WRITE<?CommonFile>|FILE_COMMON</>);
+  if (@file>0)
+  {
+    FileSeek(@file, 0, SEEK_SET);
+    FileWrite(@file, 1);
+    FileFlush(@file);
+  }
+  
+<deinit>
+  if (@file>0)
+    FileClose(@file);
+  
+[Help]
+Файл создаётся в папке .\experts\files

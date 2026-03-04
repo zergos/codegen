@@ -1,0 +1,10 @@
+[Main]
+Usable
+Name=TAModelsPack
+Title=Модели группа
+Group=ТА
+
+[Uses]
+ta-common\ta-models-base
+ta-common\ta-models-fix
+ta-common\ta-models-draw

@@ -1,0 +1,35 @@
+[Main]
+Name=Trailing
+Title=Трейлинг
+Group=Сделки
+
+[Property]
+Level=n,100,уровень в пунктах
+HubState=hubstate,HUB_ACTIVE
+WaitCross=t,,ожидать выхода цены в безубыток
+CrossPips=n,,дистанция для активации
+ResetTP=bool,true,убирать уровень тейк-профита при срабатывании
+Step=n,5,шаг изменения уровня в пунктах (если указан)
+CheckMagic=n
+
+[Code]
+<lines>
+  if ($Level>0)
+  {
+  ForEachL(CHubOrder, ho, firstOrder)
+  {
+    <?HubState>if (ho.state != $HubState) continue;</>
+    <?CheckMagic>if (OrderSelect(ho.ticket, SELECT_BY_TICKET) && OrderMagicNumber()!=$CheckMagic) continue;</>
+    if (ho.cmd==OP_BUY && <?Step>(Bid-$Level*Point>=ho.fsl+$Step*Point) && </>(Bid-<?!WaitCross><?!CrossPips>ho.fsl<~>MathMax(ho.fsl, ho.price+Point*$CrossPips)</><~>MathMax(ho.fsl, ho.price)</>)/Point>$Level)
+    {
+      <?debug>Print("bid ",Bid," price ",ho.price," ftp ",ho.ftp," fsl ",ho.fsl," bid-f ",Bid-(Ask-$Level*Point>ho.price?hub[@i].ftp:ho.fsl));</>
+      ho.SetStop(Bid-$Level*Point, $ResetTP);
+    }
+    else if (ho.cmd==OP_SELL && <?Step>(Ask+$Level*Point<=ho.fsl-$Step*Point) && </>(<?!WaitCross><?!CrossPips>ho.fsl<~>MathMin(ho.fsl, ho.price-Point*$CrossPips)</><~>MathMin(ho.fsl, ho.price)</>-Ask)/Point>$Level)
+      ho.SetStop(Ask+$Level*Point, $ResetTP);
+  }
+  }
+  
+[Help]
+Скользящий стоп.\\
+Перед запуском трейлинга нужно обязательно проверить наличие стоп-лосов и трендовых ордеров и наличие тейк-профитов у локирующих ордеров.

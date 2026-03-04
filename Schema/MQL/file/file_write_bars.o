@@ -1,0 +1,56 @@
+[Main]
+Title=Запись баров
+Name=FileWriteBars
+Group=Файлы
+
+[Property]
+SkipNulls=t,1,пропуск начальных нулевых значений
+SkipDoubles=t,1,пропуск повторяющихся значений
+
+[Input]
+time=row
+in=row
+file=n
+
+[InputPars]
+Size
+
+[Code]
+<lines>
+  int @start = 0;
+  int @size = $Size;
+  <?SkipNulls>
+  for ( ; @start<$Size; @start++)
+    if ($in[@start]!=0) break;
+  for ( ; @size>@start; @size--)
+    if ($in[@size-1]!=0) break;
+  </>
+  int @real_size = @size-@start;
+  <?SkipDoubles>
+  @real_size = 0;
+  double @prev = 0;
+  for (int k=@start; k<@size; k++)
+    if ($in[k]!=@prev)
+    {
+      @real_size++;
+      @prev = $in[k];
+    }
+  @prev = 0;
+  </>
+  FileWrite($file, @real_size+1);
+  for (int i=@start; i<@size; i++)
+  <?SkipDoubles>
+    if ($in[i]!=@prev)
+    {
+  </>
+      FileWrite($file, TimeToStr($time[i]), $in[i]);
+  <?SkipDoubles>
+      @prev = $in[i];
+    }
+  </>
+  FileWrite($file, TimeToStr($time[@size-1]+PeriodSeconds()), 0);
+  FileFlush($file);
+
+[Help]
+Запись баров в файл (например, для быстрой прогонки тестера).
+

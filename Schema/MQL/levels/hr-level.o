@@ -1,0 +1,165 @@
+[Main]
+Choice
+Name=HrLevel
+Title=Канал по объёмам
+Group=Уровни
+
+[Property]
+LookStep=n,50,количество этажей на поиск локального максимума
+Threshold=n,50,минимальное значение для проверки
+MinWidth=n,100,минимальная ширина канала
+MinVol=n,10,минимальный объём в канале
+MaxDelta=n,1.3,максимальный откат объёма в канале
+ApproxCoef=n,0.2,коэффициент приближения для поиска вторичных пиков
+MaxPeaks=n,2,количество пиков для рассчёта
+Draw=t,,рисовать пики
+Color=color,Yellow
+
+[Input]
+v=n
+
+[Output]
+check=c
+high=n,@ChanHigh
+low=n,@ChanLow
+
+[Global]
+<procs>
+bool HrCheckMax(int &VP[], int pos, int step)
+{
+  int cur = VP[pos];
+  //check before
+  for (int i=pos-step-1; i<=pos+step; i++)
+    if (i>=0 && i<ArraySize(VP) && VP[i]>cur) return false;
+  if (cur==0) return false;
+  return true;
+}
+
+[Code]
+<gvars>
+double @ChanHigh, @ChanLow;
+bool @range[];
+
+<lines>
+  // поиск экстремумов
+  double @thres = <?ApproxCoef>$Threshold*(1.0-$ApproxCoef)<~>$Threshold</>;
+  int @max=-1, @min=-1;
+  
+  <?Version>
+  for (int i=0; i<size$v; i++)
+    if (plus$v[i]>@thres && HrCheckMax(plus$v, i, $LookStep))
+    {
+      if (@max==-1) @max = i;
+      @min = i;
+    }
+  </>
+  ArrayResize(@range, size$v);
+  ArrayInitialize(@range, true);
+  int @lmax;
+  int @n = 0;
+  do {
+    @lmax = -1;
+    for (int i=0; i<size$v; i++)
+      if (@range[i] && plus$v[i]>=@thres && (@lmax==-1 || plus$v[@lmax]<plus$v[i]) && HrCheckMax(plus$v, i, $LookStep))
+        @lmax = i;
+    if (@lmax != -1)
+    {
+      for (int i=@lmax-$LookStep; i<=@lmax+$LookStep; i++)
+        if (i>=0 && i<size$v) @range[i] = false;
+      if (@min == -1 || @min<@lmax) @min = @lmax;
+      if (@max == -1 || @max>@lmax) @max = @lmax;
+    }
+    @n++;
+  } while (@lmax!=-1 && @n<$MaxPeaks);
+    
+  <?ApproxCoef2>
+  // поиск вторичных экстремумов
+  if ($ApproxCoef>0 && @min!=-1)
+  for (int i=0; i<size$v; i++)
+    if (plus$v[i]>$Threshold*(1.0-$ApproxCoef) && HrCheckMax(plus$v, i, $LookStep))
+    {
+      @max = MathMin(i, @max);
+      @min = MathMax(i, @min);
+    }
+  </>
+  
+  <?Draw>
+  if (@min!=-1)
+  {
+    string @name = "$name"+"max";
+    if (ObjectFind(@name)<0)
+    {
+      ObjectCreate(@name, OBJ_HLINE, 0, 0, 0);
+      ObjectSet(@name, OBJPROP_COLOR, $Color);
+    }
+    ObjectSet(@name, OBJPROP_PRICE1, HrPrice(start$v, @min));
+    @name = "$name"+"min";
+    if (ObjectFind(@name)<0)
+    {
+      ObjectCreate(@name, OBJ_HLINE, 0, 0, 0);
+      ObjectSet(@name, OBJPROP_COLOR, $Color);
+    }
+    ObjectSet(@name, OBJPROP_PRICE1, HrPrice(start$v, @max));
+  }
+  else
+  {
+    ObjectDelete("$name"+"max");
+    ObjectDelete("$name"+"min");
+  }
+  </>
+  
+  if (@min!=-1)
+  {
+    int @middle = (@min+@max)/2;
+    
+    // определение ширины сверху
+    int @wup = @max-1;
+    int lmin=-1;
+    while (@wup>=0 && plus$v[@wup]>=$MinVol)
+    {
+      if (lmin==-1 || plus$v[@wup]<plus$v[lmin]) lmin = @wup;
+      else
+        if (plus$v[@wup]/plus$v[lmin]>$MaxDelta)
+        {
+          @wup = lmin;
+          break;
+        }
+      @wup--;
+    }
+  
+    // определение ширины снизу
+    int @wdown = @min+1;
+    lmin = -1;
+    while (@wdown<size$v && plus$v[@wdown]>=$MinVol)
+    {
+      if (lmin==-1 || plus$v[@wdown]<plus$v[lmin]) lmin = @wdown;
+      else
+        if (plus$v[@wdown]/plus$v[lmin]>$MaxDelta)
+        {
+          @wdown = lmin;
+          break;
+        }
+      @wdown++;
+    }
+    
+    <?debug>Print("max: ",@max," min: ",@min," wup: ",@wup," wdown: ",@wdown);</>
+  
+    // общая ширина
+    int @width = MathMax(@wdown-@middle, @middle-@wup);
+    //int @width = (@wdown-@wup)/2;
+    @width = MathMax(@width, $MinWidth/2);
+    
+    // рассчёт уровней
+    @ChanHigh = HrPrice(start$v, @middle-@width);
+    @ChanLow = HrPrice(start$v, @middle+@width);
+    
+$check.lines
+  }
+
+<deinit>
+  <?Draw>
+  ObjectDelete("$name"+"max");
+  ObjectDelete("$name"+"min");
+  </>
+  
+[Help]

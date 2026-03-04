@@ -1,0 +1,44 @@
+[Main]
+Name=ReadRect
+Title=—читать рамку
+Group=”ровни
+
+[Property]
+Prefix=s
+
+[Output]
+lvl=n
+
+[Code]
+<gvars>
+double up$name, down$name;
+
+<lines>
+  up$name = EMPTY_VALUE;
+  down$name = EMPTY_VALUE;
+  string @last_name = "";
+  datetime @max_time = 0;
+  for (int i=ObjectsTotal()-1; i; i--)
+  {
+    string name = ObjectName(i);
+    if (StringFind(name, "$Prefix")==0)
+    {
+      datetime t1 = ObjectGet(name, OBJPROP_TIME1);
+      datetime t2 = ObjectGet(name, OBJPROP_TIME2);
+      t2 = MathMax(t1, t2);
+      if (t2>@max_time)
+      {
+        @last_name = name;
+        @max_time = t2;
+      }
+    }
+  }
+  
+  if (@last_name!="")
+  {
+    double p1 = ObjectGet(@last_name, OBJPROP_PRICE1);
+    double p2 = ObjectGet(@last_name, OBJPROP_PRICE2);
+    up$name = MathMax(p1,p2);
+    down$name = MathMin(p1,p2);
+    <?debug>Print("$name:", @last_name, " up ", up$name, " down ", down$name);</>
+  }

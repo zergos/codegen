@@ -1,0 +1,125 @@
+[Main]
+Name=TASigSar
+Title=EA Сигнал ЗигЗага по параболику
+Group=ТА
+
+[Property]
+SarStep=n,0.02
+SarMax=n,0.2
+
+[Input]
+high=row
+low=row
+
+[Output]
+up=row,@up
+down=row,@down
+sar=row,@osar
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @up[];
+double @down[];
+<?sar>double @osar[];</>
+
+<lines>
+  ArrayInit(@up, $Size);
+  CheckShift(@up);
+  ArrayInit(@down, $Size);
+  CheckShift(@down);
+  <?sar>
+  ArrayInit(@osar, $Size);
+  CheckShift(@osar);
+  </>
+  
+  static int @mode = 0;
+  static int @last = 0;
+  static int @peak = 0;
+  static double @accel = 0;
+  static double @sar;
+  
+  if ($Start==0)
+  {
+    @mode = 0;
+    ArrayInitialize(@up, 0);
+    ArrayInitialize(@down, 0);
+    <?sar>ArrayInitialize(@osar, 0);</>
+  }
+  else if (Shifted)
+  {
+    @last--;
+    @peak--;
+  }
+  
+  for (int i=MathMax(1,$Start); i<$Size-1; i++)
+  {
+    switch(@mode)
+    {
+      case 0:
+        if ($high[i]>$high[i-1])
+        {
+          @mode = 1;
+          @last = i-1;
+          @peak = i-1;
+          @down[i-1] = $low[i-1];
+          @accel = $SarStep;
+          @sar = $low[i-1];
+        }
+        else if ($low[i]<$low[i-1])
+        {
+          @mode = -1;
+          @last = i-1;
+          @peak = i-1;
+          @up[i-1] = $high[i-1];
+          @accel = $SarStep;
+          @sar = $high[i-1];
+        }
+        break;
+        
+      case 1:
+        @sar += @accel*($high[@peak] - @sar);
+        
+        if ($high[i]>$high[@peak])
+        {
+          @peak = i;
+          if (@accel<$SarMax) @accel = MathMin(@accel+$SarStep, $SarMax);
+        }
+        
+        if (@sar>$low[i])
+        {
+          @mode = -1;
+          @sar = $high[@peak];
+          @accel = $SarStep;
+          @up[i] = i-@peak+1;
+          @peak = i;					
+        }
+        break;
+        
+      case -1:
+        @sar -= @accel*(@sar - $low[@peak]);
+        
+        if ($low[i]<$low[@peak])
+        {
+          @peak = i;
+          if (@accel<$SarMax) @accel = MathMin(@accel+$SarStep, $SarMax);
+        }
+        
+        if (@sar<$high[i])
+        {
+          @mode = 1;
+          @sar = $low[@peak];
+          @accel = $SarStep;
+          @down[i] = i-@peak+1;
+          @peak = i;
+        }
+    }
+    <?sar>@osar[i] = @sar;</>
+  }
+  
+[Help]
+Генерирует сигнал зигзага по параболику.
+

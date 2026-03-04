@@ -1,0 +1,35 @@
+[Main]
+Name=MartinLevel
+Title=Мартин. уровень
+Group=Сделки
+
+[Property]
+Comment=s,,комментарий к сделке
+Condition=s,,условие для открытия
+
+[Input]
+lvl=n
+back=n
+sl=n
+
+[Code]
+<mlines>
+  <?Condition>if ($Condition) {</>
+  if (trend>0)
+  {
+    lots = ceillot((mlevel-down$back)*mlots/(down$back-down$lvl));
+    //OrderDeferred(down$lvl, DT_LIMIT, lots, 0.0, down$back, 0, HUB_INITIAL, false);
+    mlevel = (mlevel*mlots+down$lvl*lots)/(lots+mlots);
+    OrderDeferred(down$lvl, DT_LIMIT, lots, <?sl>down$sl<~>0.0</>, mlevel, 0, HUB_INITIAL, false<?Comment>, $Comment</>);
+  }
+  else
+  {
+    lots = ceillot((mlevel-up$back)*mlots/(up$back-up$lvl));
+    //OrderDeferred(up$lvl, DT_LIMIT, lots, 0.0, up$back, 0, HUB_INITIAL, false);
+    mlevel = (mlevel*mlots+up$lvl*lots)/(lots+mlots);
+    OrderDeferred(up$lvl, DT_LIMIT, lots, <?sl>up$sl<~>0.0</>, mlevel, 0, HUB_INITIAL, false<?Comment>, $Comment</>);
+  }
+  mlots += lots;
+  <?Condition>}</>
+
+[Help]

@@ -1,0 +1,64 @@
+[Main]
+Choice
+Name=OrderSafe
+Title=Сейф
+Group=Сделки
+
+[Property]
+Mode=n,0,0 - активирующий ордер\, 1 - последний
+PartialCoef=n,0.5,коэффициент закрытия
+SL=n
+TP=n
+
+[Input]
+sl=n
+tp=n
+
+[Output]
+Partial=c
+Close=c
+
+[Code]
+<lines>
+  <?Mode=0>
+  int @i = initial;
+  </>
+  <?Mode=1>
+  int @i = last_order;
+  </>
+  <?Mode=2>
+  for (int @i=0; @i<ArraySize(hub); @i++)
+    if (hub[@i].cmd == OP_BUY || hub[@i].cmd == OP_SELL)
+    {
+  </>
+  OrderForceClose(@i, hub[@i].lots*$PartialCoef);
+  if (hub[@i].state != HUB_CLOSED)
+  {
+  <?sl>
+  if (hub[@i].cmd == OP_BUY) OrderSetSL(@i, up$sl);
+  else if (hub[@i].cmd == OP_SELL) OrderSetSL(@i, down$sl);
+  </>
+  <?SL>
+  OrderSetSL(@i, $SL);
+  </>
+  <?tp>
+  if (hub[@i].cmd == OP_BUY) OrderSetTP(@i, up$tp);
+  else if (hub[@i].cmd == OP_SELL) OrderSetTP(@i, down$tp);
+  </>
+  <?TP>
+  OrderSetTP(@i, $TP);
+  </>
+$Partial.lines
+  }
+<?Close>
+  else
+  {
+$Close.lines
+  }
+</>
+  <?Mode=2>
+    }
+  </>
+
+[Help]
+Частичное закрытие ордера и выставление новых уровней SL/TP.

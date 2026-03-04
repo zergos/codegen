@@ -1,0 +1,49 @@
+[Main]
+Choice
+Name=SigCheck
+Title=Проверка сигнала
+Group=Фильтры
+
+[Property]
+Index=n,0
+Cmp=siglevel,>,вариант сравнения с уровнем
+Level=n,0
+UseAbs=t,,проверять сигнал по модулю
+
+[Input]
+sig=row
+
+[InputPars]
+Size
+
+[Output]
+Check=c
+False=c
+
+[Code]
+<lines>
+  <?Index>
+  if ($sig[$Size-1-$Index]!=EMPTY_VALUE && <?UseAbs>MathAbs</>($sig[$Size-1-$Index])$Cmp$Level)
+  <~>
+  if ($sig!=EMPTY_VALUE && <?UseAbs>MathAbs</>($sig)$Cmp$Level)
+  </>
+  {
+  <?debug>
+    <?Index>
+  Print("$name worked: ",$sig[$Size-1-$Index],"$Cmp",$Level);
+    <~>
+  Print("$name worked: ",$sig,"$Cmp",$Level);
+    </>
+  </>
+$Check.lines
+  }
+  <?False>
+  else
+  {
+$False.lines
+  }
+  </>
+  
+[Help]
+Проверка наличие сигнала во входном массиве с индексом **Index** от конца.\\
+Если не указан индекс - **sig** проверяется как число.

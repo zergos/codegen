@@ -1,0 +1,47 @@
+[Main]
+Name=SumPeriod
+Title=Суммирование по периодам
+Group=Арифметика
+
+[Property]
+THPeriod=period,PERIOD_D1,период старшего тайм-фрейма
+
+[Input]
+in=row
+TL=row
+TH=row,,d
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  int @idx = 0;
+  for (int i=MathMax($Start, 1); i<$Size; i++)
+  {
+    if ($TL[@idx]>$TH[i]) continue;
+    while (@idx<ArraySize($TL) && (i<$Size-1 && $TL[@idx]<$TH[i] || i==$Size-1 && $TL[@idx]<$TH[i-1]+$THPeriod*60)) @idx++;
+    if (@idx==ArraySize($TL)) break;
+    double sum = 0;
+    int k = 0;
+    while (@idx+k<ArraySize($TL) && (i<$Size-1 && $TL[@idx+k]<$TH[i+1] || i==$Size-1 && $TL[@idx+k]<$TH[i]))
+    {
+      sum += $in[@idx+k];
+      k++;
+    }
+    $out[i] = sum;
+  }
+  
+[Help]
+Складывает значения младшего периода **TL** по старшему **TH**. Ведущим является старший.
+

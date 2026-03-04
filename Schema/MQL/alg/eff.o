@@ -1,0 +1,44 @@
+[Main]
+Title=Эффективность (Кауфман)
+Group=Алгоритмы
+Name=EffKa
+
+[Property]
+Period=n,15,период вычисления индикатора
+
+[Input]
+close=row
+high=row
+low=row
+
+[Output]
+eff=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+input int @EffPeriod = $Period;
+double $eff[];
+
+<lines>
+  ArrayInit($eff, $Size);
+
+  CheckShift($eff);
+  for (int @i=MathMax($Start, @EffPeriod +1); @i<$Size; @i++)
+  {
+    double @max = $high[ArrayMaximum($high, @EffPeriod, @i-@EffPeriod)];
+    double @min = $low[ArrayMinimum($low, @EffPeriod, @i-@EffPeriod)];
+    double @range = @max-@min;
+    double @dx2 = 1.0/@EffPeriod/@EffPeriod;
+    double @L = 0;
+    for (int @k=0; @k<@EffPeriod; @k++)
+      @L += MathSqrt(@dx2+MathSqr(($close[@i-@k]-$close[@i-@k-1])/@range));
+    $eff[@i] = 1+(MathLog(@L)+MathLog(2))/MathLog(2*@EffPeriod);
+  }
+
+[Help]
+Показательно эффективности (наличия тенденции) по книге Кауфмана.
+

@@ -1,0 +1,35 @@
+[Main]
+Name=FirstDOW
+Title=ѕервый день недели
+Group=‘ильтры
+
+[Property]
+DOW=n,5,день недели (5 - п€тница)
+
+[Input]
+time=row
+
+[Output]
+sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $sig[];
+
+<lines>
+  ArrayInit($sig, $Size);
+  CheckShift($sig);
+  
+  for (int @i=$Start; @i<$Size; @i++)
+    if (TimeDay($time[@i])<=7 && TimeDayOfWeek($time[@i])==$DOW)
+      $sig[@i] = 1;
+    else
+      $sig[@i] = 0;
+
+[Help]
+√енерирует сигнал весь день в первый день недели мес€ца.
+

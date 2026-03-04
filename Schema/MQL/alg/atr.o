@@ -1,0 +1,69 @@
+[Main]
+Name=ATR
+Title=ATR
+Group=јлгоритмы (тех)
+
+[Property]
+AtrPeriod=n,14,период скольз€щего среднего
+
+[Input]
+close=row
+high=row
+low=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+double @ExtTRBuffer[];
+
+<lines>
+  ArrayInit($out, $Size);
+  ArrayInit(@ExtTRBuffer, $Size);
+
+  CheckShift($out);
+  CheckShift(@ExtTRBuffer);
+  
+  int @limit;
+  if ($Start==0)
+  {
+    @ExtTRBuffer[0]=0.0;
+    $out[0]=0.0;
+    //--- filling out the array of True Range values for each period
+    for(int i=1; i<=$AtrPeriod; i++)
+      @ExtTRBuffer[i]=MathMax($high[i],$close[i-1])-MathMin($low[i],$close[i-1]);
+    //--- first AtrPeriod values of the indicator are not calculated
+    double firstValue=0.0;
+    for(int i=1; i<=$AtrPeriod; i++)
+    {
+      $out[i]=0.0;
+      firstValue+=@ExtTRBuffer[i];
+    }
+    //--- calculating the first value of the indicator
+    firstValue/=$AtrPeriod;
+    $out[$AtrPeriod]=firstValue;
+    @limit=$AtrPeriod+1;
+  }
+  else
+    @limit=$Start;
+  //--- the main loop of calculations
+  for(int i=@limit; i<$Size; i++)
+  {
+    @ExtTRBuffer[i]=MathMax($high[i],$close[i-1])-MathMin($low[i],$close[i-1]);
+    $out[i]=$out[i-1]+(@ExtTRBuffer[i]-@ExtTRBuffer[i-$AtrPeriod])/$AtrPeriod;
+  }
+  
+[Help]
+**Average True Range**
+»стинный диапазон (True Range) есть наибольша€ из следующих трех величин:
+  - разность между текущими максимумом и минимумом;
+  - разность между предыдущей ценой закрыти€ и текущим максимумом;
+  - разность между предыдущей ценой закрыти€ и текущим минимумом.
+
+»ндикатор **—реднего »стинного ƒиапазона** (Average True Range, ATR) представл€ет собой скольз€щее среднее значений истинного диапазона.

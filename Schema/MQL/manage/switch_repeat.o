@@ -1,0 +1,22 @@
+[Main]
+Name=SwitchRepeat
+Title=Уст. повтор автомата
+Group=Управление
+
+[Input]
+Mode=n
+
+[InputPars]
+Switch
+
+[Code]
+<lines>
+  <?Mode>
+  repeat$Mode = true;
+  <~>
+  repeat$Switch = true;
+  </>
+
+[Help]
+Устанавливает автомат в режим повторного срабатывания.
+  

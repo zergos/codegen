@@ -1,0 +1,41 @@
+[Main]
+Name=ChanTouch
+Title=Канал касания
+Group=Алгоритмы
+
+[Property]
+TailCheck=n,20,свечей для проверки хвоста
+HeadCheck=n,10,свечей для проверки головы
+MaxTilt=f,100*Point,максимальный коэффициент наклона канала
+
+[Input]
+high=row
+low=row
+
+[Code]
+<procs>
+bool @checkCrossUp(int p)
+{
+  for (int i=0; i<$HeadCheck; i++)
+  
+}
+
+<gvars>
+int @pos;
+
+<lines>
+  if ($Start==0)
+  {
+    @pos = $TailCheck;
+  }
+
+  // проба сверху
+  
+
+[InputPars]
+Size
+Start
+
+[Help]
+Канал строится по двум точкам касания с одной стороны и по максимально удалённой точке с другой стороны.
+

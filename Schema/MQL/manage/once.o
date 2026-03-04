@@ -1,0 +1,36 @@
+[Main]
+Name=Once
+Title=Одноразовый проход
+Group=Управление
+Size=4
+
+[Property]
+OnceInit=t,1,одноразовые инициация/деинициация
+SaveChanged=t,,сохранять состояние при изменении
+
+[Code]
+<gvars>
+bool @passed;
+
+<init>
+  @passed = false;
+
+<lines>
+  if (!@passed)
+  {
+<?OnceInit>
+$CTRL.init
+</>
+$CTRL.lines
+<?OnceInit>
+$CTRL.deinit
+</>
+    @passed = true;
+    <?SaveChanged>syncSave();</>
+  }
+
+<sync>
+  sync("$name", @passed);
+  
+[Help]
+Одноразовое выполнение последующей цепи программы.

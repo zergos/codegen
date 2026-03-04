@@ -1,0 +1,25 @@
+[Main]
+#c - caseless, m - multi line, s - single line for dot, u - ungreedy
+Extension=pas
+
+[Colors]
+Default=d,0
+Comments=c,$808080
+Strings=s,$A000A0
+Keywords=k,$A00000
+Numbers=n,$008000
+Extra=x,$8080FF
+Symbols=z,$004080
+
+[Sections]
+Code="(.*)",ms
+
+[Regex.Code]
+CommentLine="(\/\/.*)",c
+Extra="({\$.+})",x,u
+CommentClassic="({.*})",c,msu
+CommentClassic2="(\(\*.*\*\))",c,msu
+Keywords="\b(absolute|abstract|alias|and|array|as|asm|assembler|begin|break|case|cdecl|class|const|constructor|continue|default|destructor|dispose|div|do|downto|else|end|except|exit|export|exports|external|false|far|far16|file|finalise|finalization|finally|for|forward|fpccall|function|goto|if|implementation|in|inherited|initialization|initialize|inline|interface|is|label|library|mod|near|new|nil|not|object|of|on|operator|or|overload|override|packed|pascal|popstack|private|procedure|program|property|protected|public|published|raise|read|record|register|repeat|safecall|saveregisters|self|set|shl|shr|softfloat|stdcall|stored|string|then|this|threadvar|to|true|try|type|unit|until|uses|var|while|virtual|with|write|xor)\b",k,c
+Strings="('.*')",s,u
+Numbers="\W(\d+)",n
+Symbols="([][+*/^$@&=,.;:<>()-])",z

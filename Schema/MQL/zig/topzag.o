@@ -1,0 +1,143 @@
+[Main]
+Name=TopZag
+Title=¬ерхний заг
+Group=јлгоритмы
+
+[Property]
+Backstep=n,3,рассто€ние между вершинами
+Deviation=n,15,об€зательна€ глубина склона в пунктах
+Tail=n,15,максимальное врем€ ожидани€ склона
+Proposal=n,1,максимальна€ просадка
+GenSignal=t,,сформировать сигнальный буфер
+
+[Input]
+high=row
+low=row
+
+[Output]
+zhigh=row,@zh
+zlow=row,@zl
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?high>double @zh[];</>
+<?low>double @zl[];</>
+double @t[];
+
+extern int @zBackstep = $Backstep;
+extern int @zDeviation = $Deviation;
+extern int @zTail = $Tail;
+extern int @zProposal = $Proposal;
+
+<lines>
+  <?high>ArrayInit(@zh, $Size);</>
+  <?low>ArrayInit(@zl, $Size);</>
+  ArrayInit(@t, $Size);
+
+  double @cur, @curmin, @curmax;
+  bool @good;
+  int @pos, @limit, @n, @best;
+  double @target;
+<?high>
+  ArrayInitialize(@zh, 0);
+  ArrayCopy(@t, $high);
+
+  @target = 0;//@t[ArrayMinimum(@t)];
+
+  for(@pos = ArrayMaximum(@t); @t[@pos]>@target; @pos = ArrayMaximum(@t))
+  {
+    @cur = @t[@pos];
+
+    // проверка точки
+    @limit = MathMin(@pos+@zTail, $Size) - @pos;
+    @curmin = $low[@pos];
+    @good = false;
+    @best = @pos;
+    for (@n=@pos+1; @n<$Size; @n++)
+    {
+      if (@curmin > $low[@n])
+      {
+        @curmin = $low[@n];
+	@best = @n;
+      }
+      if ($low[@n]-@curmin > @zProposal*Point || $high[@n]>=@cur) break;
+      if (@cur-@curmin >= @zDeviation*Point) good = true;
+    }
+
+    if (@good && @best-@pos<@limit && @best-@pos>=@zBackstep)
+    {
+      // точка подходит
+<?!GenSignal>
+      @zh[@pos] = @cur;
+      @zh[@best] = $low[@best];
+<~>
+      // запись сигнала
+      for (@n=@pos; @n<=@best; @n++)
+        if ($high[@n] - $low[@best] >= @zDeviation*Point) @zh[@n] = 1; // можно открывать
+      @zh[@best] = -1; // можно закрывать
+</>
+      // отсечение окрестности
+      for (@n=@pos-@zBackstep; @n<=@best; @n++)
+        @t[@n] = @target;
+    }
+    else
+      @t[@pos] = @target;
+  }
+</>
+<?low>
+  ArrayInitialize(@zl, 0);
+  ArrayCopy(@t, $low);
+
+  @target = @t[ArrayMaximum(@t)];
+
+  for(@pos = ArrayMinimum(@t); @t[@pos]<@target; @pos = ArrayMinimum(@t))
+  {
+    @cur = @t[@pos];
+
+    // проверка точки
+    @limit = MathMin(@pos+@zTail, $Size) - @pos;
+    @curmax = $high[@pos];
+    @good = false;
+    @best = @pos;
+    for (@n=@pos+1; @n<$Size; @n++)
+    {
+      if (@curmax < $high[@n])
+      {
+        @curmax = $high[@n];
+	@best = @n;
+      }
+      if (@curmax-$high[@n] > @zProposal*Point || $low[@n]<=@cur) break;
+      if (@curmax-@cur >= @zDeviation*Point) good = true;
+    }
+
+    if (@good && @best-@pos<@limit && @best-@pos>=@zBackstep)
+    {
+      // точка подходит
+<?!GenSignal>
+      @zl[@pos] = @cur;
+      @zl[@best] = $high[@best];
+<~>
+      // запись сигнала
+      for (@n=@pos; @n<=@best; @n++)
+        if ($high[@best] - $low[@n] >= @zDeviation*Point) @zl[@n] = 1; // можно открывать
+      @zl[@best] = -1; // можно закрывать
+</>
+      // отсечение окрестности
+      for (@n=@pos-@zBackstep; @n<=@best; @n++)
+        @t[@n] = @target;
+    }
+    else
+      @t[@pos] = @target;
+  }
+</>
+
+[Help]
+—троит два «иг«ага: по анализу спусков и анализу подъЄмов.\\
+ѕодбирает наилучшие услови€ дл€ открыти€ и закрыти€ позиций, исход€ из указанных условий.\\
+ѕри формировании сигнального буфера
+  * все точки, удобные дл€ открыти€, устанавливаютс€ в +1
+  * точки, лучшие дл€ закрыти€, устанавливаютс€ в -1

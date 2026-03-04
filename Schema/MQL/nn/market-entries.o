@@ -1,0 +1,111 @@
+[Main]
+Name=MarketEntries
+Title=Рыночные входы
+Group=Нейросети
+
+[Property]
+Mode=n,0,режим поиска (0 - простой, 1 - трейлинг, 2 - мартин)
+Expire=n,120,макс. количество минутных баров для получения прибыли
+TP=n,60,фиксированный уровень профита
+SL=n,20,фиксированный уровень убытка
+Spread=n,10,фиксированный спред
+
+[Input]
+time=row
+
+[Output]
+sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $sig[];
+
+<procs>
+bool @check_win(int pos, bool buy)
+{
+  int shift = iBarShift(NULL, 1, $time[pos]);
+  <?Expire>int index = 0;</>
+  double price = iOpen(NULL, 1, shift);
+  <?Mode=1>
+  double cur = price;
+  </>
+  while (shift>0<?Expire> && index<$Expire</>)
+  {
+    <?Mode=0>
+    if (buy)
+    {
+      if (iHigh(NULL, 1, shift)-price>=$TP*Point) return true;
+      else if (price-iLow(NULL, 1, shift)>=$SL*Point) return false;
+    }
+    else
+    {
+      if (price-iLow(NULL, 1, shift)>=$TP*Point) return true;
+      else if (iHigh(NULL, 1, shift)-price>=$SL*Point) return false;
+    }
+    </>
+    <?Mode=1>
+    if (buy)
+    {
+      if (iClose(NULL, 1, shift)>iOpen(NULL, 1, shift))
+      {
+        if (cur-iLow(NULL, 1, shift)>=$SL*Point)
+          return (cur-price>=($TP+$SL)*Point);
+      }
+      cur = MathMax(cur, iHigh(NULL, 1, shift));
+      if (iClose(NULL, 1, shift)<iOpen(NULL, 1, shift))
+      {
+        if (cur-iLow(NULL, 1, shift)>=$SL*Point)
+          return (cur-price>=($TP+$SL)*Point);
+      }
+      else
+      {
+        if (cur-iClose(NULL, 1, shift)>=$SL*Point)
+          return (cur-price>=($TP+$SL)*Point);
+      }
+    }
+    else
+    {
+      if (iClose(NULL, 1, shift)<iOpen(NULL, 1, shift))
+      {
+        if (iHigh(NULL, 1, shift)-cur>=$SL*Point)
+          return (price-cur>=($TP+$SL)*Point);
+      }
+      cur = MathMin(cur, iLow(NULL, 1, shift));
+      if (iClose(NULL, 1, shift)>iOpen(NULL, 1, shift))
+      {
+        if (iHigh(NULL, 1, shift)-cur>=$SL*Point)
+          return (price-cur>=($TP+$SL)*Point);
+      }
+      else
+      {
+        if (iClose(NULL, 1, shift)-cur>=$SL*Point)
+          return (price-cur>=($TP+$SL)*Point);
+      }
+    }
+    </>
+    shift--;
+    <?Expire>index++;</>
+  }
+  return false;
+}
+
+<lines>
+  ArrayInit($sig, $Size);
+  CheckShift($sig);
+
+  if ($Start==0)
+  {
+    ArrayInit($sig, $Size);
+    ArrayInitialize($sig, 0);
+    for (int i=0; i<$Size-1; i++)
+      if (@check_win(i+1, true)) $sig[i] = 1;
+      else if (@check_win(i+1, false)) $sig[i] = -1;
+  }
+  
+[Help]
+Выявляет точки входа, подходящие для получения достаточной прибыли.\\
+Анализ происходит на минутках.

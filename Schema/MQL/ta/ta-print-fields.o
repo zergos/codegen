@@ -1,0 +1,123 @@
+[Main]
+Name=TAPrintFields
+Title=EA Вывод состояния полей
+Group=ТА
+
+[Property]
+PrintOrders=t,1,информировать о сделках
+UseGraphics=t,,рисовать с помощью графики
+Title=s,Активные поля,заголовок
+PosX=n,20,сдвиг от левой границы
+PosY=n,20,сдвиг от верхней границы
+StepY=n,16,ширина линий
+MaxLines=n,20,резерв количества строк для вывода
+Font=s,Times New Roman,шрифт\, например Arial
+FontSize=n,,размер шрифта
+Angle=n,,угол наклона текста
+Anchor=text_anchor,ANCHOR_LEFT_UPPER,способ привязки
+Corner=n,0,угол привязки
+#X=n
+#Y=n
+Color=color,Green
+Back=n,1,объект на заднем фоне
+
+[InputPars]
+Threads
+
+[Code]
+<gvars>
+<?UseGraphics>
+int @cur_line;
+<~>
+string @res;
+</>
+
+<procs>
+void @PrintLine(int indent, string s, color clr)
+{
+  <?UseGraphics>
+  string @name = "$name"+@cur_line;
+  ObjectSetString(0, @name, OBJPROP_TEXT, s);
+  ObjectSet(@name, OBJPROP_XDISTANCE, $PosX+indent);
+  ObjectSet(@name, OBJPROP_COLOR, clr);
+  @cur_line++;
+  <~>
+  if (@res!="") @res += "\n";
+  @res += s;
+  </>
+}
+
+bool @checkField(TABaseField *f)
+{
+  if (f.HasRef(f.M)) return true;
+  
+  for (int i=0; i<ArraySize(f.sub); i++)
+  if (f.HasRef(f.sub[i]))
+  {
+    if (@checkField(f.sub[i])) return true;
+  }
+  
+  return false;
+}
+
+void @printField(TABaseField *f, int indent, int k)
+{
+  if (!@checkField(f)) return;
+
+  @PrintLine(indent,
+    StringFormat("%s%d - %02d/%02d %d:%02d%s", f.stop?"!":"#", f.id, TimeDay(f.Q.T[f.B[k]]), TimeMonth(f.Q.T[f.B[k]]), TimeHour(f.Q.T[f.B[k]]), TimeMinute(f.Q.T[f.B[k]]),
+      k==4 && f.HasRef(f.M)?
+        StringFormat(" %s%s%d(%d)%s%s%s%s[%s]", f.M.active?"M":(f.M.genesis?"g":"m"), f.M.stop?"!":"", f.M.id, f.M.mRef, f.M.isH?"H":"", f.M.hypOut&&!f.M.is6?"*":"", f.M.is6?"6":"", f.M.trOut?"v":"", taStateNames[((TAModel*)f.M).state]):
+        ""),
+      f.trend==1?Yellow:Thistle);
+  for (int i=0; i<ArraySize(f.sub); i++)
+  if (f.HasRef(f.sub[i]))
+  {
+    @printField(f.sub[i], indent+20, k+1);
+  }
+}
+
+<init>
+  <?UseGraphics>
+  // reserve lines
+  for (int @i=0; @i<$MaxLines; @i++)
+  {
+    string @name = "$name"+@i;
+    ObjectCreate(@name, OBJ_LABEL, 0, TimeCurrent(), Bid);
+    <?Font>ObjectSetString(0, @name, OBJPROP_FONT, "$Font");</>
+    <?FontSize>ObjectSet(@name, OBJPROP_FONTSIZE, $FontSize);</>
+    <?Angle>ObjectSet(@name, OBJPROP_ANGLE, $Angle);</>
+    <?Corner>ObjectSet(@name, OBJPROP_CORNER, $Corner);</>
+    <?Anchor>ObjectSet(@name, OBJPROP_ANCHOR, $Anchor);</>
+    <?Color>ObjectSet(@name, OBJPROP_COLOR, $Color);</>
+    <?Back>ObjectSet(@name, OBJPROP_BACK, $Back);</>
+    ObjectSet(@name, OBJPROP_XDISTANCE, $PosX);
+    ObjectSet(@name, OBJPROP_YDISTANCE, $PosY+@i*$StepY);
+    ObjectSetString(0, @name, OBJPROP_TEXT, "");
+  }
+  </>
+
+<lines>
+  <?UseGraphics>
+  @cur_line = 0;
+  <~>
+  @res = "";
+  </>
+  <?Title>@PrintLine(0, "$Title", $Color);</>
+  ForEach(TABaseField, cur)
+    @printField(cur, 0, 1);
+  <?UseGraphics>
+  for (int @i=@cur_line+1; @i<$MaxLines; @i++)
+    PrintLine(0, "", 0);
+  <~>
+  Comment(@res);
+  </>
+
+<deinit>
+  <?UseGraphics>
+  for (int @i=0; @i<$MaxLines; @i++)
+    ObjectDelete("$name"+@i);
+  </>
+    
+[Help]
+Вывод информации об активности потоков хаба.

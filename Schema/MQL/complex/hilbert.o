@@ -1,0 +1,29 @@
+[Main]
+Name=Hilbert
+Group=Преобразования
+Title=Гильбертово
+
+[Input]
+cin=row
+
+[Output]
+cout=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double $cout[];
+
+<lines>
+  ArrayInit($cout, $Size);
+  ArrayInitialize($cout, 0);
+
+  for (int @n=$Size/2; @n<$Size; @n++)
+    $cout[@n] = $cin[@n]*2;
+
+[Help]
+Оставляет только мнимые коэффициенты разложения Фурье, причём увеличенные в 2 раза.\\
+Соотвественно, на вход должно подаваться разложение Фурье. См. БПФ.
+

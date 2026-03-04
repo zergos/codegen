@@ -1,0 +1,70 @@
+[Main]
+Usable
+Name=InetUnit
+Title=Модуль для интернета
+Group=Общие
+
+[Uses]
+common\stdlib
+
+[Code]
+<top>
+#include "inet.mqh"
+
+<attach>
+=inet.mqh
+#import "wininet.dll"
+   int InternetOpenW(string a0, int a1, string a2, string a3, int a4);
+   int InternetOpenUrlW(int a0, string a1, string a2, int a3, int a4, int a5);
+   int InternetReadFile(int a0, char &a1[], int a2, int& a3[]);
+   int InternetCloseHandle(int a0);
+#import
+
+int denied_chars[] = {32, 33, 42, 39, 40, 41, 59, 58, 64, 38, 61, 43, 36, 47, 63, 35, 91, 93};
+
+bool check_denied(int c)
+{
+  for (int i = ArraySize(denied_chars) - 1; i >= 0; i--)
+    if (c == denied_chars[i]) return true;
+  return false;
+}
+
+string url_encode(string s)
+{
+  string res = "";
+  for (int i = 0; i < StringLen(s); i++)
+  {
+    <?mql4>
+    int c = StringGetChar(s, i);
+    if (check_denied(c)) res = StringConcatenate(res, "%", StringSubstr(IntegerToHexString(c), 6, 2));
+    else res = StringConcatenate(res, StringSubstr(s, i, 1));
+    <~>
+    int c = s[i];
+    if (check_denied(c)) StringConcatenate(res, res, "%", StringSubstr(IntegerToHexString(c), 6, 2));
+    else StringConcatenate(res, res, StringSubstr(s, i, 1));
+    </>
+  }
+  return (res);
+}
+
+bool load_url(string url, string &res, string headers="")
+{
+  int hi = InternetOpenW("Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)", 1, "", "", 0);
+  int data = InternetOpenUrlW(hi, url, headers, 0, 0x84000100, 0);
+  if (data == 0) return false;
+  int size[] = {1};
+  static uchar buf[16384];
+  while (true)
+  {
+    if (InternetReadFile(data, buf, 16384, size) <= 0 || size[0] == 0) break;
+    <?mql4>
+    res = StringConcatenate(res, CharArrayToString(buf, 0, size[0]));
+    <~>
+    StringConcatenate(res, res, CharArrayToString(buf, 0, size[0]));
+    </>
+  }
+  
+  InternetCloseHandle(data);
+  InternetCloseHandle(hi);
+  return true;
+}

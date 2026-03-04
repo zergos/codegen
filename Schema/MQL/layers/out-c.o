@@ -1,0 +1,12 @@
+[Main]
+BlockOut
+Name=OC
+Title=Выход (управление)
+Group=Слои
+Size=3
+
+[Input]
+CTRL=c
+
+[Help]
+Служебный блок для построения слоя.

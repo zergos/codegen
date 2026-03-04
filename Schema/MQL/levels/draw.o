@@ -1,0 +1,67 @@
+[Main]
+Name=LevelDraw
+Title=Отображение
+Group=Уровни
+
+[Property]
+Index=n,0,начальный номер временного бара для рисования (иначе рисуется от текущего)
+Color=color,Olive
+Length=n,5,длина уровня в барах
+LeaveLines=t,1,оставлять линии при деинициализации
+
+[Input]
+lvl=n
+time=row
+
+[InputPars]
+Size
+
+[Code]
+<lines>
+  <?Index>
+  datetime @t = <?time>$time[$Size-1-$Index]<~>Time[$Index]</>;
+  <~>
+  datetime @t = <?time>$time[$Size-1]<~>Time[0]</>;
+  </>
+  string @name = "up$name"<?LeaveLines>+CurTime()</>;
+  <?!Length>
+  if (ObjectFind(@name)<0) ObjectCreate(@name, OBJ_HLINE, 0, 0, up$lvl);
+  else ObjectSet(@name, OBJPROP_PRICE1, up$lvl);
+  <~>
+  if (ObjectFind(@name)<0) ObjectCreate(@name, OBJ_TREND, 0, @t, up$lvl, @t+PeriodSeconds()*$Length, up$lvl);
+  else
+  {
+    ObjectSet(@name, OBJPROP_PRICE1, up$lvl);
+    ObjectSet(@name, OBJPROP_PRICE2, up$lvl);
+    ObjectSet(@name, OBJPROP_TIME1, @t);
+    ObjectSet(@name, OBJPROP_TIME2, @t+PeriodSeconds()*$Length);
+  }
+  ObjectSet(@name, OBJPROP_RAY, 0);
+  </>
+  ObjectSet(@name, OBJPROP_COLOR, $Color);
+  
+  @name = "down$name"<?LeaveLines>+CurTime()</>;
+  <?!Length>
+  if (ObjectFind(@name)<0) ObjectCreate(@name, OBJ_HLINE, 0, 0, down$lvl);
+  else ObjectSet(@name, OBJPROP_PRICE1, down$lvl);
+  <~>
+  if (ObjectFind(@name)<0) ObjectCreate(@name, OBJ_TREND, 0, @t, down$lvl, @t+PeriodSeconds()*$Length, down$lvl);
+  else
+  {
+    ObjectSet(@name, OBJPROP_PRICE1, down$lvl);
+    ObjectSet(@name, OBJPROP_PRICE2, down$lvl);
+    ObjectSet(@name, OBJPROP_TIME1, @t);
+    ObjectSet(@name, OBJPROP_TIME2, @t+PeriodSeconds()*$Length);
+  }
+  ObjectSet(@name, OBJPROP_RAY, 0);
+  </>
+  ObjectSet(@name, OBJPROP_COLOR, $Color);
+
+<deinit>
+  <?!LeaveLines>
+  ObjectDelete("up$name");
+  ObjectDelete("down$name");
+  </>
+  
+[Help]
+Отображениие уровней на графике.

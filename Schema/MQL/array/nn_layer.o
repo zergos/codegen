@@ -1,0 +1,74 @@
+[Main]
+Name=NNLayer
+Title=Слой tanh
+Group=Нейросети
+
+[Property]
+Alpha=f,1.7159
+Beta=f,0.6666
+INCount=n,,количество входов
+NCount=n,1,количество нейронов (выходов)
+UseShift=n,1,учитывать сдвиг
+Enabled=t,1
+
+[Input]
+in=row
+w=row
+# w.Count = dim$in
+# w.Dim = $NCount
+
+[Output]
+out=row,<?Enabled>$name<~>$in</>
+
+[Code]
+<gvars>
+<?Enabled>
+double $out[];
+int rpos$out;
+int wpos$out;
+int dim$out = $NCount;
+int size$out = 0;
+</>
+
+<init>
+<?Enabled>
+  <?!INCount>size$w += (dim$in+$UseShift) * $NCount;
+  <~>size$w += ($INCount+$UseShift) * $NCount;</>
+</>
+
+<lines>
+<?Enabled>
+  int @i, @n, @k, @p;
+  double @v;
+  int @count = wpos$in/dim$in;
+
+  if (size$out < $NCount*@count)
+  {
+    if (ArrayResize($out, $NCount*@count)==-1) return (-1);
+    size$out = $NCount*@count;
+  }
+  wpos$out = $NCount*@count;
+
+  for (@i=0; @i<@count; @i++) // по всем входным векторам
+    for (@k=0; @k<$NCount; @k++) // по каждому выходу
+    {
+      @v = 0; // локальное индуцированное поле
+      @p = @k*(dim$in+$UseShift) + rpos$w;
+      for (@n=0; @n<dim$in; @n++) // по элементам каждого элемента вектора
+        @v += $in[@n*@count + @i] * $w[@p + @n];
+
+      if ($UseShift==1) @v += $w[@p + dim$in];
+
+      @v *= $Beta*2;
+      $out[@k*@count + @i] = $Alpha*(1 - MathExp(-@v))/(1 + MathExp(-@v));
+    }
+
+  rpos$w += (dim$in+$UseShift) * $NCount;
+  rpos$out = 0;
+</>
+
+[Help]
+Реализация слоя нейронов (гипер. тангенс)
+  * **in** - вход, динамический массив
+  * **w** - массив весов (обязательно, без указания размера
+Для первого слоя в сети обязательно задание параметра **INCount**

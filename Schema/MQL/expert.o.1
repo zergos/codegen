@@ -1,0 +1,525 @@
+[Main]
+Modular
+Group=Программы
+Title=Советник
+Name=Expert
+
+[Property]
+MAGIC=n,1,волшебное число
+MinBufferSize=n,128,мин. размер буфера
+MaxBufferSize=n,1024,макс. размер буфера
+Traceback=n,,запуск советника по истории
+# BufferSize=n,128,размер буфера
+WaitNewBar=t,,выполнять эксперт только на каждом новом баре
+FullRecount=t,1,полный пересчёт серий на каждом тике
+SaveState=t,,сохранять состояние советника
+StateID=n,,локальный код состояния
+CheckTradeAllowed=t,1,проверять возможность торговать
+Copyright=s,,название компании-производителя
+description=s,,описание
+link=s,,ссылка на сайт компании-производителя
+icon=s,,название файла с иконкой
+stacksize=n,,размер стека для рекурсивных вызовов
+show_confirm=t,,выводить окно подтверждения перед запуском скрипта
+show_inputs=t,,выводить окно со свойствами перед запуском скрипта и запретить вывод окна подтверждения
+strict=t,1,новый компилятор
+
+[Output]
+Trace=c
+
+[OutputPars]
+Size=GlobalSize
+Start=GlobalStart
+Trace=$Traceback
+Sync=$SaveState
+
+[Code]
+<top0>
+//+------------------------------------------------------------------+
+//| $name                                                            
+//| $copyright                                                       
+//| $link
+//+------------------------------------------------------------------+
+
+#property version "$version.0"
+<?Copyright>#property copyright "$Copyright"</>
+<?description>#property description "$description"</>
+<?link>#property link "$link"</>
+<?icon>#property icon "\\Images\\$icon"</>
+
+<?stacksize>#property stacksize $stacksize</>
+<?show_confirm>#property show_confirm</>
+<?show_inputs>#property show_inputs</>
+<?strict>#property strict</>
+
+#define MAGIC $MAGIC
+
+<?SaveState>
+#include "sync.mqh"
+</>
+
+<gvars>
+int GlobalSize, GlobalStart;
+int @LastBars, @LastSize;
+bool Shifted;
+
+bool @Inited=false;
+bool Work=true;
+
+<?Traceback>
+int trace_index;
+</>
+
+<procs>
+//---- standard expert functions
+bool CheckShift(double& a[])
+{
+  //ArrayCopy(a, a, 0, shift);
+  if (!Shifted) return (false);
+
+  int shift = GlobalSize-GlobalStart-1;
+
+  for (int i=0; i<=GlobalStart; i++) a[i] = a[i+shift];
+  return (true);
+}
+
+bool CheckShift(int& a[])
+{
+  //ArrayCopy(a, a, 0, shift);
+  if (!Shifted) return (false);
+
+  int shift = GlobalSize-GlobalStart-1;
+
+  for (int i=0; i<=GlobalStart; i++) a[i] = a[i+shift];
+  return (true);
+}
+
+void ArrayInit(double &a[], int NewSize)
+{
+  if (ArraySize(a)<NewSize) ArrayResize(a, NewSize);
+}
+
+void ArrayInit(int &a[], int NewSize)
+{
+  if (ArraySize(a)<NewSize) ArrayResize(a, NewSize);
+}
+
+void ArrayInit(datetime &a[], int NewSize)
+{
+  if (ArraySize(a)<NewSize) ArrayResize(a, NewSize);
+}
+
+double Bid()
+{
+  <?!Traceback>return Bid;
+  <~>
+  if (trace_index>0)
+    return Close[trace_index];
+  else
+    return Bid;
+  </>
+}
+
+double Ask()
+{
+  <?!Traceback>return Ask;
+  <~>
+  if (trace_index>0)
+    return Close[trace_index]+(Ask-Bid);
+  else
+    return Ask;
+  </>
+}
+
+double High()
+{
+  <?!Traceback>return Bid;
+  <~>
+  if (trace_index>0)
+    return High[trace_index];
+  else
+    return Bid;
+  </>
+}
+
+double Low()
+{
+  <?!Traceback>return Bid;
+  <~>
+  if (trace_index>0)
+    return Low[trace_index];
+  else
+    return Bid;
+  </>
+}
+
+double Open()
+{
+  <?!Traceback>return Open[0];
+  <~>return Open[trace_index];
+  </>
+}
+
+datetime CurTimeTrace()
+{
+  <?!Traceback>return Time[0];
+  <~>
+    return Time[trace_index];
+  </>
+}
+
+<?SaveState>
+void syncAll()
+{
+  <?Traceback>sync("Traceback", trace_index);</>
+$sync
+}
+</>
+
+<init>
+  <?CheckTradeAllowed>
+  if (!IsTradeAllowed())
+  {
+    Alert("Разрешите советнику торговать :(");
+    return -1;
+  }
+  </>
+  <?MaxBufferSize>GlobalSize = $MaxBufferSize;<~>GlobalSize = 0;</>
+  <?Traceback>trace_index = $Traceback;</>
+  <?SaveState>syncLoad();</>
+
+<lines>
+  if (!Work) return (0);
+
+<?MinBufferSize>
+  if (Bars<$MinBufferSize)
+<~>
+  if (Bars==0)
+</>
+    return(0);
+
+<?MaxBufferSize>
+  <?!Traceback>
+    GlobalSize = MathMin($MaxBufferSize, Bars);
+  <~>
+    GlobalSize = MathMin($MaxBufferSize+trace_index, Bars);
+  </>
+<~>
+  GlobalSize = Bars;
+</>
+<?FullRecount>
+  GlobalStart = 0;
+  Shifted = false;
+<~>
+  <?Traceback>
+  if (trace_index>0)
+  {
+    GlobalStart = 0;
+    Shifted = false;
+    @LastBars = 0;
+    @LastSize = 0;
+  }
+  else
+  {
+  </>
+  bool @newbar = false;
+  if (@LastBars==0)
+  {
+    @LastBars = Bars;
+    @LastSize = GlobalSize;
+    GlobalStart = 0;
+    Shifted = false;
+    @newbar = false;
+  }
+  else
+  if (@LastBars!=Bars)
+  {
+    Shifted = (@LastSize==GlobalSize);
+    GlobalStart = GlobalSize-1-(Bars-@LastBars);
+    @newbar = true;
+  }
+  else
+  {
+    Shifted = false;
+    GlobalStart = GlobalSize-1;
+    @newbar = false;
+  }
+  @LastBars = Bars;
+  @LastSize = GlobalSize;
+
+  <?WaitNewBar>
+  if (!@newbar) return (0);
+  </>
+  <?Traceback>
+  }
+  </>
+  
+  <?debug>
+  Print("bars: ",Bars);
+  Print("start: ", GlobalStart, " size: ", GlobalSize," shifted: ",Shifted?"true":"false");
+  </>
+</>
+$CTRL.lines
+
+  <?Traceback>
+  <?debug>if (trace_index>0) Print("trace index is "+trace_index);</>
+  int @globalsize = GlobalSize;
+  for ( ; trace_index>=0; trace_index--)
+  {
+    <?debug>if (trace_index>0) Print("trace step "+trace_index);</>
+    GlobalSize = @globalsize - trace_index;
+    
+$Trace.lines
+  }
+  trace_index = 0;
+  </>
+
+<deinit>
+  <?SaveState>
+  double @keepSync = 0;
+  switch (_UninitReason)
+  {
+    case REASON_PROGRAM:
+    case REASON_REMOVE:
+    case REASON_CHARTCHANGE:
+    case REASON_CHARTCLOSE:
+    case REASON_TEMPLATE:
+      if (!GlobalVariableGet("KeepSync", @keepSync))
+        syncDel();
+      else if (@keepSync!=1.0)
+        syncDel();
+      else
+        syncSave();
+      break;
+      
+    case REASON_RECOMPILE:
+    case REASON_PARAMETERS:
+    case REASON_CLOSE:
+    case REASON_ACCOUNT:
+      syncSave();
+  }
+  </>
+  
+<attach>
+<?tester>
+//+------------------------------------------------------------------+
+double OnTester()
+{
+$tester
+  return 0;
+}
+</>
+
+<?SaveState>
+=sync.mqh
+bool save = false;
+int syncFile;
+string syncErrorMes = "Ошибка синхронизации данных ";
+bool syncError;
+
+void syncTitle(string title)
+{
+  if (save)
+    FileWrite(syncFile, title);
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+  }
+}
+
+void sync(string title, int &i)
+{
+  if (save)
+    FileWrite(syncFile, title, i);
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+    i = FileReadNumber(syncFile);
+  }
+}
+void sync(string title, double &d)
+{
+  if (save)
+    FileWrite(syncFile, title, d);
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+    d = FileReadNumber(syncFile);
+  }
+}
+void sync(string title, int &i[])
+{
+  if (save)
+  {
+    FileWrite(syncFile, title, ArraySize(i));
+    for (int k=0; k<ArraySize(i); k++)
+      FileWrite(syncFile, i[k]);
+  }
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+    ArrayResize(i, FileReadNumber(syncFile));
+    for (int k=0; k<ArraySize(i); k++)
+      i[k] = FileReadNumber(syncFile);
+  }
+}
+void sync(string title, double &d[])
+{
+  if (save)
+  {
+    FileWrite(syncFile, title, ArraySize(d));
+    for (int k=0; k<ArraySize(d); k++)
+      FileWrite(syncFile, d[k]);
+  }
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+    ArrayResize(d, FileReadNumber(syncFile));
+    for (int k=0; k<ArraySize(d); k++)
+      d[k] = FileReadNumber(syncFile);
+  }
+}
+void sync(string title, datetime &dt)
+{
+  if (save)
+    FileWrite(syncFile, title, TimeToStr(dt));
+  else
+  {
+    FileReadString(syncFile);
+    dt = FileReadDatetime(syncFile);
+  }
+}
+void sync(string title, string &s)
+{
+  if (save)
+    FileWrite(syncFile, title, s);
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+    s = FileReadString(syncFile);
+  }
+}
+void sync(string title, bool &b)
+{
+  if (save)
+    FileWrite(syncFile, title, b?1:0);
+  else
+  {
+    string s = FileReadString(syncFile);
+    if (s!=title)
+    {
+      Print(syncErrorMes, title, " <> ", s);
+      return;
+    }
+    b = (FileReadNumber(syncFile)==1);
+  }
+}
+
+string syncName()
+{
+  return WindowExpertName()<?StateID>+$StateID</>+"."+Symbol()+"."+Period()+".save";
+}
+
+bool syncSave()
+{
+  if (IsTesting()) return true;
+  syncFile = FileOpen(syncName(), FILE_CSV|FILE_WRITE|FILE_SHARE_READ|FILE_SHARE_WRITE, "=");
+  if (syncFile < 0) return false;
+  save = true;
+  syncAll();
+  FileClose(syncFile);
+  return true;
+}
+bool syncLoad()
+{
+  if (IsTesting()) return true;
+  syncFile = FileOpen(syncName(), FILE_CSV|FILE_READ|FILE_SHARE_READ|FILE_SHARE_WRITE, "=");
+  if (syncFile < 0) return false;
+  save = false;
+  syncError = false;
+  syncAll();
+  FileClose(syncFile);
+  if (syncError) Alert("Ошибки синхронизации данных!");
+  return !syncError;
+}
+void syncDel()
+{
+  FileDelete(syncName());
+}
+</>
+  
+[Template]
+$top0
+$top
+
+//---- parameters
+$gvars
+
+//---- user functions
+$procs
+
+//+------------------------------------------------------------------+
+//| Custom expert initialization function                            |
+//+------------------------------------------------------------------+
+int init()
+{
+$init
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom expert deinitialization function                          |
+//+------------------------------------------------------------------+
+int deinit()
+{
+$deinit
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int start()
+{
+
+$lines
+$endlines
+  return(0);
+}
+
+$attach
+
+[Help]
+Объект можно использовать один раз в одной схеме.\\
+**FullRecount - рекомендуется для рабочего советника, поскольку при внезапном переподключении к серверу брокера информация об уже загруженных барах теряется (!).**

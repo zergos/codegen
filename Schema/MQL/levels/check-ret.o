@@ -1,0 +1,49 @@
+[Main]
+Choice
+Name=CheckRetLvl
+Title=ѕроверка возврата к уровн€м
+Group=”ровни
+
+[Property]
+CheckMode=n,3,режим проверки (0 - на пробитие\, 1 - на отбой\, 2 - проверка только цены Bid\, 3 - Bid или high/low на трейсе)
+Reverse=t
+
+[Input]
+lvl=n
+
+[Output]
+True=c
+False=c
+
+[Code]
+<gvars>
+int $name;
+
+<lines>
+  $name = 0;
+  <?CheckMode=0>
+  if (Ask()<=up$lvl && Bid()>=down$lvl) $name = 1;
+  </>
+  <?CheckMode=1>
+  if (Bid()<=up$lvl && Ask()>=down$lvl) $name = 1;
+  </>
+  <?CheckMode=2>
+  if (Bid()<=up$lvl && Bid()>=down$lvl) $name = 1;
+  </>
+  <?CheckMode=3>
+  if (High()<=up$lvl && Low()>=down$lvl) $name = 1;
+  </>
+  if ($name!=0)
+  {
+    <?debug>Print("$name checked: ",$name);</>
+$True.lines
+  }
+<?False>
+  else
+  {
+$False.lines
+  }
+</>
+
+[Help]
+ѕровер€ет возврат цены в заданные уровни.

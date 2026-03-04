@@ -1,0 +1,82 @@
+[Main]
+Choice
+Name=TAGet
+Title=CSV Получить форму
+Group=ТА
+
+[Property]
+Target=n,3,номер цели (1 или 3)
+TakeCoef=f,0.05,коэффициент погрешности тейк-профита
+
+[Output]
+work=c
+Price6=n,@Price6
+Sell=n,@Sell
+Buy=n,@Buy
+
+[OutputPars]
+active=@iform
+Sell=@Sell
+TakeCoef=$TakeCoef
+
+[Code]
+<gvars>
+double up@Sell, down@Sell, up@Buy, down@Buy, down@Price6, up@Price6;
+int @iform;
+
+<lines>
+  bool @found = false;
+  for (int i=0; i<ArraySize(models); i++)
+  {
+    if (models[i].state == TA_ORDER)
+    {
+      @found = true;
+      
+      up@Price6 = models[i].price6stop;
+      down@Price6 = models[i].price6stop;
+      
+      trend = models[i].trend;
+      
+      if (trend>0)
+      {
+        up@Sell = models[i].price6stop;
+        <?Target=1>
+        down@Sell = models[i].trendprice-(models[i].price6-models[i].trendprice)*(1-$TakeCoef);
+        </>
+        <?Target=3>
+        down@Sell = models[i].price1-(models[i].price6-models[i].price1)*(1-$TakeCoef);
+        </>
+      
+        up@Buy = models[i].price6-(models[i].price1-models[i].price6)*(1-$TakeCoef);
+        if (models[i].bar5==0) down@Buy = models[i].price3stop;
+        else down@Buy = models[i].price5stop;
+      }
+      else
+      {
+        down@Sell = models[i].price6stop;
+        <?Target=1>
+        up@Sell = models[i].trendprice+(models[i].trendprice-models[i].price6)*(1-$TakeCoef);
+        </>
+        <?Target=3>
+        up@Sell = models[i].price1+(models[i].price1-models[i].price6)*(1-$TakeCoef);
+        </>
+      
+        down@Buy = models[i].price6+(models[i].price6-models[i].price1)*(1-$TakeCoef);
+        if (models[i].bar5==0) up@Buy = models[i].price3stop;
+        else up@Buy = models[i].price5stop;
+      }
+      
+      models[i].state = TA_TRADE;
+      @iform = i;
+      break;
+    }
+  }
+  
+  if (@found)
+  {
+$work.lines
+  }
+  
+[Help]
+Запуск сделки от входа по форме.
+

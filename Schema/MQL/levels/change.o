@@ -1,0 +1,28 @@
+[Main]
+Name=LvlChange
+Title=Обмен уровней
+Group=Уровни
+
+[Input]
+in=n
+
+[Output]
+out=n
+
+[Code]
+<gvars>
+double up$out;
+double down$out;
+
+<lines>
+  down$out = up$in;
+  up$out = down$in;
+  
+<sync>
+  syncTitle("$name");
+  sync("up",up$out);
+  sync("down",down$out);  
+
+[Help]
+Меняет уровни местами (up/down).
+

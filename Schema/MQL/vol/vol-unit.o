@@ -1,0 +1,163 @@
+[Main]
+Unit
+Name=HrUnit
+Title=Модуль
+Group=Объёмы
+
+[Property]
+Step=n,10,шаг сетки в пунктах
+CacheLevels=n,,количество добавляемых уровней прозапас
+
+[Code]
+<top>
+#include "hr-vols.mqh"
+
+<attach>
+=hr-vols.mqh
+#define HrVolStep $Step
+#define HrIdx(start, price) (start-floor((price)/Point/$Step))
+#define HrPrice(start, index) ((start-(index))*HrVolStep*Point)
+
+void HrMeasure(double &in[], int &start, int &size)
+{
+  int max = ceil(in[ArrayMaximum(in)]/Point/HrVolStep);
+  int min = floor(in[ArrayMinimum(in)]/Point/HrVolStep);
+  size = max-min+1;
+  start = max;
+}
+
+void HrMix(int &plusV[], int &minusV[], int instart, int insize, int &outstart, int &outsize)
+{
+<?debug>
+  Print("instart: "+instart+", insize: "+insize+", outstart: "+outstart+", outsize: "+outsize);
+</>
+  if (outstart==0)
+  {
+    outsize = insize<?CacheLevels>+$CacheLevels</>;
+    outstart = instart;
+    if (ArraySize(plusV)<outsize) ArrayResize(plusV, outsize);
+    if (ArraySize(minusV)<outsize) ArrayResize(minusV, outsize);
+  }
+  else
+  {
+    int last_size = outsize;
+    int shift = outstart - instart;
+    if (shift<0)
+      outsize = MathMax(insize, outsize-shift);
+    else
+      outsize = MathMax(outsize, insize+shift);
+    
+    <?CacheLevels>if (outsize>ArraySize(plusV)) outsize+=$CacheLevels;</>
+    
+    if (ArraySize(plusV)<outsize) ArrayResize(plusV, outsize);
+    if (ArraySize(minusV)<outsize) ArrayResize(minusV, outsize);
+    
+    if (shift<0)
+    {
+      for (int k=last_size-1; k>=0; k--)
+      {
+        plusV[k-shift] = plusV[k];
+        minusV[k-shift] = minusV[k];
+      }
+      for (int k=0; k<-shift; k++)
+      {
+        plusV[k] = 0;
+        minusV[k] = 0;
+      }
+      outstart = outstart-shift;
+    }
+    else
+      for (int k=last_size; k<outsize; k++)
+      {
+        plusV[k] = 0;
+        minusV[k] = 0;
+      }
+  }
+<?debug>
+  Print("outstart: "+outstart+", outsize: "+outsize);
+</>
+}
+
+void HrMix(int &V[], int instart, int insize, int &outstart, int &outsize)
+{
+<?debug>
+  Print("instart: "+instart+", insize: "+insize+", outstart: "+outstart+", outsize: "+outsize);
+</>
+  if (outstart==0)
+  {
+    outsize = insize<?CacheLevels>+$CacheLevels</>;
+    outstart = instart;
+    if (ArraySize(V)<outsize) ArrayResize(V, outsize);
+  }
+  else
+  {
+    int last_size = outsize;
+    int shift = outstart - instart;
+    if (shift<0)
+      outsize = MathMax(insize, outsize-shift);
+    else
+      outsize = MathMax(outsize, insize+shift);
+      
+    <?CacheLevels>if (outsize>ArraySize(V)) outsize+=$CacheLevels;</>
+    
+    ArrayResize(V, outsize);
+    if (shift<0)
+    {
+      for (int k=outsize+shift-1; k>=0; k--)
+      {
+        V[k-shift] = V[k];
+      }
+      for (int k=0; k<-shift; k++)
+      {
+        V[k] = 0;
+      }
+      outstart = outstart-shift;
+    }
+    else
+      for (int k=last_size; k<outsize; k++)
+      {
+        V[k] = 0;
+      }
+  }
+<?debug>
+  Print("outstart: "+outstart+", outsize: "+outsize);
+</>
+}
+
+int HrIndex(int &plusV[], int &minusV[], int &start, int &size, double price)
+{
+  int cell = ceil(price/Point/HrVolStep);
+  
+  if (start==0)
+  {
+    start = cell;
+    size = 1<?CacheLevels>+$CacheLevels</>;
+    if (ArraySize(plusV)<size) ArrayResize(plusV, size);
+    if (ArraySize(minusV)<size) ArrayResize(minusV, size);
+    return (0);
+  }
+  else if (cell>start || cell<=start-size)
+    HrMix(plusV, minusV, cell, 1, start, size);
+    
+  return (start-cell);
+}
+
+int HrIndex(int &V[], int &start, int &size, double price)
+{
+  int cell = ceil(price/Point/HrVolStep);
+  
+  if (start==0)
+  {
+    start = cell;
+    size = 1<?CacheLevels>+$CacheLevels</>;
+    if (ArraySize(V)<size) ArrayResize(V, size);
+    return (0);
+  }
+  else if (cell>start || cell<=start-size)
+    HrMix(V, cell, 1, start, size);
+    
+  return (start-cell);
+}
+
+[Help]
+Модуль для обработки горизонтальных объёмов.

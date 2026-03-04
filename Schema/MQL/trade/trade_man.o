@@ -1,0 +1,140 @@
+[Main]
+Deprecated
+Group=Советник
+Title=Торговый бот
+Name=TradeMan
+
+[Property]
+Waitless=t,1,режим открытия ордера сразу после закрытия предыдущего
+MainCheck=n,0,основной тик проверки
+TailCheck=n,1,сколько тиков с конца проверять на наличие сигнала
+TrLevel=n,1,суммарный сигнал для срабатывания
+
+Volume=f,0.1,количество лотов
+Slippage=n,3,максимально допустимое отклонение цены
+Color=color,CLR_NONE,цвет открывающей стрелки на графике
+StopPoints=n,25,ширина стоп коридора
+
+[Input]
+Sig=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+extern int @StopLevel = $StopPoints;
+extern int @TradeLevel = $TrLevel;
+int @Ticket = 0;
+int @Mode = 0; //1 - уже бай, -1 - уже селл
+int @LastMode;
+
+<lines>
+  ArraySetAsSeries($Sig, true);
+
+  int @CurMode = 0;
+
+  for (int @i = $MainCheck+$TailCheck-1; @i>=$MainCheck; @i--) @CurMode += $Sig[@i];
+
+  if (MathAbs(@CurMode)>=@TrLevel && @CurMode!=@LastMode)
+  {
+    @LastMode = @CurMode;
+    while (true)
+    {
+      if (@CurMode>0)
+      {
+        if (@Mode>0) break;
+        if (@Ticket==0)
+        {
+          <?debug>Alert("попытка открыть бай по ",Ask);</>
+          @Ticket = OrderSend(Symbol(), OP_BUY, $Volume, NormalizeDouble(Ask, Digits), $Slippage, Bid-@StopLevel*Point, Ask+@StopLevel*Point, NULL, MAGIC, 0, $Color);
+	  if (@Ticket>0)
+	  {
+	    <?debug>Alert("сделка бай ",@Ticket);</>
+	    @Mode = 1;
+	    break;
+	  }
+	  if (Fun_Error(GetLastError())==1) continue;
+	  return(0);
+        }
+        else
+        {
+          <?debug>Alert("попытка закрыть селл ", @Ticket, " по ",Ask);</>
+          OrderSelect(@Ticket, SELECT_BY_TICKET);
+          if (OrderCloseTime()>0)
+          {
+            <?debug>Alert("закрыт автоматом ",@Ticket);</>
+            @Ticket=0;
+            @Mode=0;
+            continue;
+          }
+          <?debug>Alert("now sell");</>
+          if (OrderClose(@Ticket, $Volume, NormalizeDouble(Ask, Digits), $Slippage, $Color))
+	  {
+	    <?debug>Alert("успешно закрыт ",@Ticket);</>
+            @Ticket = 0;
+            <?Waitless>continue;
+            <~>
+	    @Mode=0;
+	    @LastMode=0;
+	    break;
+            </>
+	  }
+	  if (Fun_Error(GetLastError())==1) continue;
+	  return(0);
+        }
+      }
+      else if (@CurMode<0)
+      {
+        if (@Mode<0) break;
+        if (@Ticket==0)
+	{
+          <?debug>Alert("попытка открыть селл по ",Bid);</>
+          @Ticket = OrderSend(Symbol(), OP_SELL, $Volume, NormalizeDouble(Bid, Digits), $Slippage, Ask+@StopLevel*Point, Bid-@StopLevel*Point, NULL, MAGIC, 0, $Color);
+	  if (@Ticket>0)
+	  {
+	    <?debug>Alert("сделка селл ",@Ticket);</>
+	    @Mode = -1;
+	    break;
+	  }
+	  if (Fun_Error(GetLastError())==1) continue;
+	  return(0);
+	}
+        else
+        {
+          <?debug>Alert("попытка закрыть бай", @Ticket, " по ",Bid);</>
+          OrderSelect(@Ticket, SELECT_BY_TICKET);
+          if (OrderCloseTime()>0)
+          {
+            <?debug>Alert("закрыт автоматом ",@Ticket);</>
+            @Ticket=0;
+            @Mode=0;
+            continue;
+          }
+          <?debug>Alert("now buy");</>
+          if (OrderClose(@Ticket, $Volume, NormalizeDouble(Bid, Digits), $Slippage, $Color))
+	  {
+	    <?debug>Alert("успешно закрыт ",@Ticket);</>
+            @Ticket = 0;
+	    <?Waitless>continue;
+            <~>
+	    @Mode=0;
+	    @LastMode=0;
+	    break;
+            </>
+	  }
+	  if (Fun_Error(GetLastError())==1) continue;
+	  return(0);
+        }
+      }
+    }
+  }
+
+  ArraySetAsSeries($Sig, false);
+
+[Help]
+Организация торговли по входящему сигналу.\\
+Работает только с одним ордером.\\
+При повторном сигнале на открытие в ту же сторону - игнорируется.\\
+При сигнале в другую сторону - закрывает предыдущий, далее, в зависимости от параметра **Endless**

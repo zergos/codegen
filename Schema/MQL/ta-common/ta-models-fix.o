@@ -1,0 +1,262 @@
+[Main]
+Usable
+Name=TAModelsFix
+Title=Модели - фикс. линий
+Group=ТА
+
+[Code]
+<top>
+#include "ta-models-fix.mqh"
+
+<attach>
+=ta-models-fix.mqh
+
+  bool TABaseModel::fixB3()
+  {
+    // поиск 3-й точки
+    bool modified = false;
+    bool checked = false;
+    //double lastprice = B3==B3o?0:LO(B3o-1);
+    double fixprice = LO(B3);
+    for (int bar = B3o; bar<B4 && (LO(bar)==fixprice || type!=M_ATTR); modified = true)
+    {
+      double price3 = LO(bar);
+      
+      //if (lastprice!=0 && breakout(price3<lastprice, price3>lastprice)) break; // лишнее касание
+      //lastprice = price3;
+      
+      double delta = (price3-LO(B1o))/(bar-B1o);
+      price3+=delta;
+      checked = true;
+      int l;
+      for (l = bar+1; l<B4; l++, price3+=delta)
+        if (breakout(L(l)<price3, H(l)>price3))
+        {
+          checked = false;
+          break;
+        }
+      if (checked)
+      {
+        KT = delta;
+        B3o = bar;
+        break;
+      }
+      else
+        bar = (type!=M_ATTR?l:bar+1);
+    }
+    
+    stop = !checked;
+    return modified;
+  }
+  
+  bool TABaseModel::fixB1()
+  {
+    // поиск 1-й точки
+    bool modified = false;
+    bool checked = false;
+    double lastprice = B1==B1o?0:LO(B1o-1);
+    double fixprice = LO(B1o);
+    for (int bar = B1o; bar<B2/* && (LO(bar)==fixprice || type!=M_EXP)*/; modified = true)
+    {
+      double price1 = LO(bar);
+
+      if (lastprice!=0 && breakout(price1<lastprice, price1>lastprice)) break; // лишнее касание
+      lastprice = price1;
+      
+      double delta = (LO(B3o)-price1)/(B3o-bar);
+      price1+=delta;
+      checked = true;
+      int l;
+      for (l = bar+1; l<B2; l++, price1+=delta)
+        if (breakout(L(l)<price1, H(l)>price1))
+        {
+          checked = false;
+          break;
+        }
+      if (checked)
+      {
+        KT = delta;
+        B1o = bar;
+        break;
+      }
+      else
+        bar = bar+1;
+    }
+    stop = !checked;
+    return modified;
+  }
+  
+  bool TABaseModel::fixB4()
+  {
+    // поиск 4-й точки
+    bool modified = false;
+    bool checked = false;
+    double fixprice = HO(B4);
+    double lastprice = B4==B4o?0:HO(B4o+1);
+    for (int bar = B4o; bar>B3 && (HO(bar)==fixprice || type!=M_ATTR); modified = true)
+    {
+      double price4 = HO(bar);
+      
+      if (lastprice!=0 && breakout(price4>lastprice, price4<lastprice)) break; // лишнее касание
+      lastprice = price4;
+      
+      double delta = (price4-HO(B2o))/(bar-B2o);
+      price4-=delta;
+      checked = true;
+      int l;
+      for (l = bar-1; l>B3; l--, price4-=delta)
+        if (breakout(H(l)>price4, L(l)<price4))
+        {
+          checked = false;
+          break;
+        }
+      if (checked)
+      {
+        KR = delta;
+        B4o = bar;
+        break;
+      }
+      else
+        bar = bar-1;//(type!=M_ATTR?l:bar+1);
+    }
+    stop = !checked;
+    return modified;
+  }
+  
+  bool TABaseModel::fixB2()
+  {
+    // поиск 2-й точки
+    bool modified = false;
+    bool checked = false;
+    double lastprice = B2==B2o?0:HO(B2o+1);
+    double fixprice = HO(B2o);
+    for (int bar = B2o; bar>B1/* && (HO(bar)==fixprice || type!=M_ATTR)*/; modified = true)
+    {
+      double price2 = HO(bar);
+      
+      /*if (lastprice!=0 && breakout(price2>lastprice, price2<lastprice)) break; // лишнее касание
+      lastprice = price2;*/
+      
+      double delta = (HO(B4o)-price2)/(B4o-bar);
+      price2-=delta;
+      checked = true;
+      int l;
+      for (l = bar-1; l>B1; l--, price2-=delta)
+        if (breakout(H(l)>price2, L(l)<price2))
+        {
+          checked = false;
+          break;
+        }
+      if (checked)
+      {
+        KR = delta;
+        B2o = bar;
+        break;
+      }
+      else
+        bar = bar-1;
+    }
+    
+    stop = !checked;
+    return modified;
+  }
+  
+  bool TABaseModel::fixB3h()
+  {
+    // поиск 3-й точки для ГТ
+    bool modified = false;
+    bool checked = false;
+    double lastprice = 0;
+    for (int bar = B3h; bar<=B4; modified = true)
+    {
+      double price3 = LO(bar);
+      
+      //if (lastprice!=0 && breakout(price3<lastprice, price3>lastprice)) break; // лишнее касание
+      //lastprice = price3;
+      
+      double delta = (P5-price3)/(B5-bar);
+      price3+=delta;
+      checked = true;
+      int l;
+      for (l = bar+1; l<=B4; l++, price3+=delta)
+        if (breakout(L(l)<price3, H(l)>price3))
+        {
+          checked = false;
+          break;
+        }
+      if (checked)
+      {
+        KH = delta;
+        B3h = bar;
+        break;
+      }
+      else
+        bar = l;
+    }
+    return modified;
+  }
+  
+  bool TABaseModel::fixB2h()
+  {
+    // поиск 2-й точки для ГТ
+    bool modified = false;
+    bool checked = false;
+    for (int bar = B2h; bar>B1; modified = true)
+    {
+      double price2 = HO(bar);
+      
+      double delta = (HO(B4h)-price2)/(B4h-bar);
+      price2-=delta;
+      checked = true;
+      int l;
+      for (l = bar-1; l>B1; l--, price2-=delta)
+        if (breakout(H(l)>price2, L(l)<price2))
+        {
+          checked = false;
+          break;
+        }
+      if (checked)
+      {
+        KHR = delta;
+        B2h = bar;
+        break;
+      }
+      else
+        bar = l;
+    }
+    hypostop = !checked;
+    return modified;
+  }
+  
+  bool TABaseModel::fixB4h()
+  {
+    // поиск 4-й точки
+    bool modified = false;
+    bool checked = false;
+    for (int bar = B4h; bar>B3; modified = true)
+    {
+      double price4 = HO(bar);
+      
+      double delta = (price4-HO(B2h))/(bar-B2h);
+      price4-=delta;
+      checked = true;
+      int l;
+      for (l = bar-1; l>B3; l--, price4-=delta)
+        if (breakout(H(l)>price4, L(l)<price4))
+        {
+          checked = false;
+          break;
+        }
+      if (checked)
+      {
+        KHR = delta;
+        B4h = bar;
+        break;
+      }
+      else
+        bar = l;
+    }
+    hypostop = !checked;
+    return modified;
+  }
+

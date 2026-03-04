@@ -1,0 +1,122 @@
+[Main]
+Name=Skeleton
+Title=Скелетон
+Group=Алгоритмы
+
+[Property]
+Step=n,8
+Limit=f,0.5,ограничение
+Draw=t
+Color=color
+
+[Input]
+in=row
+time=row
+
+[Output]
+left=row,@sleft
+right=row,@sright
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=@start
+
+[Code]
+<gvars>
+<?left>double @sleft[];</>
+<?right>double @sright[];</>
+
+<lines>
+  <?left>ArrayInit(sleft, $Size);</>
+  <?right>ArrayInit(sright, $Size);</>
+
+  int @start;
+  if ($Start==0)
+  {
+    @start = 0;
+    <?left>ArrayInitialize(@sleft, 0);</>
+    <?right>ArrayInitialize(@sright, 0);</>
+  }
+  else
+  {
+    <?left>CheckShift(@sleft);</>
+    <?right>CheckShift(@sright);</>
+  }
+
+  for (int @i=@start; @i<$Size-$Step; )
+  {
+    // count regression min 3 bars
+    double @reg = 1;
+    int @curstep = $Step;
+
+    double @cb1, @cb0;
+
+    while (@reg>$Limit && @curstep+@i<$Size)
+    {
+      double @y, @x, @yx, @x2;
+      int @n;
+      @y=0; @x=0; @yx=0; @x2=0;
+      for (@n=@i; @n<@i+@curstep; @n++)
+      {
+        @y  += $in[@n];
+        @x  += @n;
+        @yx += $in[@n]*@n;
+        @x2 += @n*@n;
+      }
+      double @b1 = (@y*@x-@curstep*@yx)/(@x*@x-@curstep*@x2);
+      double @b0 = (@y - @b1*@x)/@curstep;
+
+      //double @m2x = 0;
+      //for (@n=@i; @n<@i+@curstep; @n++)
+      //  @m2x += MathPow($in[@n]-@n*@cb1-@cb0, 2);
+      //@reg = MathSqrt(@m2x/@curstep)/2/Point;
+
+      @y = @y / @curstep;
+      @x = @x / @curstep;
+      //@yx = @yx / @curstep;
+      //@x2 = @x2 / @curstep;
+      //@y2 = @ya / @curstep;
+
+      //double @b1 = (@yx-@x*@y)/(@x2-@x*@x);
+      //double @b0 = @y-@b1*@x;
+
+      double @sxy = 0, @sx2=0, @sy2=0;
+      for (@n=@i; @n<@i+@curstep; @n++)
+      {
+        @sxy += ($in[@n]-@y)*(@n-@x);
+        @sx2 += (@n-@x)*((@n-@x));
+        @sy2 += ($in[@n]-@y)*($in[@n]-@y);
+      }
+
+      @reg = MathAbs(@sxy/MathSqrt(@sx2)/MathSqrt(@sy2));
+
+      if (@curstep==$Step || @reg>$Limit)
+      {
+        @cb1 = @b1;
+        @cb0 = @b0;
+        @curstep++;
+      }
+    }
+
+    <?left>$sleft[@i] = @cb1*@i + @cb0;</>
+    <?right>$sright[@i+1] = @cb1*(@i+@curstep) + @cb0;</>
+
+    <?Draw>
+    ObjectCreate("$name"+@i, OBJ_TREND, 0, $time[@i], @cb1*@i + @cb0, $time[@i+@curstep-1], @cb1*(@i+@curstep-1) + @cb0);
+    ObjectSet("$name"+@i, OBJPROP_RAY, 0);
+    <?Color>ObjectSet("$name"+@i, OBJPROP_COLOR, $Color);</>
+    </>
+
+    @start = @i;
+    @i+=@curstep-1;
+  }
+
+<deinit>
+  for (int @i=0; @i<$Size; @i++) ObjectDelete("$name"+@i);
+
+[Help]
+Находит отрезки линейной регрессии длины не менее **Step** со среднеквадратичным отклонением не более **Limit**.\\
+На выходе - левые и правые значения отрезков.

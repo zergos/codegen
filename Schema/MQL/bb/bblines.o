@@ -1,0 +1,147 @@
+[Main]
+Name=BCLines
+Title=Би Cи Линии
+Group=Алгоритмы
+
+[Property]
+Deep=n,5,глубина прогноза
+Skip=n,,сколько значений пропустить (отладка)
+Draw=bbdraw,NO,рисовать линии
+Deinit=t,,удалять линии при завершении
+
+[Input]
+left=row
+right=row
+time=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+extern int @bdeep = $Deep;
+<?Skip>extern int @bskip = $Skip;</>
+
+<lines>
+  ArrayInit($out, $Size);
+
+  // 1st step - give 4 points
+  double @x[5];
+  double @y[5], @yr[5];
+  int @i, @n;
+
+  <?Skip>
+  if (@bskip>=0)
+  {
+    @n = @bskip;
+    for (@i=0; @i<$Size && @n>0; @i++)
+    {
+      if ($left[@i]!=0) @n--;
+    }
+  }
+  else
+  { // get last
+    @n = 3-@bskip;
+    for (@i=$Size-1; @i>=0 && @n>0; @i--)
+      if ($left[@i]!=0) @n--;
+  }
+  <~>
+  @i = 0;
+  </>
+
+  @n=0;
+  for ( ; @i<$Size && @n<4; @i++)
+  {
+    if ($left[@i]!=0)
+    {
+      @x[@n] = @i;
+      @y[@n] = $left[@i]/Point;
+      <?right>
+        @yr[@n] = $right[@i]/Point;
+      <~>
+        @yr[@n] = @y[@n];
+      </>
+      @n++;
+    }
+  }
+  for (@i = 0; @i<4; @i++)
+  {
+    $out[toint(@x[@i])] = @y[@i];
+    <?Draw=ALL>
+      if (@i>0)
+      {
+        ObjectDelete("$name"+@i);
+        ObjectCreate("$name"+@i, OBJ_TREND, 0, $time[toint(@x[@i-1])], @y[@i-1]*Point, $time[toint(@x[@i])], @yr[@i]*Point);
+      }
+    </>
+  }
+
+  // 2nd step - prediction
+  double @alpha[4], @kgamma, @k23, @k;
+  for (@i=0; @i<@bdeep; @i++)
+  {
+    @alpha[0] = MathArctan((@y[1]-@y[0])/(@x[1]-@x[0]));
+    @alpha[1] = MathArctan((@y[2]-@y[1])/(@x[2]-@x[1]));
+    @alpha[2] = MathArctan((@y[3]-@y[2])/(@x[3]-@x[2]));
+    @kgamma = MathTan((@alpha[0] + @alpha[1])/2);
+
+    @k23 = (@y[3]-@y[2])/(@x[3]-@x[2]);
+    @x[3] = (@y[2]-@y[1]+@x[1]*@kgamma-@x[2]*@k23)/(@kgamma-@k23);
+    @y[3] = (@x[3]-@x[2])*@k23 + @y[2];
+    @yr[3] = @y[3];
+    @alpha[3] = MathArctan((@y[3]-@y[1])/(@x[3]-@x[1]));
+
+    int @lim;
+
+    <?!Draw=NO>
+      @lim = MathMin($Size-1-@x[1], 20);
+      ObjectDelete("$name"+"x");
+      ObjectCreate("$name"+"x", OBJ_TREND, 0, $time[toint(@x[1])], @y[1]*Point, $time[toint(@x[1]+@lim)], (@y[1]+@lim*@kgamma)*Point);
+
+      double @kx = MathTan((@alpha[0]*3 + @alpha[1])/4);
+      ObjectDelete("$name"+"x1");
+      ObjectCreate("$name"+"x1", OBJ_TREND, 0, $time[toint(@x[1])], @y[1]*Point, $time[toint(@x[1]+@lim)], (@y[1]+@lim*@kx)*Point);
+      ObjectSet("$name"+"x1", OBJPROP_COLOR, Yellow);
+
+      double @ky = MathTan((@alpha[0] + @alpha[1]*3)/4);
+      ObjectDelete("$name"+"x2");
+      ObjectCreate("$name"+"x2", OBJ_TREND, 0, $time[toint(@x[1])], @y[1]*Point, $time[toint(@x[1]+@lim)], (@y[1]+@lim*@ky)*Point);
+      ObjectSet("$name"+"x2", OBJPROP_COLOR, Yellow);
+    </>
+
+    @k = MathTan((@alpha[3]-@alpha[2]));
+      
+    @x[0] = @x[1]; @y[0] = @y[1]; 
+    @x[1] = @x[2]; @y[1] = @y[2]; @yr[1] = @yr[2];
+    @x[2] = @x[3]-10; @y[2] = @y[3] - 10*@k; @yr[2] = @yr[3];
+    @lim = MathMin($Size-1-@x[2], 10);
+    @x[3] = @x[2]+@lim; @y[3] = @y[2] + @lim*@k; @yr[3] = @y[3];
+
+    $out[toint(@x[2])] = @y[2];
+    $out[toint(@x[3])] = @y[3];
+
+    <?!Draw=NO>
+      ObjectDelete("$name"+(@i+4));
+      ObjectCreate("$name"+(@i+4), OBJ_TREND, 0, $time[toint(@x[2])], @y[2]*Point, $time[toint(@x[3])], @y[3]*Point);
+      ObjectSet("$name"+(@i+4), OBJPROP_COLOR, Magenta);
+    </>
+  }
+
+<deinit>
+<?Deinit>
+  int @i;
+  <?Draw=ALL>
+    for (@i=1; @i<=3; @i++) ObjectDelete("$name"+@i);
+  </>
+  <?!Draw=NO>
+    for (@i=4; @i<=@bdeep+3; @i++) ObjectDelete("$name"+@i);
+    ObjectDelete("$name"+"x");
+    //ObjectDelete("$name"+"x1");
+    //ObjectDelete("$name"+"x2");
+  </>
+</>

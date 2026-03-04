@@ -1,0 +1,78 @@
+[Main]
+Usable
+Name=TACorrector
+Title=Граф. корректор
+Group=ТА
+
+[Code]
+<top>
+<?expert>
+#include "ta-corrector.mqh"
+</>
+
+<attach>
+<?expert>
+=ta-corrector.mqh
+class TACorrector : public ChainObject
+{
+  public:
+  string name;
+  int bars;
+  datetime start, finish;
+  
+  static TACorrector *first;
+
+  static void Add(string name, int bars)
+  {
+    TACorrector *cur = new TACorrector();
+    cur.name = name;
+    cur.bars = bars;
+    cur.start = Time[1];
+    cur.finish = Time[1]+bars*PeriodSeconds();
+    cur.add();
+  }
+  
+  virtual ChainObject *getFirst() { return first; }
+  virtual void setFirst(ChainObject *o) { first = o; }
+  ~TACorrector()
+  {
+    if (first==GetPointer(this)) first = next;
+  }
+  
+  void Correct()
+  {
+    int k = iBarShift(NULL, 0, start);
+    if (finish>Time[1])
+    {
+      int newbars = k-1 + (finish-Time[1])/PeriodSeconds();
+      if (newbars<bars)
+      {
+        //Print("bars diff: ", bars-newbars);
+        finish += (bars-newbars)*PeriodSeconds();
+        ObjectSet(name, OBJPROP_TIME2, finish);
+      }
+    }
+    else
+    {
+      int l = iBarShift(NULL, 0, finish);
+      int newbars = k-l;
+      if (newbars<bars)
+      {
+        //Print("bars inner diff: ", bars-newbars);
+        finish += (bars-newbars)*PeriodSeconds();
+        ObjectSet(name, OBJPROP_TIME2, finish);
+      }
+      else
+        Release();
+    }
+  }
+  
+  static void CorrectAll()
+  {
+    ForEach(TACorrector, cur)
+      cur.Correct();
+  }
+};
+
+TACorrector *TACorrector::first;
+</>

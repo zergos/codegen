@@ -1,0 +1,97 @@
+[Main]
+Title=ADX
+Group=Алгоритмы (тех)
+Name=ADX
+Size=5
+
+[Property]
+Period=n,15,период для расчета экспоненциальных средних
+
+[Input]
+Close=row
+High=row
+Low=row
+
+[Output]
+DP=row,@PlusDiBuffer
+DM=row,@MinusDiBuffer
+DX=row,@ADXBuffer
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @PlusDiBuffer[], @MinusDiBuffer[];
+double @PlusSdiBuffer[], @MinusSdiBuffer[];
+double @TempBuffer[], @ADXBuffer[];
+
+<lines>
+  ArrayInit(@PlusDiBuffer, $Size);
+  ArrayInit(@MinusDiBuffer, $Size);
+  ArrayInit(@PlusSdiBuffer, $Size);
+  ArrayInit(@MinusSdiBuffer, $Size);
+  ArrayInit(@TempBuffer, $Size);
+  ArrayInit(@ADXBuffer, $Size);
+  
+  CheckShift(@PlusDiBuffer);
+  CheckShift(@MinusDiBuffer);
+  CheckShift(@PlusSdiBuffer);
+  CheckShift(@MinusSdiBuffer);
+  CheckShift(@TempBuffer);
+  CheckShift(@ADXBuffer);
+
+   double @pdm,@mdm,@tr;
+   double @price_high,@price_low;
+   
+   for(int i=MathMax($Start,1); i<$Size; i++)
+     {
+      @price_low=$Low[i];
+      @price_high=$High[i];
+      //----
+      @pdm=@price_high-$High[i-1];
+      @mdm=$Low[i-1]-@price_low;
+      if(@pdm<0) @pdm=0;  // +DM
+      if(@mdm<0) @mdm=0;  // -DM
+      if(@pdm==@mdm) { @pdm=0; @mdm=0; }
+      else if(@pdm<@mdm) @pdm=0;
+           else if(@mdm<@pdm) @mdm=0;
+      //---- вычисляем истинный интервал
+      double @num1=MathAbs(@price_high-@price_low);
+      double @num2=MathAbs(@price_high-$Close[i-1]);
+      double @num3=MathAbs(@price_low-$Close[i-1]);
+      @tr=MathMax(@num1,@num2);
+      @tr=MathMax(@tr,@num3);
+      //---- counting plus/minus direction
+      if(@tr==0) { @PlusSdiBuffer[i]=0; @MinusSdiBuffer[i]=0; }
+      else      { @PlusSdiBuffer[i]=100.0*@pdm/@tr; @MinusSdiBuffer[i]=100.0*@mdm/@tr; }
+      //----
+     }
+//---- apply EMA to +DI
+   ArraySetAsSeries(@PlusSdiBuffer, true);
+   for(int i=$Start; i<$Size; i++)
+      @PlusDiBuffer[i]=iMAOnArray(@PlusSdiBuffer,0,$Period,0,MODE_EMA,$Size-1-i);
+   ArraySetAsSeries(@PlusSdiBuffer, false);
+//---- apply EMA to -DI
+   ArraySetAsSeries(@MinusSdiBuffer, true);
+   for(int i=$Start; i<$Size; i++)
+      @MinusDiBuffer[i]=iMAOnArray(@MinusSdiBuffer,0,$Period,0,MODE_EMA,$Size-1-i);
+   ArraySetAsSeries(@MinusSdiBuffer, false);
+//---- Directional Movement (DX)
+   for(int i=$Start; i<$Size; i++)
+     {
+      double @div=MathAbs(@PlusDiBuffer[i]+@MinusDiBuffer[i]);
+      if(@div==0.00) @TempBuffer[i]=0;
+      else @TempBuffer[i]=100*(MathAbs(@PlusDiBuffer[i]-@MinusDiBuffer[i])/@div);
+     }
+//---- ADX is exponential moving average on DX
+   ArraySetAsSeries(@TempBuffer, true);
+   for(int i=$Start; i<$Size; i++)
+      @ADXBuffer[i]=iMAOnArray(@TempBuffer,0,$Period,0,MODE_EMA,$Size-1-i);
+   ArraySetAsSeries(@TempBuffer, false);
+      
+[Help]
+Индекс Среднего Направления Движения.\\
+ [[ta.mql4.com/ru/indicators/trends/average_directional_movement]]\\
+Стандартный технический алгоритм.

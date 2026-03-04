@@ -1,0 +1,23 @@
+[Main]
+Name=Negative
+Title=Отрицание
+Group=Арифметика
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++) $out[@i] = -$in[@i];

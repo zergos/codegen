@@ -1,0 +1,69 @@
+[Main]
+Name=BarLvl
+Title=Фикс. уровни свечи
+Group=Уровни
+
+[Property]
+Index=n,0,номер свечи\, если на входе серия
+Percent=f,,процент смещения уровня относительно свечи
+FixedVal=n,,кол. пунктов смещения свечи
+
+[Input]
+high=row
+low=row
+
+[Output]
+lvl=n
+rev=n,R$name
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+<?lvl>
+double up$name;
+double down$name;
+</>
+<?rev>
+double upR$name;
+double downR$name;
+</>
+
+<lines>
+  <?Index>int @i = $Size-1-$Index;</>
+  <?lvl>
+  up$name = $low<?Index>[@i]</><?Percent>+($high<?Index>[@i]</>-$low<?Index>[@i]</>)*$Percent</><?FixedVal>-($FixedVal)*Point</>;
+  down$name = $high<?Index>[@i]</><?Percent>-($high<?Index>[@i]</>-$low<?Index>[@i]</>)*$Percent</><?FixedVal>+($FixedVal)*Point</>;
+<?debug>
+  Print("$name> high: ",up$name,", low: ",down$name);
+</>
+  </>
+  <?rev>
+  <?lvl>
+  upR$name = down$name;
+  downR$name = up$name;
+  <~>
+  downR$name = $low<?Index>[@i]</><?Percent>+($high<?Index>[@i]</>-$low<?Index>[@i]</>)*$Percent</><?FixedVal>-($FixedVal)*Point</>;
+  upR$name = $high<?Index>[@i]</><?Percent>-($high<?Index>[@i]</>-$low<?Index>[@i]</>)*$Percent</><?FixedVal>+($FixedVal)*Point</>;
+<?debug>
+  Print("$name> high: ",upR$name,", low: ",downR$name);
+</>
+  </>
+  </>
+
+<sync>
+  syncTitle("$name");
+  <?lvl>
+  sync("up", up$name);
+  sync("down", down$name);
+  </>
+  <?rev>
+  sync("upR", upR$name);
+  sync("downR", downR$name);
+  </>
+  
+[Help]
+Фиксирует уровни цены относительно свечи с индексом **Index**\\
+Нулевой процент снизу, 1.0 - сверху свечи - для выхода **up**\\
+Наоборот - для выхода **down**.

@@ -1,0 +1,29 @@
+[Main]
+Name=ArraySlice
+Title=Разделение
+Group=Массивы
+
+[Property]
+Index=n,0,индекс вектора
+
+[Input]
+buf=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  int @count = wpos$buf/dim$buf;
+  for (int @i=0; @i<@count; @i++)
+    $out[@i+$Size-@count] = $buf[$Index*@count + @i];
+

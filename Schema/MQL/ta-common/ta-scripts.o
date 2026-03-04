@@ -1,0 +1,86 @@
+[Main]
+Usable
+Name=TAScripts
+Title=Скрипты
+Group=ТА
+
+[Code]
+<top>
+<?expert>
+#include "ta-scripts.mqh"
+</>
+
+<attach>
+<?expert>
+=ta-scripts.mqh
+class TABaseModel;
+class TABaseScript : public ChainObject
+{
+  public:
+  
+  TABaseModel *M;
+  
+  int code;
+  
+  int trend;
+  double price;
+  double tp;
+  double sl;
+  
+  bool denied;
+  bool active;
+  bool stop;
+  
+  static TABaseScript *first;
+  virtual ChainObject *getFirst() { return first; }
+  virtual void setFirst(ChainObject *o) { first = o; }
+  
+  TABaseScript(TABaseModel *m, int _trend, int _code, double _price, double _tp, double _sl) : ChainObject(),
+    code(_code), trend(_trend), price(_price), tp(_tp), sl(_sl-_trend*m.BP), active(false), denied(false)
+  {
+    if (taCases.check(_code))
+    {
+      M = m; m.AddRef();
+      M.active = true;
+      M.sCount++;
+      M.sleepTo = iTime(NULL,0,0)+PeriodSeconds();
+      <?debug>M.Log(StringFormat("запуск скрипта %d %s tp %f sl %f",_code,trend>0?"BUY":"SELL",_tp,_sl));</>
+    }
+    else
+    {
+      <?debug>m.Log(StringFormat("скрипт запрещён %d",_code));</>
+      denied = true;
+    }
+    Activate();
+  }
+  
+  ~TABaseScript()
+  {
+    if (first==GetPointer(this)) first = next;
+    
+    if (HasRef(M))
+      M.Release();
+  }
+  
+  virtual void Advise() { }
+  
+  void Activate()
+  {
+    add();
+  }
+  
+  static TABaseScript *Get()
+  {
+    ForEach(TABaseScript, taCur)
+      if (!taCur.active)
+      {
+        taCur.active = true;
+        return taCur;
+      }
+    return NULL;
+  }
+};
+
+TABaseScript *TABaseScript::first;
+</>
+

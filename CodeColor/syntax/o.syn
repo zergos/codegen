@@ -1,0 +1,116 @@
+#c - caseless, m - multi line for ^$, s - dot include eol, u - ungreedy, a - anchored to previous match
+
+[Main]
+Extension=o
+
+[Colors]
+Default  =d, $000000
+Comments =c, $808080
+Strings  =s, $A000A0
+Keywords =k, $A00000
+Numbers  =n, $005000
+Extra    =x, $8080FF
+Symbols  =z, $008040
+Id       =i, $0000FF
+Special  =p, $00AFAF
+Help     =h, $208020
+Vars     =v, $FF8000
+Pars     =w, $FF0080
+Consts   =t, $00A000
+
+[Sections]
+Main      =      "^(\[main\](.*?))(\n\[|\Z)",msc
+Property  =  "^(\[property\](.*?))(\n\[|\Z)",msc
+Property  =       "^(\[map\](.*?))(\n\[|\Z)",msc
+Input     =     "^(\[input\](.*?))(\n\[|\Z)",msc
+Output    =    "^(\[output\](.*?))(\n\[|\Z)",msc
+InputPars = "^(\[inputpars\](.*?))(\n\[|\Z)",msc
+OutputPars="^(\[outputpars\](.*?))(\n\[|\Z)",msc
+Uses      =      "^(\[uses\](.*?))(\n\[|\Z)",msc
+Code      =      "^(\[code\](.*?))(\n\[|\Z)",msc
+Code      =    "^(\[global\](.*?))(\n\[|\Z)",msc
+Code      =  "^(\[template\](.*?))(\n\[|\Z)",msc
+Code      =    "^(\[prefix\](.*?))(\n\[|\Z)",msc
+Code      =   "^(\[postfix\](.*?))(\n\[|\Z)",msc
+Help      =      "^(\[help\](.*?))(\n\[|\Z)",msc
+
+[Regex.Code]
+SectionId       = "\A(\[\w+\])$",i,m
+CommentLine     = "(\/\/.*)",c
+CommentBlock    = "(\/\*.*\*\/)",c,msu
+MacroBlock      = "(^\<\w+\^?\*?\>)",x,m
+TemplateBlock   = "(^\$\w+(\.\w+)?$)",x,m
+MacroExpression1= "(\<\?[!]?\w+\>)",c,u
+#MacroExpressionV= "\<\?[!]?\w+=(.+)\>",s,mu
+MacroExpression2= "(\<\?[!]?\w+=.+\>)",c,mu
+MacroExpression3= "(\<\~\>)",c
+MacroExpression4= "(\<\/\>)",c
+Defines         = "(\#\w+)",x
+MacroVars       = "(@\w+)",v
+MacroPars       = "(\$\w+)",w
+Strings         = "(\".*\")",s,u
+Numbers         = "\W(\d+)",n
+Keywords        = "\b(input|new|delete|this|class|public|private|virtual|static|break|case|continue|default|datetime|else|extern|false|for|if|null|return|sizeof|switch|true|while|void|bool|char|double|int|string|struct|enum)\b",k
+ExtraWords      = "\b(GetPointer|CheckPointer|Sleep|ArraySize|ArrayResize|Alert|RefreshRates|Bars|Time|High|Low|Open|Close|Volume|start|init|deinit|Symbol|Point|MathMax|fmax|MathMin|fmin|MathAbs|fabs|iMAOnArray|ArraySetAsSeries|Print|iBars|iBarShift|iHigh|iLow|iOpen|iClose|iVolume|ObjectCreate|ObjectDelete|ObjectSet|ObjectSetText|ObjectGet|MathTan|MathArctan|MathSqrt|sqrt|MathLog|MathPow|MathSin|MathCos|MathExp|MathMod|SetIndexBuffer|SetIndexStyle|SetIndexEmptyValue|SetIndexArrow|SetIndexDrawBegin|SetIndexLabel|SetIndexShift|ArrayMinimum|ArrayMaximum|ArrayCopy|ArrayInitialize|TimeDayOfWeek|FileWriteArray||GetLastError|FileOpen|FileSeek|FileClose|FileReadArray|FileReadInteger|IndicatorBuffers|IndicatorShortName|IndicatorCounted|TimeCurrent|TimeToStr|ArrayBsearch|TimeHour|OrderSelect|OrderCloseTime|OrderClose|NormalizeDouble|Ask|Bid|Digits|OrderSend|OrderType|OrderStopLoss|OrderTakeProfit|OrderOpenPrice|OrderModify|OrderTicket|OrdersTotal|Period)\b",k
+Consts          = "\b(MODE_SMA|OBJ_TREND|OBJPROP_COLOR|OBJ_TEXT|OBJPROP_RAY|OBJPROP_BACK|OBJPROP_WIDTH|OBJPROP_ANCHOR|OBJ_RECTANGLE|OBJ_VLINE|SEEK_END|TIME_DATE|TIME_MINUTES|SELECT_BY_TICKET|NULL|OP_BUY|OP_SELL|OP_BUYLIMIT|OP_SELLLIMIT|OP_SELLSTOP|OP_BUYSTOP|SELECT_BY_POS|MODE_TRADES|OBJPROP_TIME1|OBJPROP_TIME2|OBJPROP_PRICE1|OBJPROP_PRICE2|POINTER_INVALID|POINTER_DYNAMIC|POINTER_AUTOMATIC)\b",t
+Symbols         = "([][+*/&%=,.;:<>()|-])",z
+
+[Regex.Uses]
+SectionId
+FullText        = "\s+\n(.+)",d,ms
+
+[Regex.Help]
+SectionId
+FullText        = "\s+\n(.+)",h,ms
+
+[Regex.Main]
+SectionId
+Comments        = "^(\#.+)$",c,m
+Modifier        = "^(\w+)$",p,m
+Captions        = "^(name|title|group|size)\=",x,mc
+Values          = "\=(.+)$",s,m
+
+[Regex.Property]
+SectionId
+Comments
+Property        = "^(\w+)\=",k,m
+Types           = "\=(f|d|s|t|n)(\,|$)",p,m
+ValuesP         = "\=.*?[,]([+-]?\d+[.]?(\d*))",n,c
+Description     = "\=.*?[,].*?[,](.+)$",h,mc
+
+[Regex.Input]
+SectionId
+Comments
+Property
+TypesI          = "\=(\w+)",p
+Description     = "\=\s*[,](.+?)[,]?$",h,mc
+
+[Regex.Output]
+SectionId
+Comments
+Property
+TypesI
+MacroExpression1
+MacroExpression2
+MacroExpression3
+MacroExpression4
+MacroVars
+MacroPars
+Symbols
+
+[Regex.InputPars]
+SectionId
+Comments
+FullTextI       = "\s+\n(.+)",w,ms
+
+[Regex.OutputPars]
+SectionId
+Comments
+Property
+MacroExpression1
+MacroExpression2
+MacroExpression3
+MacroExpression4
+MacroVars
+MacroPars
+Symbols

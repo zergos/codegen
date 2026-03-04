@@ -1,0 +1,62 @@
+[Main]
+Name=TASigFractals
+Title=EA Сигнал "Фрактал"
+Group=ТА
+
+[Property]
+Bars=n,7,кол-во баров для поиска экстремума
+BarsR=n,7
+SigMode=t,,сигнал для советника
+Strict=t,,строгое сравнение
+
+[Input]
+high=row
+low=row
+
+[Output]
+up=row,@up
+down=row,@down
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?SigMode>int<~>double</> @up[];
+<?SigMode>int<~>double</> @down[];
+
+<lines>
+  ArrayInit(@up, $Size);
+  CheckShift(@up);
+  ArrayInit(@down, $Size);
+  CheckShift(@down);
+  
+  for (int i=MathMax($Bars+$BarsR, $Start); i<$Size; i++)
+  {
+    bool check = true;
+    double price = $low[i-$BarsR];
+    for (int k=i-$Bars-$BarsR; k<=i; k++)
+      <?Strict>if ($low[k]<=price)<~>if (k!=i-$BarsR && $low[k]<price)</>
+      {
+        check = false;
+        break;
+      }
+    if (check)
+      <?!SigMode>@down[i-$BarsR] = $low[i-$BarsR];<~>@down[i] = $BarsR+1;</>
+    
+    check = true;
+    price = $high[i-$BarsR];
+    for (int k=i-$Bars-$BarsR; k<=i; k++)
+      <?Strict>if ($high[k]>=price)<~>if (k!=i-$BarsR && $high[k]>price)</>
+      {
+        check = false;
+        break;
+      }
+    if (check)
+      <?!SigMode>@up[i-$BarsR] = $high[i-$BarsR];<~>@up[i] = $BarsR+1;</>
+  }
+  
+[Help]
+Сигнал для ТА по фракталам.
+

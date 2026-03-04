@@ -1,0 +1,51 @@
+[Main]
+# Accumulation/Distribution
+Title=A/D
+Group=Алгоритмы (тех)
+Name=AD
+
+[Input]
+Open=row
+Close=row
+High=row
+Low=row
+Volume=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<init>
+  ArrayInit($out, $Size);
+
+<lines>
+  for(int @i=0; @i<$Size; @i++)
+    {
+     double @high =$High[@i];
+     double @low  =$Low[@i];
+     double @open =$Open[@i];
+     double @close=$Close[@i];
+
+     $out[@i]=(@close-@low)-(@high-@close);
+     if($out[@i]!=0)
+       {
+        double @diff=@high-@low;
+        if(0==@diff)
+           $out[@i]=0;
+        else
+          {
+           $out[@i]/=@diff;
+           $out[@i]*=$Volume[@i];
+          }
+       }
+     if(@i>0) $out[@i]+=$out[@i-1];
+    }
+
+[Help]
+Индикатор Накопления/Распределения (Accumulation/Distribution)

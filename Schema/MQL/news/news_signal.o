@@ -1,0 +1,58 @@
+[Main]
+Name=NewsSignal
+Title=Периоды новостей
+Group=Новости
+
+[Property]
+TimeShift=n,3600,сдвиг текущего времени от времени терминала
+Importance=n,0,фильтр важности новостей (0-3)
+Corridor=n,60,количество минут до и после выхода новости
+
+[Input]
+time=row
+
+[Output]
+sig=n
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $sig[];
+datetime @last_news, @prev_news;
+int @lapse;
+
+<lines>
+  ArrayInit($sig, $Size);
+  CheckShift($sig);
+  
+  if ($Start==0)
+  {
+    @last_news = 0;
+    @prev_news = 0;
+    @lapse = -1;
+  }
+  
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    if (@lapse<0 || @last_news<$time[@i])
+    {
+      if ($time[@i]<D'2015.03.30 0:00:00')
+        @lapse = NewsTimeLapse($time[@i]+3600+$TimeShift, Symbol(), $Importance);
+      else
+        @lapse = NewsTimeLapse($time[@i]+$TimeShift, Symbol(), $Importance);
+      @prev_news = @last_news;
+      @last_news = $time[@i]+@lapse;
+    }
+    if (@last_news-$Corridor*60<=$time[@i] || $time[@i]<=@prev_news+$Corridor*60)
+      $sig[@i] = 1;
+    else
+      $sig[@i] = 0;
+  }
+  
+[Help]
+Генерирует сигнал наличия области новостей:\\
+1 - новость присутствует\\
+0 - отсутствует

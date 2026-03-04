@@ -1,0 +1,1550 @@
+[Main]
+Choice
+Name=OrderHub
+Title=Хаб
+Group=Сделки
+
+[Property]
+Slippage=n,3,проскальзывание
+LotsPerThousand=f,1,пропорция лот на тысячу баланса
+NormMode=n,0,режим нормирования лота 0 - к балансу\, 1 - с учётом сделок\, 2 - с учётом маржи
+BalanceFit=t,,неснижаемый баланс
+NormFloor=t,,округлять ордер в нижнюю сторону
+ThreadsCount=t,1,количество параллельных запусков
+MaxThreadsCount=n,1,максимальное количество потоков
+ThreadSleep=n,_Period,расстояние в минутах до добавления новой потока
+OrdersControl=t,,расширенное управление контролем ордеров (для реальной работы)
+XLots=t,,расширенное управление лотностью ордеров
+ClosedFirst=t,,сначала обрабатывать новые потоки
+WriteLog=t,,писать лог работы в hub.log (только при отладке)
+ForceDeferred=t,,принудительное открытие отложенников при раннем пробитии уровня цены
+SmartDeferred=t,,менять режим отложенника при раннем проходе цены
+UseSpread=n,,учитывать для отложенников и стоп-уровней спред (1 - текущий\, 2 - средний)
+MaxSpread=n,20,максимальый спред
+SpreadTicks=n,60,количество тиков для расчёта спреда
+
+[Output]
+initial=c
+active=c
+opened=c
+closed=c
+error=c
+threads=c
+
+[InputPars]
+Trace
+Sync
+
+[OutputPars]
+Threads=@threads
+ThreadRepeat=@thread_repeat
+ThreadType=C$name
+
+[Global]
+<gvars>
+#include "hub.mqh"
+
+<attach>
+=hub.mqh
+#define opLIMIT(cmd) (cmd==OP_BUYLIMIT || cmd==OP_SELLLIMIT)
+#define opSTOP(cmd) (cmd==OP_BUYSTOP || cmd==OP_SELLSTOP)
+#define opBUY(cmd) (cmd==OP_BUY || cmd==OP_BUYSTOP || cmd==OP_BUYLIMIT || cmd==OP_VBUYSTOP || cmd==OP_VBUYLIMIT)
+#define opSELL(cmd) (cmd==OP_SELL || cmd==OP_SELLSTOP || cmd==OP_SELLLIMIT || cmd==OP_VSELLSTOP || cmd==OP_VSELLLIMIT)
+#define opVIRTUAL(cmd) (cmd==OP_VSELLSTOP || cmd==OP_VBUYSTOP || cmd==OP_VSELLLIMIT || cmd==OP_VBUYLIMIT || cmd==OP_VCLOSE)
+#define opMARKET(cmd) (cmd==OP_BUY || cmd==OP_SELL)
+#define opDEFER(cmd) (cmd==OP_BUYSTOP || cmd==OP_SELLSTOP || cmd==OP_BUYLIMIT || cmd==OP_SELLLIMIT)
+#define opREAL(cmd) (opMARKET(cmd) || opDEFER(cmd))
+
+enum specialCmd
+{
+  OP_VIRTUAL = 10,
+  OP_VBUYLIMIT = 11,
+  OP_VSELLLIMIT = 12,
+  OP_VBUYSTOP = 13,
+  OP_VSELLSTOP = 14,
+  OP_VCLOSE = 15
+};
+
+enum hubState
+{
+  HUB_CLOSED = 0,
+  HUB_TAIL = 1,
+  HUB_INITIAL = 2,
+  HUB_ACTIVE = 3
+};
+
+<?debug>
+<?WriteLog>int log_file;</>
+</>
+string hubStateNames[] = {"ОЖИДАНИЕ","ОТЛОЖЕН","ВХОД","АКТИВЕН"};
+string cmdNames[] = {"BUY", "SELL", "BUY LIMIT", "SELL LIMIT", "BUY STOP", "SELL STOP", "BALANCE", "", "", "", "VIRTUAL", "VBUYLIMIT", "VSELLLIMIT", "VBUYSTOP", "VSELLSTOP"};
+double min_lot;
+<?UseSpread=2>
+double sum_spread=0;
+int n_spread=1;
+</>
+<?BalanceFit>
+double MaxBalance;
+</>
+
+enum deferredType
+{
+  DT_STOP=1,
+  DT_LIMIT=2
+};
+
+struct order_hub
+{
+  int ticket;
+  int cmd;
+  double price;
+  double lots;
+  int sl, tp; // stop/take in points
+  double fsl, ftp; //fact stop/take
+  hubState state;
+  datetime expire;
+  datetime late_stops;
+  datetime time_stamp;
+  bool signal;
+  <?XLots>
+  int linked;
+  bool primary;
+  </>
+};
+
+double MarketLot(double lot)
+{
+  <?LotsPerThousand>
+    <?BalanceFit>
+    MaxBalance = fmax(MaxBalance,
+      <?NormMode=0>AccountBalance()</>
+      <?NormMode=1>AccountEquity()</>
+      <?NormMode=2>AccountFreeMargin()</>
+      );
+    return MathMax(min_lot, <?NormFloor>floor<~>round</>(lot*$LotsPerThousand*MaxBalance/1000/min_lot)*min_lot);
+    <~>
+    return MathMax(min_lot, <?NormFloor>floor<~>round</>(lot*$LotsPerThousand*
+      <?NormMode=0>AccountBalance()</>
+      <?NormMode=1>AccountEquity()</>
+      <?NormMode=2>AccountFreeMargin()</>
+      /1000/min_lot)*min_lot);
+    </>
+  <~>
+    return MathMax(min_lot, <?NormFloor>floor<~>round</>(lot/min_lot)*min_lot);
+  </>
+}
+  
+double MarketLot0(double lot)
+{
+  <?LotsPerThousand>
+    <?BalanceFit>
+    MaxBalance = fmax(MaxBalance,
+      <?NormMode=0>AccountBalance()</>
+      <?NormMode=1>AccountEquity()</>
+      <?NormMode=2>AccountFreeMargin()</>
+      );
+    return floor(lot*$LotsPerThousand*MaxBalance/1000/min_lot)*min_lot;
+    <~>
+    return floor(lot*$LotsPerThousand*
+      <?NormMode=0>AccountBalance()</>
+      <?NormMode=1>AccountEquity()</>
+      <?NormMode=2>AccountFreeMargin()</>
+      /1000/min_lot)*min_lot;
+    </>
+  <~>
+    return MathMax(lot,min_lot);
+  </>
+}
+double norm(double price)
+{
+  return NormalizeDouble(price, Digits());
+}
+  
+double normlot(double lot)
+{
+  return MathMax(min_lot, round(lot/min_lot)*min_lot);
+}
+
+double ceillot(double lot)
+{
+  return MathMax(min_lot, ceil(lot/min_lot)*min_lot);
+}
+
+double Spread()
+{
+  <?!UseSpread>
+  return 0;
+  </>
+  <?UseSpread=1>
+  return <?!MaxSpread>Ask-Bid<~>MathMin(Ask-Bid, $MaxSpread)</>;
+  </>
+  <?UseSpread=2>
+  return sum_spread/n_spread;
+  </>
+}
+  
+class CHubThread
+{
+public:
+  int thread_index;
+  bool active;
+  order_hub hub[];
+  int Slippage;
+  hubState hub_state;
+  string state_mark;
+  datetime last_state_changed;
+  int initial, last_order;
+  bool hub_activated, hub_repeat;
+  bool order_error;
+  double trend;
+  bool stop_thread;
+  int pins[];
+  <?debug><?WriteLog>int log_file;</></>
+    
+<?debug>
+  void add_log(string message)
+  {
+    <?WriteLog>FileWrite(log_file, TimeToStr(CurTime()), message, "ПОТОК:"+thread_index, "СОСТОЯНИЕ:"+hubStateNames[hub_state]," ",trend!=0?(trend>0?"+":"-"):"");
+    FileFlush(log_file);</>
+    Print(message+", ПОТОК:"+thread_index+", СОСТОЯНИЕ:"+hubStateNames[hub_state]," ",state_mark," ",trend!=0?(trend>0?"+":"-"):"");
+  }
+</>
+
+  int HubFreeIndex()
+  {
+    int i;
+    bool found = false;
+    for (i=0; i<ArraySize(hub); i++)
+      if (hub[i].state == HUB_CLOSED)
+      {
+        found = true;
+        break;
+      }
+        
+    if (!found)
+    {
+      i = ArraySize(hub);
+      ArrayResize(hub, i+1);
+    }
+    
+    hub[i].time_stamp = CurTime();
+    hub[i].ticket = -1;
+    hub[i].cmd = -1;
+    hub[i].price = 0;
+    hub[i].lots = 0;
+    hub[i].sl = 0;
+    hub[i].tp = 0;
+    hub[i].fsl = 0;
+    hub[i].ftp = 0;
+    hub[i].state = HUB_CLOSED;
+    hub[i].expire = 0;
+    hub[i].signal = false;
+    <?XLots>
+    hub[i].primary = true;
+    hub[i].linked = -1;
+    </>
+    
+    return (i);
+  }
+  
+  int GetPin()
+  {
+    for (int i=0; i<ArraySize(pins); i++)
+      if (pins[i]==-1 || (pins[i]>=0 && hub[pins[i]].state == HUB_CLOSED))
+      {
+        pins[i] = -2;
+        return i;
+      }
+    ArrayResize(pins, ArraySize(pins)+1);
+    pins[ArraySize(pins)-1] = -2;
+    return ArraySize(pins)-1;
+  }
+
+  int getLastTicket()
+  {
+    if (OrderSelect(OrdersTotal()-1, SELECT_BY_POS, MODE_TRADES))
+      return OrderTicket();
+    else
+      return -1;
+  }
+
+  <?OrdersControl>
+  bool ProcessError(int error)
+  {
+    switch (error)
+    {
+      case 4:
+        Print("Торговый сервер занят. Пробуем ещё раз...");
+        Sleep(3000);
+        return true;
+      case 6:
+        Print("Нет связи с торговым сервером. Попробуем снова...");
+        Sleep(3000);
+        return true;
+      case 128:
+        Print("Истёк срок ожидания сделки. Пробуем снова...");
+        return true;
+      case 129:Print("Неправильная цена. Пробуем ещё раз...");
+        RefreshRates();
+        return true;
+      case 135:Print("Цена изменилась. Пробуем ещё раз..");
+        RefreshRates();
+        return true;
+      case 136:Print("Нет цен. Ждём новый тик..");
+        while(RefreshRates()==false)
+          Sleep(1000);
+        return true;
+      case 137:Print("Брокер занят. Пробуем ещё раз..");
+        Sleep(3000);
+        return true;
+      case 138:Print("Поступили новые цены. Повторяем...");
+        RefreshRates();
+        return true;
+      case 146:Print("Подсистема торговли занята. Пробуем ещё..");
+        Sleep(500);
+        return true;
+         
+      // Критические ошибки
+      case  2: Print("Общая ошибка. Повторная попытка...");
+        Sleep(500);
+        return true;
+      case  5: Print("Старая версия терминала.");
+        Work=false;
+        return false;
+      case 64: Print("Счет заблокирован.");
+        Work=false;
+        return false;
+      case 130:Print("Неверные уровни SL/TP");
+        return false;
+      case 131:Print("Неправильный объём");
+        return false;      
+      case 133:Print("Торговля запрещена.");
+        return false;
+      case 134:Print("Недостаточно денег для совершения операции.");
+        return false;
+      case 4109: Print("Разрешите советнику торговать :(");
+        Work = false;
+        return false;
+      default: Print("Возникла ошибка ",error); // Другие варианты   
+        return false;
+    }
+  }
+  
+  int OrderSend2(int cmd, double lots, double &price, double sl, double tp)
+  {
+    int ticket = -1;
+    if (AccountFreeMarginCheck(Symbol(), cmd, lots)<=0)
+    {
+      Print("Недостаточно средств для открытия ордера");
+    }
+    else
+    if (cmd == OP_BUY)
+    {
+      price = Ask;
+      ticket = OrderSend(Symbol(), OP_BUY, lots, price, Slippage, sl, tp, "", MAGIC);
+      while (ticket<0 && ProcessError(GetLastError()))
+      {
+        price = Ask;
+        ticket = OrderSend(Symbol(), OP_BUY, lots, price, Slippage, sl, tp, "", MAGIC);
+      }
+    }
+    else if (cmd == OP_SELL)
+    {
+      price = Bid;
+      ticket = OrderSend(Symbol(), OP_SELL, lots, price, Slippage, sl, tp, "", MAGIC);
+      while (ticket<0 && ProcessError(GetLastError()))
+      {
+        price = Bid;
+        ticket = OrderSend(Symbol(), OP_SELL, lots, price, Slippage, sl, tp, "", MAGIC);
+      }
+    }
+    else
+    {
+      ticket = OrderSend(Symbol(), cmd, lots, price, Slippage, sl, tp, "", MAGIC);
+      while (ticket<0 && ProcessError(GetLastError()))
+        ticket = OrderSend(Symbol(), cmd, lots, price, Slippage, sl, tp, "", MAGIC);
+    }
+    //if (ticket<0) order_error = true;
+    return ticket;
+  }
+
+  bool OrderClose2(int idx, int cmd, double lots)
+  {
+    bool res = false;
+    if (cmd == OP_BUY)
+    {
+      double price = Bid;
+      res = OrderClose(hub[idx].ticket, lots, price, Slippage);
+      while (!res && ProcessError(GetLastError()))
+      {
+        price = Bid;
+        res = OrderClose(hub[idx].ticket, lots, price, Slippage);
+      }
+    }
+    else if (cmd == OP_SELL)
+    {
+      double price = Ask;
+      res = OrderClose(hub[idx].ticket, lots, price, Slippage);
+      while (!res && ProcessError(GetLastError()))
+      {
+        price = Ask;
+        res = OrderClose(hub[idx].ticket, lots, price, Slippage);
+      }
+    }
+    return res;
+  }
+
+  int OrderSend3(int cmd, double lots, double price, double sl, double tp, string comment="") // для отложенных
+  {
+    int ticket = OrderSend(Symbol(), cmd, lots, price, Slippage, sl, tp, comment, MAGIC);
+    <?ForceDeferred>
+      if (GetLastError()=130)
+        if (cmd == OP_BUYSTOP || cmd == OP_SELLLIMIT)
+        {
+          double level = MarketInfo(Symbol(), MODE_STOPLEVEL);          
+          if (price<Ask+level) price = Ask+level;
+        }
+        else if (cmd == OP_SELLSTOP || cmd == OP_BUYLIMIT)
+        {
+          double level = MarketInfo(Symbol(), MODE_STOPLEVEL);          
+          if (price>Bid-level) price = Bid-level;
+        }
+    </>
+    while (ticket<0 && ProcessError(GetLastError()))
+      ticket = OrderSend(Symbol(), cmd, lots, price, Slippage, sl, tp, comment, MAGIC);
+    return ticket;
+  }
+  </>
+
+  int OrderDeferred(double price, deferredType type, double lots, int sl, int tp, int expire, hubState state, bool byMarket = true, string comment="")
+  {
+    int i = HubFreeIndex();
+    hub[i].lots = byMarket?MarketLot(lots):normlot(lots);
+    hub[i].sl = sl;
+    hub[i].tp = tp;
+    hub[i].fsl = 0;
+    hub[i].ftp = 0;
+    hub[i].expire = expire==0?0:CurTime()+expire*60;
+    
+    if (type == DT_STOP)
+    {
+      if (price>=Ask)
+      {
+        hub[i].price = norm(price)+Spread();
+        hub[i].fsl = sl==0?0:price-sl*Point;
+        hub[i].ftp = tp==0?0:price+tp*Point;
+        <?debug>add_log("отложенник BUY STOP по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_BUYSTOP, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);
+        <~>
+        hub[i].ticket = OrderSend3(OP_BUYSTOP, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VBUYSTOP;
+        else hub[i].cmd = OP_BUYSTOP;
+      }
+      else
+      {
+        hub[i].price = norm(price);
+        hub[i].fsl = sl==0?0:price+sl*Point+Spread();
+        hub[i].ftp = tp==0?0:price-tp*Point+Spread();
+        <?debug>add_log("отложенник SELL STOP по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_SELLSTOP, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);
+        <~>
+        hub[i].ticket = OrderSend3(OP_SELLSTOP, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VSELLSTOP;
+        else hub[i].cmd = OP_SELLSTOP;
+      }
+    }
+    else if (type == DT_LIMIT)
+    {
+      if (price>=Ask)
+      {
+        hub[i].price = norm(price);
+        hub[i].fsl = sl==0?0:price+sl*Point+Spread();
+        hub[i].ftp = tp==0?0:price-tp*Point+Spread();
+        <?debug>add_log("отложенник SELL LIMIT по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_SELLLIMIT, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);//, hub[i].expire);
+        <~>
+        hub[i].ticket = OrderSend3(OP_SELLLIMIT, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);//, hub[i].expire);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VSELLLIMIT;
+        else hub[i].cmd = OP_SELLLIMIT;
+      }
+      else
+      {
+        hub[i].price = norm(price)+Spread();
+        hub[i].fsl = sl==0?0:price-sl*Point;
+        hub[i].ftp = tp==0?0:price+tp*Point;
+        <?debug>add_log("отложенник BUY LIMIT по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_BUYLIMIT, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);//, hub[i].expire);
+        <~>
+        hub[i].ticket = OrderSend3(OP_BUYLIMIT, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);//, hub[i].expire);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VBUYLIMIT;
+        else hub[i].cmd = OP_BUYLIMIT;
+      }
+    }
+    
+    if (hub[i].ticket>=0)
+    {
+      hub[i].state = state;
+      if (hub_state<state)
+      {
+        hub_state = state;
+        hub_activated = true;
+        <?debug>add_log("состояние изменилось");</>
+      }
+    }
+  
+    return (i);
+  }
+
+  int OrderDeferred(double price, deferredType type, double lots, double sl, double tp, int expire, hubState state, bool byMarket = true, string comment="")
+  {
+    int i = HubFreeIndex();
+    hub[i].lots = normlot(byMarket?MarketLot(lots):lots);
+    hub[i].expire = expire==0?0:CurTime()+expire*60;
+    hub[i].state = state;
+  
+    <?SmartDeferred>
+    if (tp!=0 && sl!=0)
+      if (type == DT_STOP)
+      {
+        if ((price>=Ask && tp<sl) || (price<=Bid && tp>sl)) type = DT_LIMIT;
+      }
+      else
+        if ((price>=Ask && tp>sl) || (price<=Bid && tp<sl)) type = DT_STOP;
+    </>
+  
+    if (type == DT_STOP)
+    {
+      if (price>=Ask)
+      {
+        hub[i].price = norm(price)+Spread();
+        hub[i].fsl = norm(sl);
+        hub[i].ftp = norm(tp);
+        <?debug>add_log("отложенник BUY STOP по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots+" "+comment);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_BUYSTOP, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);
+        <~>
+        hub[i].ticket = OrderSend3(OP_BUYSTOP, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VBUYSTOP;
+        else hub[i].cmd = OP_BUYSTOP;
+      }
+      else
+      {
+        hub[i].price = norm(price);
+        hub[i].fsl = sl==0?0:norm(sl)+Spread();
+        hub[i].ftp = tp==0?0:norm(tp)+Spread();
+        <?debug>add_log("отложенник SELL STOP по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots+" "+comment);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_SELLSTOP, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);
+        <~>
+        hub[i].ticket = OrderSend3(OP_SELLSTOP, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VSELLSTOP;
+        else hub[i].cmd = OP_SELLSTOP;
+      }
+    }
+    else if (type == DT_LIMIT)
+    {
+      if (price>=Ask)
+      {
+        hub[i].price = norm(price);
+        hub[i].fsl = sl==0?0:norm(sl)+Spread();
+        hub[i].ftp = tp==0?0:norm(tp)+Spread();
+        <?debug>add_log("отложенник SELL LIMIT по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots+" "+comment);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_SELLLIMIT, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);
+        <~>
+        hub[i].ticket = OrderSend3(OP_SELLLIMIT, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VSELLLIMIT;
+        else hub[i].cmd = OP_SELLLIMIT;
+      }
+      else
+      {
+        hub[i].price = norm(price)+Spread();
+        hub[i].fsl = norm(sl);
+        hub[i].ftp = norm(tp);
+        <?debug>add_log("отложенник BUY LIMIT по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots+" "+comment);</>
+        <?!OrdersControl>
+        hub[i].ticket = OrderSend(Symbol(), OP_BUYLIMIT, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, comment, MAGIC);
+        <~>
+        hub[i].ticket = OrderSend3(OP_BUYLIMIT, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, comment);
+        </>
+        if (hub[i].ticket<0) hub[i].cmd = OP_VBUYLIMIT;
+        else hub[i].cmd = OP_BUYLIMIT;
+      }
+    }
+  
+    if (hub[i].ticket>=0)
+    {
+      hub[i].state = state;
+      if (hub_state<state)
+      {
+        hub_state = state;
+        hub_activated = true;
+        <?debug>add_log("состояние изменилось");</>
+      }
+    }
+    else
+      order_error = true;
+  
+    return (i);
+  }
+  
+  void OrderDeferred(int i)
+  {
+    <?debug>add_log("отложенник "+cmdNames[hub[i].cmd]+" по "+hub[i].price+" sl "+hub[i].fsl+" tp "+hub[i].ftp+" lots "+hub[i].lots);</>
+    <?!OrdersControl>
+    hub[i].ticket = OrderSend(Symbol(), hub[i].cmd, hub[i].lots, hub[i].price, Slippage, hub[i].fsl, hub[i].ftp, "corrected", MAGIC);
+    <~>
+    hub[i].ticket = OrderSend3(hub[i].cmd, hub[i].lots, hub[i].price, hub[i].fsl, hub[i].ftp, "corrected");
+    </>
+    if (hub[i].ticket<0) order_error = true;
+  }
+  
+  void OrderToMarket(int idx)
+  {
+    int cmd = hub[idx].cmd;
+    <?debug>add_log("ордер по рынку "+cmdNames[cmd]+" lots "+hub[idx].lots+" sl "+hub[idx].sl+" tp "+hub[idx].tp+" fsl "+hub[idx].fsl+" ftp "+hub[idx].ftp);</>
+    if (cmd == OP_VBUYSTOP || cmd == OP_VBUYLIMIT || cmd == OP_BUY)
+    {
+      hub[idx].fsl = hub[idx].fsl==0?(hub[idx].sl==0?0:Bid-hub[idx].sl*Point):norm(hub[idx].fsl);
+      hub[idx].ftp = hub[idx].ftp==0?(hub[idx].tp==0?0:Bid+hub[idx].tp*Point):norm(hub[idx].ftp);
+      <?!OrdersControl>
+      hub[idx].price = Ask;
+      hub[idx].ticket = OrderSend(Symbol(), OP_BUY, hub[idx].lots, hub[idx].price, Slippage, hub[idx].late_stops==0?hub[idx].fsl:0, hub[idx].ftp, "", MAGIC);
+      <~>
+      hub[idx].ticket = OrderSend2(OP_BUY, hub[idx].lots, hub[idx].price, hub[idx].late_stops==0?hub[idx].fsl:0, hub[idx].ftp);
+      </>
+      <?debug>add_log("тикет нового ордера "+hub[idx].ticket);</>
+      cmd = OP_BUY;
+    }
+    else if (cmd == OP_VSELLSTOP || cmd == OP_VSELLLIMIT || cmd == OP_SELL)
+    {
+      hub[idx].fsl = hub[idx].fsl==0?(hub[idx].sl==0?0:Ask+hub[idx].sl*Point+Spread()):norm(hub[idx].fsl)+Spread();
+      hub[idx].ftp = hub[idx].ftp==0?(hub[idx].tp==0?0:Ask-hub[idx].tp*Point+Spread()):norm(hub[idx].ftp)+Spread();
+      <?!OrdersControl>
+      hub[idx].price = Bid;
+      hub[idx].ticket = OrderSend(Symbol(), OP_SELL, hub[idx].lots, hub[idx].price, Slippage, hub[idx].late_stops==0?hub[idx].fsl:0, hub[idx].ftp, "", MAGIC);
+      <~>
+      hub[idx].ticket = OrderSend2(OP_SELL, hub[idx].lots, hub[idx].price, hub[idx].late_stops==0?hub[idx].fsl:0, hub[idx].ftp);
+      </>
+      <?debug>add_log("тикет нового ордера "+hub[idx].ticket);</>
+      cmd = OP_SELL;
+    }
+    if (hub[idx].ticket>=0)
+    {
+      hub[idx].cmd = cmd;
+      hub[idx].state = HUB_ACTIVE;
+      hub[idx].expire = 0;
+      if (hub_state != HUB_ACTIVE)
+      {
+        hub_state = HUB_ACTIVE;
+        hub_activated = true;
+        initial = idx;
+        <?debug>add_log("состояние изменилось");</>
+      }
+      last_order = idx;
+    }
+    else
+      order_error = true;
+  }
+  
+  void OrderUpdate(int idx)
+  {
+    int cmd = hub[idx].cmd;
+    switch (cmd)
+    {
+      case OP_BUYSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(hub[idx].ticket, SELECT_BY_TICKET) && (OrderOpenPrice()!=norm(hub[idx].price+Spread())
+        || OrderStopLoss()!=norm(hub[idx].fsl)
+        || OrderTakeProfit()!=norm(hub[idx].ftp)))
+        {
+          <?debug>add_log(StringFormat("обновление отложенника #%d цена %f с/л %f т/п %f", hub[idx].ticket, hub[idx].price+Spread(), hub[idx].fsl, hub[idx].ftp));</>
+          if (!OrderModify(hub[idx].ticket, hub[idx].price+Spread(), hub[idx].fsl, hub[idx].ftp, OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            order_error = true;
+          }
+        }
+        break;
+      case OP_SELLSTOP:
+      case OP_SELLLIMIT:
+        if (OrderSelect(hub[idx].ticket, SELECT_BY_TICKET) && (OrderOpenPrice()!=norm(hub[idx].price)
+        || OrderStopLoss()!=(hub[idx].fsl==0?0:norm(hub[idx].fsl)+Spread())
+        || OrderTakeProfit()!=(hub[idx].ftp==0?0:norm(hub[idx].ftp)+Spread())))
+        {
+          <?debug>add_log(StringFormat("обновление отложенника #%d цена %f с/л %f т/п %f", hub[idx].ticket, hub[idx].price, hub[idx].fsl==0?0:norm(hub[idx].fsl)+Spread(), hub[idx].ftp==0?0:norm(hub[idx].ftp)+Spread()));</>
+          if (!OrderModify(hub[idx].ticket, hub[idx].price, hub[idx].fsl==0?0:norm(hub[idx].fsl)+Spread(), hub[idx].ftp==0?0:norm(hub[idx].ftp)+Spread(), OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            order_error = true;
+          }
+        }
+        break;
+      case OP_BUY:
+        if (OrderSelect(hub[idx].ticket, SELECT_BY_TICKET) &&
+          (OrderStopLoss()!=norm(hub[idx].fsl)
+        || OrderTakeProfit()!=norm(hub[idx].ftp)))
+        {
+          <?debug>add_log(StringFormat("обновление стопов #%d с/л %f т/п %f", hub[idx].ticket, hub[idx].fsl, hub[idx].ftp));</>
+          if (!OrderModify(hub[idx].ticket, 0, hub[idx].fsl, hub[idx].ftp, OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            order_error = true;
+          }
+        }
+        break;
+      case OP_SELL:
+        if (OrderSelect(hub[idx].ticket, SELECT_BY_TICKET) &&
+          (OrderStopLoss()!=(hub[idx].fsl==0?0:norm(hub[idx].fsl)+Spread())
+        || OrderTakeProfit()!=(hub[idx].ftp==0?0:norm(hub[idx].ftp)+Spread())))
+        {
+          <?debug>add_log(StringFormat("обновление стопов #%d с/л %f т/п %f", hub[idx].ticket, hub[idx].fsl==0?0:norm(hub[idx].fsl)+Spread(), hub[idx].ftp==0?0:norm(hub[idx].ftp)+Spread()));</>
+          if (!OrderModify(hub[idx].ticket, 0, hub[idx].fsl==0?0:norm(hub[idx].fsl)+Spread(), hub[idx].ftp==0?0:norm(hub[idx].ftp)+Spread(), OrderExpiration()))
+          {
+            <?debug>add_log("ордер не изменён");<~>Print("ордер не изменён");</>
+            order_error = true;
+          }
+        }
+        break;
+    }
+  }
+  
+  void CloseDeferred(int idx)
+  {
+    <?debug>add_log("закрытие отложенника");</>
+    int cmd = hub[idx].cmd;
+    if (opVIRTUAL(cmd))
+      hub[idx].state = HUB_CLOSED;
+    else if (opDEFER(cmd))
+      if (OrderDelete(hub[idx].ticket))
+        hub[idx].state = HUB_CLOSED;
+    for (int k=0; k<ArraySize(pins); k++)
+      if (pins[k]==idx) pins[k] = -1;
+  }
+
+  double HubActiveProfit()
+  {
+    double @sum = 0;
+    for (int i=0; i<ArraySize(hub); i++)
+      if (hub[i].state == HUB_ACTIVE && OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+        @sum += OrderProfit();
+    <?debug2>
+    if (@sum>0)
+    {
+    Print("profit at ", Bid);
+    for (i=0; i<ArraySize(hub); i++)
+      if (hub[i].state == HUB_ACTIVE && OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+        Print("order ",hub[i].ticket," profit is ",OrderProfit());
+    }
+    </>
+    return (@sum);
+  }
+
+  double HubActivePoints()
+  {
+    double @sum = 0;
+    for (int i=0; i<ArraySize(hub); i++)
+      if (hub[i].state == HUB_ACTIVE && OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+        //if (OrderType() == OP_BUY)
+          @sum += (Bid-OrderOpenPrice())/Point*OrderLots()/min_lot;
+        //else if (OrderType() == OP_SELL)
+         // @sum += (Ask-OrderOpenPrice())/Point*OrderLots()/min_lot;
+    <?debug2>add_log("активных пунктов "+@sum);</>
+    return (@sum);
+  }
+  
+  double HubActiveLots()
+  {
+    double @sum = 0;
+    for (int i=0; i<ArraySize(hub); i++)
+      if (hub[i].state == HUB_ACTIVE && OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+        @sum += OrderLots();
+    return @sum;
+  }
+  
+  int HubOpenCount(int state=-1)
+  {
+    int res = 0;
+    for (int i=0; i<ArraySize(hub); i++)
+      if ((state==-1 && hub[i].state != HUB_CLOSED) || hub[i].state == state)
+        res++;
+    return res;
+  }
+
+  void <?!XLots>OrderForceClose<~>OrderForceClose1</>(int i, double lots=0)
+  {
+    lots = lots==0?hub[i].lots:normlot(lots);
+    <?debug>add_log("принудительное закрытие "+lots);</>
+    if (opDEFER(hub[i].cmd))
+    {
+      if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+        if (OrderDelete(hub[i].ticket))
+          hub[i].state = HUB_CLOSED;
+    }
+    else if (hub[i].cmd == OP_BUY)
+    {
+      if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+      <?OrdersControl>
+        if (OrderClose2(i, OP_BUY, lots))
+      <~>
+        if (OrderClose(hub[i].ticket, lots, Bid, Slippage))
+      </>
+        if (lots==hub[i].lots)
+          hub[i].state = HUB_CLOSED;
+        else
+        {
+          hub[i].lots -= lots;
+          hub[i].ticket = getLastTicket();
+          <?XLots>hub[i].time_stamp = CurTime();</>
+        }
+    }
+    else if (hub[i].cmd == OP_SELL)
+    {
+      if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+      <?OrdersControl>
+        if (OrderClose2(i, OP_SELL, lots))
+      <~>
+        if (OrderClose(hub[i].ticket, lots, Ask, Slippage))
+      </>
+        if (lots==hub[i].lots)
+          hub[i].state = HUB_CLOSED;
+        else
+        {
+          hub[i].lots -= lots;
+          hub[i].ticket = getLastTicket();
+        }
+    }
+    else // закрытие виртуальных
+      hub[i].state = HUB_CLOSED;
+      
+    if (hub[i].state == HUB_CLOSED)
+      for (int k=0; k<ArraySize(pins); k++)
+        if (pins[k]==i) pins[k] = -1;
+  }
+
+  <?XLots>
+  void OrderForceClose(int i, double lots=0)
+  {
+    <?debug>Print("сокращение ордера на ", lots);</>
+    if (lots==0)
+    {
+      int pos = i;
+      while (pos>=0)
+      {
+        OrderForceClose1(i);
+        pos = hub[pos].linked;
+      }
+    }
+    else
+    {
+      double rest = normlot(lots);
+      while (rest>0)
+      {
+        int prev = 0;
+        int cur = i;
+        while (hub[cur].linked>=0)
+        {
+          prev = cur;
+          cur = hub[cur].linked;
+        }
+        if (rest>=hub[cur].lots) // ордер требуется закрыть полностью
+        {
+          rest -= hub[cur].lots;
+          <?debug>Print("полное закрытие ордера ", hub[cur].lots, " остаток: ",rest);</>
+          OrderForceClose1(cur);
+          hub[prev].linked = -1;
+          hub[prev].time_stamp = CurTime();
+        }
+        else // закрыть частично
+        {
+          <?debug>Print("частичное закрытие на ", rest);</>
+          OrderForceClose1(cur, rest);
+          rest = 0;
+        }
+      }
+    }
+  }
+  </>
+  
+  void <?!XLots>OrderSetTP<~>OrderSetTP1</>(int i, int tp, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня tp "+tp+" для #"+hub[i].ticket+(only?" *":""));</>
+    int cmd = hub[i].cmd;
+    hub[i].tp = tp;
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_SELLLIMIT:
+        if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), only?0:OrderStopLoss(), Bid+tp*Point, OrderExpiration()))
+          <?debug>add_log("ошибка установки tp");<~>Print("ошибка установки tp");</>
+          else
+            hub[i].ftp = Bid+tp*Point;
+        break;
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), only?0:OrderStopLoss(), Ask-tp*Point, OrderExpiration()))
+          <?debug>add_log("ошибка установки tp");<~>Print("ошибка установки tp");</>
+          else
+            hub[i].ftp = Ask-tp*Point;
+    }
+  }
+  
+  <?XLots>
+  void OrderSetTP(int i, int tp, bool only=false)
+  {
+    int pos = i;
+    while (pos>=0)
+    {
+      OrderSetTP1(pos, tp, only);
+      pos = hub[pos].linked;
+    }
+  }
+  </>
+
+  void <?!XLots>OrderSetTP<~>OrderSetTP1</>(int i, double ftp, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня ftp "+ftp+" для #"+hub[i].ticket+(only?" *":""));</>
+    int cmd = hub[i].cmd;
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_SELLLIMIT:
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), only?0:OrderStopLoss(), ftp, OrderExpiration()))
+          <?debug>add_log("ошибка установки tp");<~>Print("ошибка установки tp");</>
+          else
+            hub[i].ftp = ftp;
+    }
+  }
+
+  <?XLots>
+  void OrderSetTP(int i, double ftp, bool only=false)
+  {
+    int pos = i;
+    while (pos>=0)
+    {
+      OrderSetTP1(pos, ftp, only);
+      pos = hub[pos].linked;
+    }
+  }
+  </>
+  
+  void <?!XLots>OrderSetSL<~>OrderSetSL1</>(int i, int sl, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня sl "+sl+" для #"+hub[i].ticket+(only?" *":""));</>
+    int cmd = hub[i].cmd;
+    hub[i].sl = sl;
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_SELLLIMIT:
+        if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), Bid-sl*Point, only?0:OrderTakeProfit(), OrderExpiration()))
+          <?debug>add_log("ошибка установки sl");<~>Print("ошибка установки sl");</>
+          else
+            hub[i].fsl = Bid-sl*Point;
+        break;
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), Ask+sl*Point, only?0:OrderTakeProfit(), OrderExpiration()))
+          <?debug>add_log("ошибка установки sl");<~>Print("ошибка установки sl");</>
+          else
+            hub[i].fsl = Ask+sl*Point;
+    }
+  }
+  
+  <?XLots>
+  void OrderSetSL(int i, int sl, bool only=false)
+  {
+    int pos = i;
+    while (pos>=0)
+    {
+      OrderSetSL1(pos, sl, only);
+      pos = hub[pos].linked;
+    }
+  }
+  </>
+
+  void <?!XLots>OrderSetSL<~>OrderSetSL1</>(int i, double fsl, bool only=false)
+  {
+    <?debug>add_log("установка нового уровня fsl "+fsl+" для #"+hub[i].ticket+(only?" *":""));</>
+    int cmd = hub[i].cmd;
+    switch (cmd)
+    {
+      case OP_BUY:
+      case OP_BUYSTOP:
+      case OP_SELLLIMIT:
+      case OP_SELL:
+      case OP_SELLSTOP:
+      case OP_BUYLIMIT:
+        if (OrderSelect(hub[i].ticket, SELECT_BY_TICKET))
+          if (!OrderModify(OrderTicket(), OrderOpenPrice(), fsl, only?0:OrderTakeProfit(), OrderExpiration()))
+          <?debug>add_log("ошибка установки sl");<~>Print("ошибка установки sl");</>
+          else
+            hub[i].fsl = fsl;
+    }
+  }
+  
+  <?XLots>
+  void OrderSetSL(int i, double fsl, bool only=false)
+  {
+    int pos = i;
+    while (pos>=0)
+    {
+      OrderSetSL1(pos, fsl, only);
+      pos = hub[pos].linked;
+    }
+  }
+  </>
+  
+  void OrderSetStop(int i, double level, bool only=false)
+  {
+    int cmd = hub[i].cmd;
+    switch (cmd)
+    {
+      case OP_BUY:
+        if (level>=Ask)
+          OrderSetTP(i, level, only);
+        else
+          OrderSetSL(i, level, only);
+        break;
+        
+      case OP_BUYSTOP:
+      case OP_BUYLIMIT:
+        if (level>=hub[i].price)
+          OrderSetTP(i, level, only);
+        else
+          OrderSetSL(i, level, only);
+        break;
+          
+      case OP_SELL:
+        if (level<=Bid)
+          OrderSetTP(i, level, only);
+        else
+          OrderSetSL(i, level, only);
+        break;
+          
+      case OP_SELLSTOP:
+      case OP_SELLLIMIT:
+        if (level<=hub[i].price)
+          OrderSetTP(i, level, only);
+        else
+          OrderSetSL(i, level, only);
+    }
+  }
+  
+  CHubThread()
+  {
+    hub_state = HUB_CLOSED;
+    active = false;
+    hub_activated = true;
+    thread_index = 0;
+    <?debug2>Print("мин. лот: ",min_lot);</>
+    order_error = false;
+    trend = 0;
+    stop_thread = false;
+  }
+};
+
+<init>
+  min_lot = MathMax(MarketInfo(Symbol(), MODE_MINLOT), 0.01);
+  
+<lines>
+  <?UseSpread=2>
+  if (n_spread==$SpreadTicks)
+    sum_spread = sum_spread*($SpreadTicks-1)/$SpreadTicks;
+  else
+    n_spread++;
+  sum_spread += Ask-Bid;
+  </>
+
+<sync>
+  <?BalanceFit>
+  sync("MaxBalance", MaxBalance);
+  </>
+  
+[Code]
+<gvars>
+$threads.gvars
+$threads.procs
+
+class C$name : public CHubThread
+{
+public:
+    
+$initial.gvars
+$active.gvars
+$opened.gvars
+$closed.gvars
+
+$initial.procs
+$active.procs
+$opened.procs
+$closed.procs
+$hubprocs
+
+  C$name() : CHubThread()
+  {
+$hub_init
+  }
+    
+  ~C$name()
+  {
+$initial.deinit
+$active.deinit
+$opened.deinit
+$closed.deinit
+  }
+    
+  int process()
+  {
+    <?debug>//add_log("process thread #"+thread_index);</>
+    
+    // обновление информации по отложенным и закрытым ордерам
+    bool @check_closed_state = false;
+    for (int i=0; i<ArraySize(hub); i++)
+    {
+      if (hub[i].state==HUB_CLOSED) continue;
+      if (!OrderSelect(hub[i].ticket, SELECT_BY_TICKET) || OrderCloseTime()!=0)
+      {
+        hub[i].state = HUB_CLOSED;
+        @check_closed_state = true;
+        <?debug>add_log("закрыт с профитом: "+OrderProfit());</>
+        
+        // удаление привязок
+        for (int k=0; k<ArraySize(pins); k++)
+          if (pins[k]==i) pins[k] = -1;
+        
+        <?closed>
+        if (opMARKET(OrderType()))
+        {
+          int order = i;
+$closed.lines
+        }
+        </>
+      }
+    }
+  
+    // обработка истекающих ордеров
+    for (int @i=0; @i<ArraySize(hub); @i++)
+    {
+      if (hub[@i].state==HUB_CLOSED || hub[@i].expire==0) continue;
+      if (hub[@i].expire<=CurTime())
+      {
+        <?debug>add_log("ордер просрочен");</>
+        OrderForceClose(@i);
+        @check_closed_state = true;
+      }
+    }
+    
+    // обработка отложенных стопов
+    for (int @i=0; @i<ArraySize(hub); @i++)
+    {
+      if (hub[@i].state==HUB_CLOSED || hub[@i].late_stops==0) continue;
+      if (hub[@i].late_stops<=CurTime())
+      {
+        <?debug>add_log("установка стопов");</>
+        OrderUpdate(@i);
+        hub[@i].late_stops = 0;
+      }
+    }
+  
+    // исполнение отложенных ордеров
+    for (int @i=0; @i<ArraySize(hub); @i++)
+    {
+      if (hub[@i].state == HUB_CLOSED) continue;
+      int @cmd = hub[@i].cmd;
+      switch (@cmd)
+      {
+        case OP_VBUYSTOP:
+          if (Ask>=hub[@i].price) OrderToMarket(@i);
+          break;
+        case OP_VSELLSTOP:
+          if (Bid<=hub[@i].price) OrderToMarket(@i);
+          break;
+        case OP_VBUYLIMIT:
+          if (Ask<=hub[@i].price) OrderToMarket(@i);
+          break;
+        case OP_VSELLLIMIT:
+          if (Bid>=hub[@i].price) OrderToMarket(@i);
+          break;
+        case OP_BUYSTOP:
+        case OP_SELLSTOP:
+        case OP_BUYLIMIT:
+        case OP_SELLLIMIT:
+          if (OrderSelect(hub[@i].ticket, SELECT_BY_TICKET))
+          if (opMARKET(OrderType()))
+          {
+            hub[@i].cmd = OrderType();
+            hub[@i].state = HUB_ACTIVE;
+            hub[@i].expire = 0;
+            <?debug2>add_log("активирован отложенник #"+hub[@i].ticket);</>
+            <?debug>add_log("ордер #"+hub[@i].ticket+" "+cmdNames[@cmd]+" открыт "+cmdNames[hub[@i].cmd]);</>
+          }
+      }
+      
+      if (@cmd!=hub[@i].cmd && opMARKET(hub[@i].cmd))
+      {
+        if (hub[@i].signal)
+        {
+          trend = hub[@i].cmd==OP_BUY?1:-1;
+          initial = @i;
+        }
+        
+        if (hub_state != HUB_ACTIVE)
+        {
+          hub_state = HUB_ACTIVE;
+          hub_activated = true;
+          <?debug>add_log("открытие отложенника изменило состояние");</>
+          initial = @i;
+        }
+        last_order = @i;
+$opened.lines
+      }
+    }
+    
+    // отработка общих состояний
+$invade
+  
+    // проверка перехода хаба в закрытое состояние
+    if (@check_closed_state && !hub_activated)
+    {
+      bool @closed = true;
+      for (int @i=0; @i<ArraySize(hub); @i++)
+        if (hub[@i].state != HUB_CLOSED)
+        {
+          @closed = false;
+          break;
+        }
+      <?debug>add_log("проверка состояния закрытия потока "+(@closed?"ДА":"НЕТ"));</>
+      if (@closed && hub_state != HUB_CLOSED)
+      {
+        hub_state = HUB_CLOSED;
+        hub_activated = true;
+        <?debug>add_log("состояние изменилось");</>
+      }
+    }
+
+    // инициация активного состояния
+    while (hub_activated)
+    {
+      <?debug>add_log("обработка нового состояния");</>
+      <?Sync>syncSave();</>
+      hub_activated = false;
+      last_state_changed = CurTimeTrace();
+      switch (hub_state)
+      {
+        case HUB_CLOSED:
+        {
+$initial.init
+$opened.init
+$closed.init
+        }
+        case HUB_ACTIVE:																													
+        {
+          // активация всех инициирующих ордеров
+          /*for (@i=0; @i<ArraySize(hub); @i++)
+          {
+            if (hub[@i].state == HUB_CLOSED) continue;
+            hub[@i].state = HUB_ACTIVE;
+          }*/
+$active.init
+          break;
+        }
+      }
+    }
+    
+    // обработка состояний
+    if (stop_thread) stop_thread = false;
+    else
+    do
+    {
+      hub_repeat = false;
+      switch (hub_state)
+      {
+        <?initial>
+        case HUB_CLOSED:
+          state_mark = "";
+        case HUB_INITIAL:
+        {
+$initial.lines
+          break;
+        }
+        </>
+        <?active>
+        case HUB_ACTIVE:
+        {
+$active.lines
+          break;
+        }
+        </>
+      }
+    } while (hub_repeat);
+
+    if (order_error)
+    {
+$error.lines
+      order_error = false;
+    }
+    
+    return 0;
+  } // process
+  
+  <?Sync>
+  void syncAll()
+  {
+    sync("thread_index", thread_index);
+    sync("active", active);
+    int @hs = hub_state;
+    sync("hub_state", @hs);
+    hub_state = (hubState)@hs;
+    sync("last_state_changed", last_state_changed);
+    sync("initial", initial);
+    sync("last_order", last_order);
+    sync("hub_activated", hub_activated);
+    sync("order_error", order_error);
+    sync("trend", trend);
+
+    if (save)
+      FileWrite(syncFile, "hub", ArraySize(hub));
+    else
+    {
+      FileReadString(syncFile);
+      ArrayResize(hub, FileReadNumber(syncFile));
+    }
+    for (int @k=0; @k<ArraySize(hub); @k++)
+    {
+      syncTitle("HUB #"+@k);
+      sync("ticket", hub[@k].ticket);
+      sync("cmd", hub[@k].cmd);
+      sync("price", hub[@k].price);
+      sync("lots", hub[@k].lots);
+      sync("sl", hub[@k].sl);
+      sync("tp", hub[@k].tp);
+      sync("fsl", hub[@k].fsl);
+      sync("ftp", hub[@k].ftp);
+      @hs = hub[@k].state;
+      sync("state", @hs);
+      hub[@k].state = (hubState)@hs;
+      sync("late_stops", hub[@k].late_stops);
+      sync("expire", hub[@k].expire);
+      sync("signal", hub[@k].signal);
+      <?XLots>
+      sync("linked", hub[@k].linked);
+      sync("primary", hub[@k].primary);
+      </>
+    }
+    
+    sync("pins", pins);
+$sync
+  }
+  </>
+}; // class def
+
+C$name @threads[$MaxThreadsCount];
+datetime @sleep_time = 0;
+bool @thread_repeat;
+
+<procs>
+int ActiveThreads(C$name &lthreads[], hubState state=-1)
+{
+  int count = 0;
+  for (int i=0; i<ArraySize(lthreads); i++)
+  {
+    if (state==-1 && lthreads[i].hub_state != HUB_CLOSED || lthreads[i].hub_state == state) count++;
+  }
+  return count;
+}
+
+double ActiveProfit(C$name &lthreads[])
+{
+  double sum = 0;
+  for (int i=0; i<ArraySize(lthreads); i++)
+    sum += lthreads[i].HubActiveProfit();
+  return sum;
+}
+
+double LowTrend(C$name &lthreads[])
+{
+  double minus = 0, plus = 0;
+  for (int i=0; i<ArraySize(lthreads); i++)
+    if (lthreads[i].hub_state != HUB_CLOSED)
+    {
+      if (lthreads[i].trend>0) plus += lthreads[i].HubActiveProfit();
+      else minus += lthreads[i].HubActiveProfit();
+    }
+  return (plus<minus?1:-1);
+}
+
+double TrendPower(C$name &lthreads[], double trend)
+{
+  double sum = 0;
+  for (int i=0; i<ArraySize(lthreads); i++)
+    if (lthreads[i].hub_state != HUB_CLOSED)
+    {
+      if (lthreads[i].trend>0 && trend>0 || lthreads[i].trend<0 && trend<0) sum += lthreads[i].HubActiveProfit();
+    }
+  return sum;
+}
+
+<init>
+  <?debug>
+  <?WriteLog>log_file = FileOpen("hub.log", FILE_WRITE|FILE_CSV|FILE_SHARE_READ|FILE_SHARE_WRITE," ");</>
+  </>
+  <?ThreadsCount=1>
+  @threads[0].active = true;
+  <~>
+  for (int @i=0; @i<$ThreadsCount; @i++)
+  {
+    @threads[@i].thread_index = @i;
+    <?debug>
+    <?WriteLog>@threads[@i].log_file = FileOpen("hub"+@i+".log", FILE_WRITE|FILE_CSV|FILE_SHARE_READ|FILE_SHARE_WRITE," ");</>
+    </>
+  }
+  </>
+$threads.init
+
+<lines>
+  <?Trace><?debug>if (trace_index>0) Print("запуск потоков от ",TimeToStr(CurTimeTrace()));</></>
+  do
+  {
+    @thread_repeat = false;
+  <?MaxThreadsCount=1>
+  @threads[0].process();
+  <~>
+  // activate one closed on next tick
+  <?!ThreadsCount=1>
+  if ($ThreadsCount==1)
+  {
+    @threads[0].active = true;
+    @threads[0].process();
+  }
+  else
+  </>
+  {
+  bool @closed_found;
+  <?ThreadSleep>
+  if (CurTimeTrace()>=@sleep_time)
+  {
+  </>
+    @closed_found = false;
+    for (int @i=0; @i<$ThreadsCount; @i++)
+      if (@threads[@i].active && @threads[@i].hub_state == HUB_CLOSED)
+      {
+        @closed_found = true;
+        break;
+      }
+
+    if (!@closed_found)
+    for (int @i=0; @i<$ThreadsCount; @i++)
+      if (!@threads[@i].active)
+      {
+        <?debug>Print("активация потока #"+@i);</>
+        @threads[@i].active = true;
+        @threads[@i].hub_activated = true;
+        break;
+      }
+   <?ThreadSleep>
+   }
+   </>
+      
+  <?!ClosedFirst>
+  // run all active non closed
+  for (int @i=0; @i<$ThreadsCount; @i++)
+    if (@threads[@i].active && @threads[@i].hub_state!=HUB_CLOSED)
+      @threads[@i].process();
+  </>
+      
+  // deactivate all closed except one, which to process
+  @closed_found = false;
+  for (int @i=0; @i<$ThreadsCount; @i++)
+    if (@threads[@i].active && @threads[@i].hub_state == HUB_CLOSED)
+      if (!@closed_found)
+      {
+        @closed_found = true;
+        @threads[@i].process();
+        if (@threads[@i].hub_state!=HUB_CLOSED)
+        {
+          <?ThreadSleep>
+          @sleep_time = CurTimeTrace()+$ThreadSleep*60;
+          <~>
+          @closed_found = false;
+          </>
+          <?debug>Print("поток готов к работе #",@i);</>
+        }
+      }
+      else @threads[@i].active = false;
+
+  <?ClosedFirst>
+  // run all active non closed
+  for (int @i=0; @i<$ThreadsCount; @i++)
+    if (@threads[@i].active && @threads[@i].hub_state!=HUB_CLOSED)
+      @threads[@i].process();
+  </>
+  }   
+  </>
+  } while (@thread_repeat);
+  
+$threads.lines
+    
+<deinit>
+  <?debug>
+  <?WriteLog>
+  FileClose(log_file);
+  for (int @i=0; @i<$ThreadsCount; @i++)
+    FileClose(@threads[@i].log_file);
+  </>
+  </>
+$threads.deinit
+
+<sync>
+  <?Sync>
+  syncTitle("$name");
+  sync("sleep_time", @sleep_time);
+  for (int @i=0; @i<$ThreadsCount; @i++)
+  {
+    syncTitle("THREAD #"+@i);
+    @threads[@i].syncAll();
+  }
+  </>
+    
+[Help]
+Хаб для работы с ордерами.\\
+Порядок функционирования:\\
+  - обновляется статус хаба по отложенным и закрытым ордерам
+  - для каждого закрытого ордера - выполняется блок **closed** с параметром **sig** = 1, если в прибыль или -1 при убытке
+  - проверяются и закрываются истекающие ордера
+  - исполняются виртуальные отложенники, обновляется статус сработавших отложенников. если такие есть - хаб переходит в состояние **HUB_ACTIVE**
+  - для каждого сработавшего отложенника на предыдущем шаге выполняется блок **opened**
+  - проверяется, все ли открытые ранее ордера закрыты - в этом случае хаб переходит в состояние **HUB_CLOSED**
+  - если хаб поменял своё состояние - выполняется а)инициализация блока **initial** в случае **HUB_CLOSED** и б)инициализация блока **active** в случае **HUB_ACTIVE**
+  - выполняется блок **initial** в случае **HUB_CLOSED**, **HUB_INITIAL**
+  - выполняется блок **active** в случае **HUB_ACTIVE**
+Порядок функционирования потоков:\\
+  - сначала активируется дополнительный хаб с состоянием **HUB_CLOSED**, в случае, если ни одного такого не активировано и прошло достаточно времени **ThreadSleep** после выхода предыдущего хаба из состояния **HUB_CLOSED**
+  - срабатывают все хабы с состоянием, отличающимся от **HUB_CLOSED**
+  - деактивируются все активные хабы с новым состоянием **HUB_CLOSED**, кроме одного,
+  - который тут же выполняется и в случае, если он перешёл в другое состояние активируется таймер до подключения следущего закрытого хаба (1)
+

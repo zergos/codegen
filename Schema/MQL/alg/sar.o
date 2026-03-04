@@ -1,0 +1,97 @@
+[Main]
+Name=ParSAR
+Title=Параболич. SAR
+Group=Алгоритмы (тех)
+
+[Property]
+Step=f,0.2
+Tail=n,,глубина поиска экстремума
+GenSignal=t
+
+[Input]
+high=row
+low=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+extern double @SARStep = $Step;
+double @cmin, @cmax, @cur;
+int @mode;
+
+<lines>
+  ArrayInit($out, $Size);
+
+  double @ccur;
+  int @i;
+  bool @shift;
+  if ($Start==0)
+  {
+    // вычисление начального направления
+    int @pt = 0;
+    for (@i = 0; @i < 5; @i++)
+      @pt += (($high[@i+1]-$low[@i+1]) - ($high[@i]-$low[@i]) > 0);
+
+    if (@pt>0) @mode = 1;
+    else @mode = -1;
+
+    @cmin = $low[0];
+    @cmax = $high[0];
+
+    if (@mode==1) @cur = @cmin;
+    else @cur = @cmax;
+
+    $out[0] = @cur;
+    @shift = true;
+  }
+  else
+    @shift = CheckShift($out);
+
+
+  for (@i=MathMax($Start,1); @i<$Size; @i++)
+  {
+    <?!Tail>
+    if ($low[@i]<@cmin) @cmin = $low[@i];
+    if ($high[@i]>@cmax) @cmax = $high[@i];
+    </>
+    if (@mode==1)
+    {
+      @ccur = @SARStep*($high[@i]-@cur) + @cur;
+      if (@shift && $low[@i]<=@ccur) 
+      {
+        @mode = -1;
+        <?Tail>@cmax = $high[ArrayMaximum($high, $Tail, @i-$Tail)];</>
+        @ccur = @cmax;
+        <?!Tail>@cmin = $low[@i];</>
+      }
+    }
+    else
+    {
+      @ccur = @SARStep*($low[@i]-@cur) + @cur;
+      if (@shift && $high[@i]>=@ccur) 
+      {
+        @mode = 1;
+        <?Tail>@cmin = $low[ArrayMinimum($low, $Tail, @i-$Tail)];</>
+        @ccur = @cmin;
+        <?!Tail>@cmax = $high[@i];</>
+      }
+    }
+    if (@shift) @cur = @ccur;
+    <?!GenSignal>
+    $out[@i] = @ccur;
+    <~>
+    $out[@i] = @mode;
+    </>
+  }
+
+[Help]
+См. [[codebase.mql4.com/ru/236]]\\
+Значения немного отличаются от встроенного индикатора, но смысл тот же.\\
+При генерации сигнала: +1, если восходящий; -1, если нисходящий тренд.

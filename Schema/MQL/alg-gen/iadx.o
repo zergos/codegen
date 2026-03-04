@@ -1,0 +1,30 @@
+[Main]
+Name=IADX
+Title=Average Directional Index
+Group=Алгоритмы (ген)
+
+[Property]
+Period=n,12
+Price=applied_price,PRICE_CLOSE
+Mode=adx_mode,MODE_MAIN
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out);
+  CheckShift($out);
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = iADX(NULL, 0, $Period, $Price, $Mode, $Size-1-i);
+    
+[Help]
+Генератор линий скользящей средней.
+

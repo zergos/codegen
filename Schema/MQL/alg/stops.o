@@ -1,0 +1,71 @@
+[Main]
+Name=Stops
+Title=Стоп уровни
+Group=Алгоритмы
+
+[Property]
+TrailLevel=n,200,уровень максимального ухода цены для переключения уровня
+ATRMulti=n,4
+
+[Input]
+high=row
+low=row
+atr=row
+
+[Output]
+up=row,@up
+down=row,@down
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @up[];
+double @down[];
+int @nup, @ndown;
+double @pup, @pdown;
+
+<lines>
+  ArrayInit(@up, $Size);
+  CheckShift(@up);
+  ArrayInit(@down, $Size);
+  CheckShift(@down);
+  
+  if ($Start==0)
+  {
+    @nup = 0; @ndown = 0;
+    @pup = $high[0]; @pdown = $low[0];
+  }
+  
+  for (int i=MathMax($Start,1); i<$Size; i++)
+  {
+    double thres = <?atr>MathMax($atr[i], $TrailLevel*Point)*$ATRMulti<~>$TrailLevel*Point</>;
+    if ($high[i]>@pup) { @nup = i; @pup = $high[i]; }
+    else if (@pup-$low[i]>=thres)
+    {
+      int k=@nup+1;
+      @nup = i;
+      @pup = MathMin($high[i], $low[i]+thres);
+      for ( ; k<=i; k++)
+        if ($high[k]>@pup && $high[k]-$low[i]<thres) { @nup = k; @pup = $high[k]; }
+    }
+    
+    if ($low[i]<@pdown) { @ndown = i; @pdown = $low[i]; }
+    else if ($high[i]-@pdown>=thres)
+    {
+      int k=@ndown+1;
+      @ndown = i;
+      @pdown = MathMax($low[i], $high[i]-thres);
+      for ( ; k<=i; k++)
+        if ($low[k]<@pdown && $high[i]-$low[k]<thres) { @ndown = k; @pdown = $low[k]; }
+    }
+    
+    @up[i] = @pup;
+    @down[i] = @pdown;
+  }
+  
+[Help]
+Вычисляет рекомендуемые уровни стопов при сопровождении сделки.
+

@@ -1,0 +1,27 @@
+[Main]
+Name=WaitNextBar
+Title=Сдвиг ожидания свечи
+Group=Управление
+
+[Property]
+Count=n,,количество свечей для сдвига
+
+[Input]
+time=n
+
+[InputPars]
+Trace
+
+[Code]
+<lines>
+  <?Trace>
+  $time = <?mql4>iTime(NULL, 0, trace_index)<~>Bar.Time(trace_index)</>;
+  <~>
+  $time = <?mql4>iTime(NULL, 0, 0)<~>Bar.Time(0)</>;
+  </>
+  <?Count>$time += $Count*PeriodSeconds();</>
+  <?debug>Print("$name next bar is "+TimeToStr($time));</>
+  
+[Help]
+Сдвигает период ожидания свечи относительно текущего времени (соединяется с WaitShifted).
+

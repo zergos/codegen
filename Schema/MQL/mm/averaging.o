@@ -1,0 +1,79 @@
+[Main]
+Name=Averaging
+Title=Усреднение
+Group=Сделки
+
+[Property]
+Step=n,100,уровень усреднения
+Mode=n,0,режим усреднения (0 - повторение лота\, 1 - увеличение лота на 1\, 2 - удвоение лота)
+Count=n,3,количество шагов усреднения
+
+[Output]
+act=c
+
+[Map]
+act_lines=lines,act
+
+[Code]
+<gvars>
+int @avStep;
+double @lot;
+
+<init>
+  @avStep = 1;
+  @lot = 0;
+
+<lines>
+  if (hub_state == HUB_ACTIVE && @avStep<=$Count && OrderSelect(hub[initial].ticket, SELECT_BY_TICKET))
+  {
+    if (@lot==0) @lot = OrderLots();
+    int @idx;
+    <?act>bool @activate = false;</>
+    if (OrderType() == OP_BUY && Bid <= OrderOpenPrice()-@avStep*$Step*Point)
+    {
+      <?Mode=1>
+      @lot += OrderLots();
+      </>
+      <?Mode=2>
+      @lot *= 2;
+      </>
+      @idx = HubFreeIndex();
+      hub[@idx].cmd = OP_VBUYLIMIT;
+      hub[@idx].price = OrderOpenPrice()-@avStep*$Step*Point;
+      hub[@idx].state = HUB_ACTIVE;
+      hub[@idx].lots = @lot;
+      hub[@idx].tp = hub[initial].tp;
+      hub[@idx].sl = hub[initial].sl;
+      OrderToMarket(@idx);
+      @avStep++;
+      <?act>@activate = true;</>
+    }
+    else if (OrderType() == OP_SELL && Ask >= OrderOpenPrice()+@avStep*$Step*Point)
+    {
+      <?Mode=1>
+      @lot += OrderLots();
+      </>
+      <?Mode=2>
+      @lot *= 2;
+      </>
+      @idx = HubFreeIndex();
+      hub[@idx].cmd = OP_VSELLLIMIT;
+      hub[@idx].price = OrderOpenPrice()+@avStep*$Step*Point;
+      hub[@idx].state = HUB_ACTIVE;
+      hub[@idx].lots = @lot;
+      hub[@idx].tp = hub[initial].tp;
+      hub[@idx].sl = hub[initial].sl;
+      OrderToMarket(@idx);
+      @avStep++;
+      <?act>@activate = true;</>
+    }
+    <?act>
+    if (@activate)
+    {
+$act_lines
+    }
+    </>
+  }
+
+[Help]
+Торговля на усреднении.

@@ -1,0 +1,45 @@
+[Main]
+Title=Вызов индикатора
+Group=Индикатор
+Name=iCustom
+
+[Property]
+Symbol=s,,имя символа
+TimeFrame=n,0
+Name=s
+Pars=s,,параметры индикатора
+BufferIndex=n,0
+Shift=n,0,cдвиг индикатора относительно ценового графика
+Count=n,1,количество извлекаемых значений (если не указано - на выходе значение вместо серии)
+
+[Input]
+
+[Output]
+out=row
+
+[InputPars]
+Trace
+
+[OutputPars]
+Start=0
+Size=$Count
+
+[Code]
+<gvars>
+double $out<?Count>[]</>;
+
+<lines>
+  <?Count>
+  ArrayInit($out, $Count);
+  <?!Count=1>
+  for (int @n=$Count-1; @n>=0; @n--)
+    $out[@n] = iCustom(<?Symbol>"$Symbol"<~>NULL</>, $TimeFrame, "$Name", <?Pars>$Pars,</> $BufferIndex, $Shift+$Count-1-@n<?Trace>+trace_index</>);
+  <~>
+  $out[0] = iCustom(<?Symbol>"$Symbol"<~>NULL</>, $TimeFrame, "$Name", <?Pars>$Pars,</> $BufferIndex, $Shift<?Trace>+trace_index</>);
+  </>
+  <~>
+  $out = iCustom(<?Symbol>"$Symbol"<~>NULL</>, $TimeFrame, "$Name", <?Pars>$Pars,</> $BufferIndex, $Shift<?Trace>+trace_index</>);
+  </>
+
+[Help]
+Вызов пользовательского индикатора

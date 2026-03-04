@@ -1,0 +1,20 @@
+[Main]
+Name=Zero
+Title=Генератор нулей
+Group=Генераторы
+Size=4
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+

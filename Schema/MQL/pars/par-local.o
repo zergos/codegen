@@ -1,0 +1,34 @@
+[Main]
+Name=LocalPar
+Title=Локальный
+Group=Параметры
+
+[Property]
+ParType=type,int,тип параметра
+Default=s,,начальное значение
+Initial=s,0,устанавливаемое значение
+Index=n
+GlobalName=s,,имя глобальной переменной для чтения
+
+[Input]
+in=n
+
+[Code]
+<gvars>
+ $ParType $name;
+
+<init>
+  <?Default>$name = $Default;</>
+ 
+<lines>
+  <?Initial>$name = $Initial;</>
+  <?in>$name = $in<?Index>[$Index]</>;</>
+  <?GlobalName>$name = GlobalVariableGet("$GlobalName");</>
+  <?debug>Print("$name = ",$name);</>
+
+<sync>
+  sync("$name", $name);
+  
+[Help]
+Определение параметра для хода выполнения.
+

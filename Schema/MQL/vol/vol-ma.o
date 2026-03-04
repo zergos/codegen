@@ -1,0 +1,45 @@
+[Main]
+Name=HrMA
+Title=—глаживание
+Group=ќбъЄмы
+
+[Property]
+Period=n,5,период усреднени€ (ниже и выше)
+
+[Input]
+i=row
+
+[Output]
+o=row
+
+[Global]
+<procs>
+void hr_ma(int &vin[], int &vout[], int shift, int period)
+{
+  for (int i=0; i<ArraySize(vin); i++)
+  {
+    int sum = 0;
+    for (int k=-period; k<=period; k++)
+      if (i+k>=0 && i+k<ArraySize(vin))
+        sum += vin[i+k];
+    vout[i+shift] = sum/(period+period+1);
+  }
+}
+
+[Code]
+<gvars>
+int plus$o[], minus$o[];
+int start$o;
+int size$o;
+
+<init>
+  start$o = 0;
+
+<lines>
+  HrMix(plus$o, minus$o, start$i, size$i, start$o, size$o);
+  int @shift = start$i-start$o;
+  hr_ma(plus$i, plus$o, @shift, $Period);
+  hr_ma(minus$i, minus$o, @shift, $Period);
+
+[Help]
+—глаживает объЄмы с помощью математического усреднени€.

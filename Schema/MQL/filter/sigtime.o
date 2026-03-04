@@ -1,0 +1,45 @@
+[Main]
+Group=Фильтры
+Title=Сигнал по часам
+Name=SignalTime
+
+[Property]
+StartHour=n,9,начальный час
+EndHour=n,20,конечный час
+
+[Input]
+time=row
+
+[Output]
+S=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $S[];
+
+<lines>
+  ArrayInit($S, $Size);
+
+  if ($Start==0)
+    ArrayInitialize($S, 0);
+  else
+    CheckShift($S);
+
+  int @i;
+  for (@i=$Start; @i<$Size; @i++)
+  {
+    if (TimeHour($time[@i])>=$StartHour && TimeHour($time[@i])<$EndHour) $S[@i]=1;
+    else $S[@i]=0;
+  }
+
+[Help]
+Вычисляет сигнал по формуле:
+<code>
+Sig = | 1, StartHour <= x <= EndHour
+      | 0
+</code>
+Если указан **Reverse**, то знак результата меняется на противоположный.

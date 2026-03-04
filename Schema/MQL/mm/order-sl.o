@@ -1,0 +1,29 @@
+[Main]
+Name=OrderSL
+Title=Стоп-лосс
+Group=Сделки
+
+[Property]
+HubState=hubstate
+Level=n,50,уровень тейк-профита в пунктах
+Reverse=t,,обратная логика
+Price=f
+
+[Input]
+lvl=n
+
+[Code]
+<lines>
+  ForEachL(CHubOrder, ho, firstOrder)
+  <?HubState>if (ho.state==$HubState)<~>if (ho.state!=HUB_CLOSED)</>
+  <?Price>
+    ho.SetStop($Price);
+  <~>
+  if (<?Reverse>-</>trend>0)
+    ho.SetStop(<?lvl>down$lvl<~>Bid-$Level*Point</>);
+  else //if (<?Reverse>-</>$sig<0)
+    ho.SetStop(<?lvl>up$lvl<~>Ask+$Level*Point</>);
+  </>
+
+[Help]
+Устанавливание всем ордерам тейк-профит по уровню от текущей цены.

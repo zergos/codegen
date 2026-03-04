@@ -1,0 +1,40 @@
+[Main]
+Name=FigTextMarks
+Title=Текстовые метки
+Group=Фигуры
+
+[Uses]
+common\obj-counter
+
+[Property]
+Text=s
+Color=color,Red
+Size=n,12
+BarIndex=n,0,номер бара справа
+Shift=n,20,сдвиг в пунктах
+PosY=n
+Leave=t
+
+[InputPars]
+Start
+
+[Code]
+<gvars>
+ObjCounter *$name;
+
+<init>
+  $name = new ObjCounter("$name");
+
+<lines>
+  if ($Start==0) $name.Clear();
+  
+  string @name = $name.NextName();
+  ObjectCreate(@name, OBJ_TEXT, 0, Time[$BarIndex], <?PosY>$PosY<~>High[$BarIndex]+Point*$Shift</>);
+  ObjectSet(@name, OBJPROP_COLOR, $Color);
+  ObjectSetText(@name, $Text, $Size);
+  
+<deinit>
+<?Leave>$name.name="";</>
+  delete $name;
+
+[Help]

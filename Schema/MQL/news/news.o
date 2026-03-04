@@ -1,0 +1,27 @@
+[Main]
+Unit
+Group=Ќовости
+Title=ћодуль
+Name=NewsUnit
+
+[Property]
+CoefLow=f,1.0
+CoefMiddle=f,0.6
+CoefHigh=f,0.3
+Proportional=bool,true,усил€ть сигнал согласно числовым показател€м новости
+TimeShift=n,8,сдвиг текущего времени относительно новостей (дл€ московского +8)
+
+[Code]
+<top>
+#import "ff_get.dll"
+void NewsList(datetime SetDate, string Symb, int Im, int Lim, datetime &Times[], int &Ids[]);
+void NewsValues(int Lim, int &Ids[], double &Values[], int &Ims[]);
+int NewsTimeLapse(datetime SetDate, string Symb, int Im);
+void NewsSetCoefs(double low, double middle, double high, bool proportional, int timeshift);
+#import
+
+<init>
+  NewsSetCoefs($CoefLow, $CoefMiddle, $CoefHigh, $Proportional, $TimeShift);
+
+[Help]
+ќб€зательно подключать при использовании новостей

@@ -1,0 +1,256 @@
+[Main]
+Name=FlowControl
+Title=ѕоток
+Group=Ћента
+
+[Property]
+Symbol=s,,если не указан\, используетс€ текущий
+PntSize=n,10,размер пункта
+CountBidAsk=t,1,считать тиковые объЄмы
+RequestNewTicks=t,1,запрашивать новые тики здесь же 
+RequestFast=t,1,аналог дл€ быстрой выборки
+GroupPeriod=period,,период бара дл€ расчета котировочных кластеров
+ForceNID=n,,принудительный отбор по контракту
+
+[Input]
+time=row
+
+[Output]
+tick=row,@tick
+group=c
+
+[InputPars]
+Start
+Size
+Trace
+
+[OutputPars]
+Start=<?group>@flowStart<~>$Start</>
+Size=<?group>@flowSize<~>$Size</>
+bar=@bar
+
+[Global]
+<gvars>
+struct flow_bar
+{
+  double prices[];
+  int ask[];
+  int bid[];
+  datetime time;
+  int idx;
+};
+
+struct flow_tick
+{
+  flowReq req;
+  int PntSize;
+  datetime time, rawtime;
+  double price;
+  int shift, volume, mode;
+  double size;
+  int sid;
+  int last_id;
+  int idx;
+  int period;
+};
+
+[Code]
+<procs>
+datetime @GetShiftedTime(datetime intime, int sign=1)
+{
+  if (intime<D'2015.03.30 00:00:00' || (intime>=D'2015.04.06 00:00:00' && intime<D'2015.09.18 00:00:00')) return intime-($TimeShift+3600)*sign;
+  else if (intime>=D'2015.10.28 00:00:00') return intime-($TimeShift+3600)*sign;
+  else return intime-$TimeShift*sign;
+}
+
+<gvars>
+<?group>
+int @flowStart = 0;
+int @flowSize;
+</>
+bool @inverse;
+double @fwd;
+flow_tick @tick;
+flow_bar @bar;
+bool @tickChecked;
+
+<init>
+  @tick.sid = FlowSymbolIDInfo(<?!Symbol>Symbol()<~>$Symbol</>, @inverse, @fwd, @tick.size);
+<?CheckFlow>
+  if (@tick.sid==-1)
+  {
+    Alert("по символу "+<?!Symbol>Symbol()<~>$Symbol</>+" лента не пишетс€");
+    return (1);
+  }
+</>
+  <?ForceNID>@tick.sid = -$ForceNID;</>
+  @tick.PntSize = $PntSize;
+  @tick.size *= $PntSize*Point;
+  <?GroupPeriod>@tick.period = $GroupPeriod*60;<~>@tick.period = PeriodSeconds();</>
+  
+<lines>
+  if (@tick.sid==-1) return 0;
+
+  if ($Start==0)
+  {
+    @tick.idx = 0;
+    @bar.time = 0;
+    <?CountBidAsk>
+    ArrayResize(@bar.prices, 0);
+    </>
+    
+    <?RequestFast>
+    FlowRequestTicksFast(@tick.sid, @GetShiftedTime($time[0], -1), @tick.period/60, @tick.req);
+    <~>
+    FlowRequestTicks(@tick.sid, @GetShiftedTime($time[0], -1), @tick.req);
+    </>
+    <?debug>Print("requested by time "+TimeToStr($time[0]));</>
+    @tickChecked = false;
+  }
+  else
+  {
+    <?RequestNewTicks>
+      if (!@tickChecked)
+        FlowRequestTicksByID(@tick.sid, @tick.last_id, @tick.req);
+    </>
+    /*@tick.idx--;
+    if (Shifted)
+      @tick.idx--;*/
+  }
+  
+  <?group>
+  int @last_idx = $Start;
+  @flowStart = $Start;
+  @flowSize = $Size;
+  </>
+  
+  //@tick.idx = 0;
+    
+$flow_init
+    
+  <?group>
+  bool @saveShifted = Shifted;
+  Shifted = false;
+  </>
+  
+  if (!@tickChecked) @tickChecked = @tick.req.pos>=0 && FlowReadTick(@tick.req, @tick.rawtime, @tick.price, @tick.shift, @tick.volume, @tick.mode, @tick.last_id, @fwd);
+  <?Trace>
+  while (@tickChecked && @GetShiftedTime(@tick.rawtime) < CurTimeTrace())
+  <~>
+  while (@tickChecked && @GetShiftedTime(@tick.rawtime) < CurTime())
+  </>
+  {
+    //if ($Start>0)
+    //    printf("tickChecked %s == %s", TimeToStr(@tick.rawtime-$TimeShift), TimeToStr(CurTime()));
+  
+    @tick.rawtime = @GetShiftedTime(@tick.rawtime);
+    
+    if (@inverse)
+    {
+   																																																																																																																																																																																																																																		   @tick.price = NormalizeDouble(1/@tick.price, Digits);
+      @tick.mode = 3-@tick.mode;
+    }
+    @tick.price -= @fwd*@tick.size;
+    
+    <?GroupPeriod>
+    <?group>
+    //for (idx=@flowStart; idx<$Size-1; idx++)
+    //  if ($time[idx]<=@ticktime && @ticktime<$time[idx+1]) break;
+    </>
+      
+    @tick.rawtime = ceil(@tick.rawtime/$GroupPeriod/60)*$GroupPeriod*60;
+    </>
+    
+    // find bar
+    <?GroupPeriod>
+    if (@tick.rawtime<$time[0]) @tick.idx = 0;
+    else
+    </>
+    {
+    for ( ; @tick.idx>0 && @tick.rawtime<$time[@tick.idx]; @tick.idx--);
+    for ( ; @tick.idx<$Size-2; @tick.idx++)
+      if ($time[@tick.idx]<=@tick.rawtime && @tick.rawtime<$time[@tick.idx+1]) break;
+    if (_Period!=2 && @tick.idx<$Size-1 && @tick.rawtime>=$time[@tick.idx]+PeriodSeconds()) @tick.idx++;
+    }
+    
+    //if ($Start>0)
+    //Print("idx: ",@tick.idx," raw time ",TimeToStr(@tick.rawtime));
+    
+    <?debug>//FileWrite(Logger, "idx",@tick.idx,"rawtime",TimeToStr(@tick.rawtime, TIME_DATE|TIME_MINUTES|TIME_SECONDS),"tick time",TimeToStr($time[@tick.idx], TIME_DATE|TIME_MINUTES|TIME_SECONDS),"price",$tick.price);</>
+    
+    @tick.time = $time[@tick.idx];
+      
+    <?group>
+    if (@flowStart<0) @flowStart = MathMin($Start, @tick.idx); // fix first changed bar
+    </>
+    
+    <?CountBidAsk>
+    if (@bar.time==@tick.time)
+    {
+      bool @found = false;
+      for (@bar.idx=0; @bar.idx<ArraySize(@bar.prices); @bar.idx++)
+        if (MathAbs(@tick.price-@bar.prices[@bar.idx])<@tick.size/2)
+        {
+          @tick.price = @bar.prices[@bar.idx];
+          @found = true;
+          break;
+        }
+      if (!@found)
+      {
+        @bar.idx = ArraySize(@bar.prices);
+        ArrayResize(@bar.prices, @bar.idx+1);
+        ArrayResize(@bar.ask, @bar.idx+1);
+        ArrayResize(@bar.bid, @bar.idx+1);
+        @bar.prices[@bar.idx] = @tick.price;
+        @bar.ask[@bar.idx] = 0;
+        @bar.bid[@bar.idx] = 0;
+      }
+    }
+    else
+    {
+    
+$flow_bar
+      @bar.idx = 0;
+      ArrayResize(@bar.prices, 1);
+      ArrayResize(@bar.ask, 1);
+      ArrayResize(@bar.bid, 1);
+      @bar.prices[0] = @tick.price;
+      @bar.ask[0] = 0;
+      @bar.bid[0] = 0;
+    }
+    
+    if (@tick.mode==1)
+      @bar.ask[@bar.idx] += @tick.volume;
+    else
+      @bar.bid[@bar.idx] += @tick.volume;
+    <~>
+    if (@bar.time!=@tick.time)
+    {
+$flow_bar
+    }
+    </>
+    @bar.time = @tick.time;
+
+$flow_tick
+    <?group>
+    if (@tick.idx>@last_idx)
+    {
+      @flowStart = @tick.idx;
+      @flowSize = MathMin($Size, @tick.idx+$GroupPeriod*60/PeriodSeconds());
+      @last_idx = @flowSize-1;
+$group.lines
+    }
+    </>
+    @tickChecked = FlowReadTick(@tick.req, @tick.rawtime, @tick.price, @tick.shift, @tick.volume, @tick.mode, @tick.last_id, @fwd);
+  }
+  
+$flow_deinit
+
+  <?group>
+  Shifted = @saveShifted;
+  @flowSize = $Size;
+  </>
+  
+[Help]
+ќболочка дл€ обработки потока котировок.
+

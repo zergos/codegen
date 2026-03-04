@@ -1,0 +1,34 @@
+[Main]
+Name=PrintTest
+Title=Тестовый вывод
+Group=Советник
+Size=4
+
+[Property]
+TailSize=n,5
+FromNull=t,,выводить от нуля
+Title=s
+TimeToStr=t,,конвертировать время в строку
+
+[Input]
+in=row
+
+[InputPars]
+Size
+
+[Code]
+<lines>
+  string @s;
+  @s = "$Title";
+  <?!FromNull>for (int @i=$Size-1; @i>=$Size-$TailSize; @i--)
+  <~>for (int @i=0; @i<$TailSize; @i++)</>
+  <?!TimeToStr>
+    @s = @s + $in[@i] + ", ";
+  <~>
+    @s = @s + TimeToStr($in[@i], TIME_DATE|TIME_MINUTES|TIME_SECONDS) + ", ";
+  </>
+  Print(@s);
+  
+[Help]
+Вывод в журнал последних **TailSize** тиков массива.\\
+Активен только в режиме отладки

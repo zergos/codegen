@@ -1,0 +1,14 @@
+[Main]
+Name=PrintExpr
+Title=Тестовый вывод (знач.)
+Group=Советник
+
+[Property]
+Expression=t,,выводить от нуля
+
+[Code]
+<lines>
+  Print($Expression);
+  
+[Help]
+Вывод в журнал любого выражения.

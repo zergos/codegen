@@ -1,0 +1,21 @@
+[Main]
+Name=GetSignal
+Title=Извлечь сигнал
+Group=Фильтры
+
+[Property]
+Index=n,0
+
+[Input]
+in=row
+
+[Output]
+out=n
+
+[Code]
+<lines>
+  $out = $in[$Index];
+
+[Help]
+Извлекает число-сигнал из серии.
+

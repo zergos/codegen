@@ -1,0 +1,49 @@
+[Main]
+Unit
+Name=DateUtils
+Title=Модуль "даты/время"
+Group=Общие
+
+[Code]
+<top>
+#include "date-utils.mqh"
+
+<attach>
+=date-utils.mqh
+bool TimeInside(datetime time, string start, string end)
+{
+  int hour1 = StringToInteger(StringSubstr(start, 0, 2));
+  int minute1 = StringToInteger(StringSubstr(start, 3, 2));
+  int hour2 = StringToInteger(StringSubstr(end, 0, 2));
+  int minute2 = StringToInteger(StringSubstr(end, 3, 2));
+  
+  int hour = TimeHour(time);
+  int minute = TimeMinute(time);
+  
+  if (hour2>hour1 && (hour>hour1 || hour==hour1 && minute>=minute1) && (hour<hour2 || hour==hour2 && minute<minute1) ||
+      hour2<hour1 && ((hour>hour1 || hour==hour1 && minute>=minute1) || (hour<hour2 || hour==hour2 && minute<minute1)) ||
+      hour2==hour1 && (minute1==minute1 || hour==hour1 && minute>=minute1 && minute<minute2))
+    return true;
+  else
+    return false;
+}
+
+string TimeToBorder(datetime time, string border)
+{
+  int hour1 = StringToInteger(StringSubstr(border, 0, 2));
+  int minute1 = StringToInteger(StringSubstr(border, 3, 2));
+  
+  int hour = TimeHour(time);
+  int minute = TimeMinute(time);
+  
+  int minutes;
+  if (hour<hour1 || hour==hour1 && minute<minute1)
+    minutes = hour<hour1?(hour1-hour-1)*60+(60-minute)+minute1:minute1-minute;
+  else
+    minutes = hour>hour1?(24+hour1-hour-1)*60+(60-minute)+minute1:24*60+minute1-minute;
+    
+  return StringFormat("%d:%02d",minutes/60,minutes%60);
+}
+
+[Help]
+Модуль для работы со временем.

@@ -1,0 +1,227 @@
+[Main]
+Name=FlowRays
+Title=Лучи уровней
+Group=Лента
+
+[Property]
+Threshold=n,100,барьер отображения цвета
+UseSession=t,1,использование ограничение по торговой сессии
+SessionStart=n,15,час начала сессии для отработки горизонтальных объёмов
+SessionEnd=n,23
+WidthCoef=n,100,коэффициент ширины линии
+
+Draw=t,1,рисовать линии
+LevelColor=color,LightGray
+
+WindowSize=n,100,высота окна для проверки плотности уровней
+LevelsStrenth=n,8,количество уровней для срабатывания
+
+[Input]
+tick=row
+in=row
+
+[Output]
+up=row,@sup
+down=row,@sdown
+
+[InputPars]
+Start
+Size
+bar
+
+[Global]
+<gvars>
+struct flow_xray
+{
+  datetime start, checktime;
+  double price;
+  string name;
+  int width;
+};
+
+<procs>
+int XRayIndex(flow_xray &xn[], double price)
+{
+  for (int idx=0; idx<ArraySize(xn); idx++)
+    if (xn[idx].price<=price && price-xn[idx].price<$tick.size)
+      return (idx);
+    
+  return (-1);
+}
+
+int XRayWidth(flow_xray &xn[], double low, double high)
+{
+  int res = 0;
+  for (int idx=0; idx<ArraySize(xn); idx++)
+    if (xn[idx].price>=low && xn[idx].price<=high)
+      res += xn[idx].width;
+    
+  return (res);
+}
+
+int BarIndex(double &prices[], double price)
+{
+  for (int idx=0; idx<ArraySize(prices); idx++)
+    if (prices[idx]<=price && price-prices[idx]<$tick.size)
+      return (idx);
+    
+  return (-1);
+}
+
+<?Draw>
+void ClearXRays(string &xn[])
+{
+  for (int xi=0; xi<ArraySize(xn); xi++)
+    ObjectDelete(xn[xi]);
+  ArrayResize(xn, 0);
+}
+
+void XRayStop(flow_xray &xi)
+{
+  if (xi.start>=$bar.time) ObjectDelete(xi.name);
+  else
+  {
+    ObjectSet(xi.name, OBJPROP_RAY, false);
+    ObjectSet(xi.name, OBJPROP_TIME2, $bar.time);
+  }
+}
+
+void XRayCreate(flow_xray &xi)
+{
+  xi.start = $tick.time;
+  xi.name = "x$name"+$bar.time+"_"+xi.price;
+  ArrayResize(@names, ArraySize(@names)+1);
+  @names[ArraySize(@names)-1] = xi.name;
+  ObjectCreate(xi.name, OBJ_TREND, 0, $tick.time, xi.price+$tick.size/2, $tick.time+PeriodSeconds(), xi.price+$tick.size/2);
+  ObjectSet(xi.name, OBJPROP_COLOR, $LevelColor);
+  ObjectSet(xi.name, OBJPROP_RAY, true);
+  ObjectSet(xi.name, OBJPROP_WIDTH, xi.width);
+  ObjectSet(xi.name, OBJPROP_BACK, true);
+}
+</>
+
+[Code]
+<gvars>
+flow_xray @x[];
+string @names[];
+<?up>
+double @sup[], @sdown[];
+</>
+
+<flow_init>
+  if ($Start==0)
+  {
+    <?Draw>ClearXRays(@names);</>
+    ArrayResize(@x, 0);
+  }
+  
+<flow_bar>
+  <?UseSession>if (TimeHour($bar.time)>=$SessionStart && TimeHour($bar.time)<=$SessionEnd)</>
+  {
+    // check old levels
+    for (int @i=0; @i<ArraySize(@x); @i++)
+    {
+      if (@x[@i].width==0 || @x[@i].checktime>$bar.time) continue;
+    
+      int @mode;
+      int @front = BarIndex($bar.prices, @x[@i].price);
+      if (@front==-1) // no cross, just check up|down
+        @mode = 0;
+      else if (MathAbs($bar.ask[@front]-$bar.bid[@front])<$Threshold) @mode = -1;
+      
+      int @up = BarIndex($bar.prices, @x[@i].price+$tick.size);
+      int @down = BarIndex($bar.prices, @x[@i].price-$tick.size);
+      if ((@up>=0 && MathAbs($bar.ask[@up]-$bar.bid[@up])>=$Threshold)
+        ||(@down>=0 && MathAbs($bar.ask[@down]-$bar.bid[@down])>=$Threshold)) @mode = 1;
+      
+      if (@mode!=0)
+      {
+        @x[@i].checktime = $bar.time + 4*$tick.period;
+        if (@mode>0)
+        {
+          if (@x[@i].width<3)
+          {
+            @x[@i].width++;
+            <?Draw>
+            XRayStop(@x[@i]);
+            XRayCreate(@x[@i]);
+            </>
+          }
+        }
+        else
+        {
+          @x[@i].width--;
+          <?Draw>
+          XRayStop(@x[@i]);
+          if (@x[@i].width>0)
+            XRayCreate(@x[@i]);
+          </>
+        }
+      }
+    }
+      
+    // check new levels
+    for (int @k=0; @k<ArraySize($bar.prices); @k++)
+    {
+      @i = XRayIndex(@x, $bar.prices[@k]);
+      //if (@i>=0) continue; // already exist
+        
+      int @dlt = MathAbs($bar.ask[@k] - $bar.bid[@k]);
+      if (@dlt>=$Threshold)
+      {
+        if (@i<0)
+        {
+          @i = ArraySize(@x);
+          ArrayResize(@x, @i+1);
+          @x[@i].price = $bar.prices[@k];
+          @x[@i].width = MathMin(@dlt/$WidthCoef, 3);
+          <?Draw>XRayCreate(@x[@i]);</>
+        }
+        else
+        {
+          if (@x[@i].width<3)
+          {
+            @x[@i].width++;
+            <?Draw>
+            XRayStop(@x[@i]);
+            XRayCreate(@x[@i]);
+            </>
+          }          
+        }
+        @x[@i].checktime = $bar.time + 4*$tick.period;
+      }
+    }
+  }
+
+<lines>
+<?up>
+  ArrayInit(@sup, $Size);
+  CheckShift(@sup);
+  ArrayInit(@sdown, $Size);
+  CheckShift(@sdown);
+  
+  <?in>double @spread = Ask-Bid;</>
+  for (@k=$Start; @k<$Size; @k++)
+  {
+    @sup[@k] = 0; @sdown[@k] = 0;
+    
+    <?in>double @price = $in[@k]+@spread;
+    <~>double @price = Ask;</>
+    int @sum = XRayWidth(@x, @price, @price+$WindowSize*Point);
+    if (@sum>=$LevelsStrenth)
+      @sup[@k] = @sum;
+      
+    <?in>@price = $in[@k]-@spread;
+    <~>@price = Bid;</>
+    @sum = XRayWidth(@x, @price-$WindowSize*Point, @price);
+    if (@sum>=$LevelsStrenth)
+      @sdown[@k] = -@sum;
+  }
+    
+</>
+  
+<deinit>
+  <?Draw>ClearXRays(@names);</>
+    
+[Help]
+Вывод уровней по пороговым значениям.

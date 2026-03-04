@@ -1,0 +1,247 @@
+[Main]
+Name=SimTicks
+Title=—имул€тор тиков
+Group=√енераторы
+
+[Property]
+StartDate=s,D'',начальна€ дата/врем€ симул€ции
+Speed=n,1,шаг добавлени€ тиков
+Count=n,1000,кол-во баров дл€ отработки
+MaxTicks=n,100,кол-во тиков на свечу
+
+[Output]
+open=row,@sopen
+close=row,@sclose
+high=row,@shigh
+low=row,@slow
+volume=row,@svolume
+time=row,@stime
+
+[InputPars]
+Start
+
+[OutputPars]
+Size=$Count
+Start=@sstart
+
+[Code]
+<procs>
+void @doShift(double &a[])
+{
+  for (int i=0; i<$Count-1; i++) a[i] = a[i+1];
+}
+void @doShift(datetime &a[])
+{
+  for (int i=0; i<$Count-1; i++) a[i] = a[i+1];
+}
+
+<gvars>
+double @sopen[], @sclose[], @shigh[], @slow[], @svolume[];
+datetime @stime[];
+int @sstart;
+int @step;
+datetime @curtime;
+MqlRates @curbar;
+double @route[];
+int @fixlim1, @fixlim2;
+int @fixmode;
+
+<init>
+  ArrayInit(@sopen, $Count);
+  ArrayInit(@sclose, $Count);
+  ArrayInit(@shigh, $Count);
+  ArrayInit(@slow, $Count);
+  ArrayInit(@svolume, $Count);
+  ArrayInit(@stime, $Count);
+  ArrayInit(@route, $MaxTicks);
+
+<lines>
+  if ($Start==0) // сброс симул€ции
+  {
+    @sstart = 0;
+    @step = 0;
+    // заполнение истории
+    int shift = iBarShift(NULL, _Period, $StartDate);
+    for (int i=0; i<$Count-1; i++)
+    {
+      @sopen[i] = Open[i+shift+1];
+      @sclose[i] = Close[i+shift+1];
+      @shigh[i] = High[i+shift+1];
+      @slow[i] = Low[i+shift+1];
+      @svolume[i] = Volume[i+shift+1];
+      @stime[i] = Time[i+shift+1];
+    }
+    @curtime = Time[shift];
+  }
+  else
+    @sstart = $Count-1;
+    
+  
+  if (@step==0) // расчЄт маршрута движени€ цены на первом тике бара
+  {
+    int shift = iBarShift(NULL, _Period, @curtime);
+    
+    if (shift==0) // достигли текущего бара, обновл€емс€ по времени
+    {
+      @sopen[$Count-1] = Open[0];
+      @sclose[$Count-1] = Close[0];
+      @shigh[$Count-1] = High[0];
+      @slow[$Count-1] = Low[0];
+      @svolume[$Count-1] = Volume[0];
+      @stime[$Count-1] = Time[0];
+      @curtime = Time[0] + PeriodSeconds();
+    }
+    else
+    {
+    @sopen[$Count-1] = Open[shift];
+    @sclose[$Count-1] = Open[shift];
+    @shigh[$Count-1] = Open[shift];
+    @slow[$Count-1] = Open[shift];
+    @svolume[$Count-1] = 0;
+    @stime[$Count-1] = Time[shift];
+    
+    @curbar.time = Time[shift];
+    @curbar.open = Open[shift];
+    @curbar.close = Close[shift];
+    @curbar.high = High[shift];
+    @curbar.low = Low[shift];
+    @curbar.tick_volume = Volume[shift];
+    
+    double path;
+    int dir;
+    if (@curbar.close<@curbar.open)
+    {
+      dir = 1;
+      path = (@curbar.high-@curbar.open) + (@curbar.high-@curbar.low) + (@curbar.close-@curbar.low);
+    }
+    else
+    {
+      dir = -1;
+      path = (@curbar.open-@curbar.low) + (@curbar.high-@curbar.open) + (@curbar.high-@curbar.close);
+    }
+    
+    double price = @curbar.open;
+    int mode = 0;
+    double inc = path/$MaxTicks;
+    for (int k=0; k<$MaxTicks; k++)
+    {
+      if (dir == 1)
+      {
+        switch (mode)
+        {
+          case 0:
+            price += inc;
+            if (price>=@curbar.high)
+            {
+              price = @curbar.high;
+              @fixlim1 = k;
+              mode++;
+            }
+            break;
+          case 1:
+            price -= inc;
+            if (price<=@curbar.low)
+            {
+              price = @curbar.low;
+              @fixlim2 = k;
+              mode++;
+            }
+            break;
+          case 2:
+            price += inc;
+            if (price>=@curbar.close)
+              price = @curbar.close;
+        }
+      }
+      else
+      {
+        switch (mode)
+        {
+          case 0:
+            price -= inc;
+            if (price<=@curbar.low)
+            {
+              price = @curbar.low;
+              @fixlim1 = k;
+              mode++;
+            }
+            break;
+          case 1:
+            price += inc;
+            if (price>=@curbar.high)
+            {
+              price = @curbar.high;
+              @fixlim2 = k;
+              mode++;
+            }
+            break;
+          case 2:
+            price -= inc;
+            if (price<=@curbar.close)
+              price = @curbar.close;
+        }
+      }
+      @route[k] = NormalizeDouble(price, _Digits);
+    }
+      @step = 1;
+      @fixmode = 0;
+    }
+  }  
+  else // движение по маршруту
+  {
+    @stime[$Count-1] = @curtime + MathMin(PeriodSeconds()*@step/$MaxTicks, PeriodSeconds()-1);
+    double price = @route[@step];
+    switch (@fixmode)
+    {
+      case 0:
+        if (@step>=@fixlim1)
+        {
+          price = @route[@fixlim1];
+          @fixmode++;
+        }
+        break;
+      case 1:
+        if (@step>=@fixlim2)
+        {
+          price = @route[@fixlim2];
+          @fixmode++;
+        }
+    }
+    @sclose[$Count-1] = price;
+    if (price>@shigh[$Count-1]) @shigh[$Count-1] = price;
+    else
+    if (price<@slow[$Count-1]) @slow[$Count-1] = price;
+    svolume[$Count-1] = @curbar.tick_volume*@step/$MaxTicks;
+    
+    @step += $Speed;
+    if (@step>=$MaxTicks)
+    {
+      @step = 0;
+
+      @sclose[$Count-1] = @curbar.close;
+      @shigh[$Count-1] = @curbar.high;
+      @slow[$Count-1] = @curbar.low;
+      @svolume[$Count-1] = @curbar.tick_volume;
+      
+      @curtime += PeriodSeconds();
+      @doShift(@sopen);
+      @doShift(@sclose);
+      @doShift(@shigh);
+      @doShift(@slow);
+      @doShift(@svolume);
+      @doShift(@stime);
+      @stime[$Count-2] = @curtime;
+      
+      @sopen[$Count-1] = @curbar.close;
+      @shigh[$Count-1] = @curbar.close;
+      @slow[$Count-1] = @curbar.close;
+      @svolume[$Count-1] = 0;
+      @stime[$Count-1] = @curtime+PeriodSeconds();
+    
+      @sstart = $Count-2;
+    }
+  }
+  
+[Help]
+—имулирует формирование баров.
+

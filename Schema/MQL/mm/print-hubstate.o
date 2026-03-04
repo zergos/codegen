@@ -1,0 +1,110 @@
+[Main]
+Name=PrintHubState
+Title=Вывод состояния хаба
+Group=Сделки
+
+[Property]
+PrintOrders=t,1,информировать о сделках
+UseGraphics=t,,рисовать с помощью графики
+Title=s,Активные потоки,заголовок
+TitleEng=s,Active threads
+ThreadTitle=s,ПОТОК,заголовок потока
+ThreadTitleEng=s,THREAD
+PosX=n,20,сдвиг от левой границы
+PosY=n,20,сдвиг от верхней границы
+StepY=n,16,ширина линий
+MaxLines=n,20,резерв количества строк для вывода
+Font=s,Times New Roman,шрифт\, например Arial
+FontSize=n,,размер шрифта
+Angle=n,,угол наклона текста
+Anchor=text_anchor,ANCHOR_LEFT_UPPER,способ привязки
+Corner=n,0,угол привязки
+#X=n
+#Y=n
+Color=color,Green
+Back=n,1,объект на заднем фоне
+
+[InputPars]
+Threads
+
+[Code]
+<gvars>
+<?UseGraphics>
+int @comment_line;
+<~>
+string @comment_text;
+</>
+
+<procs>
+void @PrintLine(string s)
+{
+  <?UseGraphics>
+  string @name = "$name"+@comment_line;
+  ObjectSetString(0, @name, OBJPROP_TEXT, s);
+  @comment_line++;
+  <~>
+  if (@comment_text!="") @comment_text += "\n";
+  @comment_text += s;
+  </>
+}
+
+<init>
+  <?UseGraphics>
+  // reserve lines
+  for (int @i=0; @i<$MaxLines; @i++)
+  {
+    string @name = "$name"+@i;
+    ObjectCreate(@name, OBJ_LABEL, 0, TimeCurrent(), Bid);
+    <?Font>ObjectSetString(0, @name, OBJPROP_FONT, "$Font");</>
+    <?FontSize>ObjectSet(@name, OBJPROP_FONTSIZE, $FontSize);</>
+    <?Angle>ObjectSet(@name, OBJPROP_ANGLE, $Angle);</>
+    <?Corner>ObjectSet(@name, OBJPROP_CORNER, $Corner);</>
+    <?Anchor>ObjectSet(@name, OBJPROP_ANCHOR, $Anchor);</>
+    <?Color>ObjectSet(@name, OBJPROP_COLOR, $Color);</>
+    <?Back>ObjectSet(@name, OBJPROP_BACK, $Back);</>
+    ObjectSet(@name, OBJPROP_XDISTANCE, $PosX);
+    ObjectSet(@name, OBJPROP_YDISTANCE, $PosY+@i*$StepY);
+    ObjectSetString(0, @name, OBJPROP_TEXT, "");
+  }
+  </>
+
+<lines>
+  <?UseGraphics>
+  @comment_line = 0;
+  <~>
+  @comment_text = "";
+  </>
+  <?Title>@PrintLine(<?!english>"$Title"<~>"$TitleEng"</>);</>
+  int @i = 1;
+  ForEach($Threads, th)
+  {
+    @PrintLine(StringFormat("%s"+<?!english>"$ThreadTitle"<~>"$ThreadTitleEng"</>+" #%d %s %s %s изменён:%s", th==$Threads::worker?"*":"", @i++, th.trend==0||th.hub_state==HUB_CLOSED?"":(th.trend>0?"BUY":"SELL"), hubStateNames[th.hub_state], th.state_mark==""?"":"*"+th.state_mark+"*", TimeToStr(th.last_state_changed)));
+    <?PrintOrders>
+    int k = 0;
+    ForEachL2(CHubOrder, ho, th.firstOrder)
+    {
+      if (ho.state!=HUB_CLOSED)
+        //@PrintLine(StringFormat("-- order:#%d state:%s ticket:%d type:%s price:%f sl:%f tp:%f expire:%s", @k, hubStateNames[ho.state], ho.ticket, cmdNames[ho.cmd], ho.price, ho.fsl, ho.ftp, ho.expire==0?"no":TimeToStr(ho.expire)));
+        <?UseGraphics>
+        @PrintLine(StringFormat("#%d %s %s %f", ho.ticket, cmdNames[ho.cmd], hubStateNames[ho.state], ho.price));
+        <~>
+        @PrintLine(StringFormat("#%d %s %s %f %s", ho.ticket, cmdNames[ho.cmd], hubStateNames[ho.state], ho.price, ho.expire==0?"":"истекает:"+TimeToStr(ho.expire)));
+        </>
+    }
+    </>
+  }
+  <?UseGraphics>
+  for (int i=@comment_line+1; i<$MaxLines; i++)
+    @PrintLine("");
+  <~>
+  Comment(@comment_text);
+  </>
+
+<deinit>
+  <?UseGraphics>
+  for (int i=0; i<$MaxLines; i++)
+    ObjectDelete("$name"+i);
+  </>
+    
+[Help]
+Вывод информации об активности потоков хаба.

@@ -1,0 +1,19 @@
+[Main]
+Name=ClosePin
+Title=Закрыть привязку
+Group=Сделки
+Size=4
+
+[Input]
+pin=n
+
+[Code]
+<lines>
+  if (HasRef($pin))
+  {
+    $pin.ClosePending();
+    $pin = NULL;
+  }
+
+[Help]
+Удаляет привязанный отложенный ордер.

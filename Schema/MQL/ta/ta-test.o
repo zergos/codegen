@@ -1,0 +1,46 @@
+[Main]
+Name=TATest
+Title=Ind Прогонка
+Group=ТА
+
+[Property]
+CheckMode=n,ModeC,режим построения (ModeC, ModeHL)
+
+[Input]
+up=row
+down=row
+
+close=row
+open=row
+high=row
+low=row
+time=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<lines>
+  if ($Start==0)
+    TAReset();
+
+  for (int i=$Start; i<$Size-2; i++)
+  {
+    if ($up[i]>0)
+    {
+      TABaseField *f = new TABaseField($CheckMode, -1);
+      f.Activate();
+    }
+    if ($down[i]>0)
+    {
+      TABaseField *f = new TABaseField($CheckMode, 1);
+      f.Activate();
+    }
+    
+    TABaseField::ProcessAll($close[i], $open[i], $high[i], $low[i], $time[i]);
+  }
+
+[Help]
+Прогоняет поля поиска по входящему ЗигЗагу.
+

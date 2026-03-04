@@ -1,0 +1,25 @@
+[Main]
+Name=SetParGlobal
+Title=Уст. глобального
+Group=Параметры
+
+[Property]
+Name=s,Parameter
+Value=s,0
+Temp=t,1,значения параметра на диск при выходе не сохраняется
+Unique=t,1,привязка к символу
+
+[Code]
+<init>
+  <?Temp>
+  GlobalVariableTemp("$Name"<?Unique>+Symbol()</>);
+  </>
+  GlobalVariableSet("$Name"<?Unique>+Symbol()</>, 0);
+
+<lines>
+  GlobalVariableSet("$Name"<?Unique>+Symbol()</>, $Value);
+  GlobalVariablesFlush();
+  
+[Help]
+Устанавливает значение глобального параметра.
+

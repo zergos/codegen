@@ -1,0 +1,115 @@
+[Main]
+Usable
+Name=ChainObject
+Title=Цепь объектов
+Group=Общие
+
+[Uses]
+common\ref-object
+
+[Code]
+<top>
+#include "chain-object.mqh"
+
+<attach>
+=chain-object.mqh
+
+#define ForEach(type, var) for (type *var = type::first, *inext = RefObject::HasRef(var)?var.next:NULL; RefObject::HasRef(var); var = (type*)inext, inext = RefObject::HasRef(var)?var.next:NULL)
+#define ForEachL(type, var, first) for (type *var = first, *inext = RefObject::HasRef(var)?var.next:NULL; RefObject::HasRef(var); var = (type*)inext, inext = RefObject::HasRef(var)?var.next:NULL)
+#define ForEach2(type, var) for (type *var = type::first, *inext2 = RefObject::HasRef(var)?var.next:NULL; RefObject::HasRef(var); var = (type*)inext2, inext2 = RefObject::HasRef(var)?var.next:NULL)
+#define ForEachL2(type, var, first) for (type *var = first, *inext2 = RefObject::HasRef(var)?var.next:NULL; RefObject::HasRef(var); var = (type*)inext2, inext2 = RefObject::HasRef(var)?var.next:NULL)
+#define ChainIndex(var) HasRef(var)?var.index():0
+
+class ChainObject : public RefObject
+{
+  public:
+  ChainObject *prev, *next;
+  
+  ChainObject()
+  {
+    //add();
+  }
+  
+  ~ChainObject()
+  {
+    //if (first==GetPointer(this)) first = next;
+    if (HasRef(prev)) prev.next = next;
+    if (HasRef(next)) next.prev = prev;
+  }
+  
+  virtual ChainObject *getFirst() { return NULL; }
+  virtual void setFirst(ChainObject *o) { }
+  
+  //static ChainObject *first;
+  //virtual ChainObject *getFirst() { return first; }
+  //virtual void setFirst(ChainObject *o) { first = o; }
+  
+  void insert(ChainObject *o)
+  {
+    o.prev = GetPointer(this);
+    o.next = next;
+    next = o;
+  }
+  
+  void add()
+  {
+    ChainObject *cur = getFirst();
+    SetUserError(cur==NULL); // ошибка компилятора МТ (без этой строки следующая не работает)
+    if (cur==NULL) setFirst(GetPointer(this));
+    else
+    {
+      while (HasRef(cur.next)) cur = cur.next;
+      cur.insert(GetPointer(this));
+    }
+  }
+  
+  void clear()
+  {
+    ChainObject *cur = getFirst(), *inext;
+    while (HasRef(cur))
+    {
+      inext = cur.next;
+      delete cur;
+      cur = inext;
+    }
+  }
+  
+  int count()
+  {
+    int res = 0;
+    ChainObject *cur = getFirst();
+    while (HasRef(cur))
+    {
+      res++;
+      cur = cur.next;
+    }
+    return res;
+  }
+  
+  int index()
+  {
+    int res = 1;
+    ChainObject *cur = getFirst();
+    while (HasRef(cur) && cur!=GetPointer(this))
+    {
+      res++;
+      cur = cur.next;
+    }
+    return HasRef(cur)?res:0;
+  }
+  
+  ChainObject *byIndex(int i)
+  {
+    if (i==0) return NULL;
+    int k = i;
+    ChainObject *cur = getFirst();
+    while (HasRef(cur) && k>1)
+    {
+      k--;
+      cur = cur.next;
+    }
+    return cur;
+  }
+};
+
+//ChainObject *ChainObject::first;

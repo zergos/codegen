@@ -1,0 +1,28 @@
+[Main]
+Name=Pause
+Title=Пауза
+Group=Советник
+
+[Property]
+Enabled=t,1,включено
+
+[Global]
+<top>
+#include <WinUser32.mqh>
+
+<procs>
+void BreakPoint()
+{
+  if (!IsVisualMode()) return;
+  keybd_event(19,0,0,0);
+  Sleep(10);
+  keybd_event(19,0,2,0);
+}
+
+[Code]
+<lines>
+  <?Enabled>BreakPoint();</>
+
+[Help]
+Нажимает в тестере кнопку "Пауза".
+  

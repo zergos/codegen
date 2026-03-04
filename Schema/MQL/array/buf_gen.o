@@ -1,0 +1,24 @@
+[Main]
+Unit
+Name=ArrayGen
+Title=Новый массив
+Group=Массивы
+
+[Output]
+out=row
+
+[Code]
+<gvars>
+double $out[];
+int size$out = 0;
+int rpos$out;
+int wpos$out;
+int dim$out;
+
+<lines>
+  rpos$out = 0;
+  wpos$out = 0;
+  dim$out = 0;
+
+[Help]
+Подготавливает динамический массив для последовательной записи и чтения

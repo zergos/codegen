@@ -1,0 +1,44 @@
+[Main]
+Name=LossLess
+Title=Безубыток
+Group=Сделки
+
+[Property]
+Level=n,100,уровень в пунктах для безубытка
+Profit=n,,профит в пунктах от сети
+HubState=hubstate,HUB_ACTIVE,класс учёта сделок
+Split=t,,отдельные уровни безубытков по каждой сделке
+Force=bool,false,оставлять только один уровень БУ
+
+[Code]
+<lines>
+  <?Profit>double @add = trend>0?$Profit*Point:-$Profit*Point;</>
+  <?!Split>
+  double @level = HubActivePoints()/HubActiveLots()*min_lot;
+  <?Level>
+  if (trend>0 && @level>=$Level || trend<0 && -@level>=$Level)
+  </>
+  for (int i=0; i<ArraySize(hub); i++)
+  {
+    <?HubState>if (hub[i].state != $HubState) continue;</>
+    OrderSetStop(i, Bid-@level*Point<?Profit>+@add</>, $Force);
+    <?last_version>
+    if (hub[@i].cmd == OP_BUY && (Bid-hub[@i].price)/Point>=$Level && hub[@i].fsl<hub[@i].price)
+      OrderSetSL(@i, hub[@i].price+Ask-Bid);
+    else if (hub[@i].cmd == OP_SELL && (hub[@i].price-Ask)/Point>=$Level && hub[@i].fsl>hub[@i].price)
+      OrderSetSL(@i, hub[@i].price-Ask+Bid);
+    </>
+  }
+  <~>
+  for (int i=0; i<ArraySize(hub); i++)
+  {
+    //<?HubState>if (hub[i].state != $HubState) continue;</>
+    //OrderSetStop(i, hub[i].price<?Profit>+@add</>, $Force);
+    <?HubState>if (hub[i].state != $HubState || !OrderSelect(hub[i].ticket, SELECT_BY_TICKET, MODE_TRADES)) continue;</>
+    OrderSetStop(i, OrderOpenPrice()<?Profit>+@add</>, $Force);
+  }
+  </>
+
+[Help]
+Установка сделки в безубыток по достижению уровня прибыли в **Level** пунктов.\\
+Если указан **profit**, то уровень БУ выставляется с учётом этого профита.

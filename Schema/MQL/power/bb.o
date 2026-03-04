@@ -1,0 +1,46 @@
+[Main]
+Name=BBPower
+Title=Сила быков/медведей
+Group=Алгоритмы
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+
+[Output]
+bulls=row,@bulls
+bears=row,@bears
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @bulls[], @bears[];
+
+<lines>
+  ArrayInit(@bulls, $Size);
+  CheckShift(@bulls);
+  ArrayInit(@bears, $Size);
+  CheckShift(@bears);
+  
+  for (int i=$Start; i<$Size-1; i++)
+  {
+    if ($close[i]>$open[i])
+    {
+      @bulls[i] = $high[i] - $low[i];
+      @bears[i] = $open[i] - $low[i] + $high[i] - $close[i];
+    }
+    else
+    {
+      @bulls[i] = $high[i] - $open[i] + $close[i] - $low[i];
+      @bears[i] = $high[i] - $low[i];
+    }
+  }
+
+[Help]
+Индикатор показывает силу быков и медведей по каждой свече.
+

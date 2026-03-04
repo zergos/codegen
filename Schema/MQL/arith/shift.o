@@ -1,0 +1,32 @@
+[Main]
+Name=Shift
+Title=Сдвиг
+Group=Арифметика
+
+[Property]
+Bars=n,0,на сколько баров вперёд сдвинуть
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  for (int @i=MathMin($Start+$Bars,$Size-1); @i<$Size; @i++)
+    $out[@i] = $in[@i-$Bars];
+  
+  
+[Help]
+Сдвигает массив на указанное значение баров вперёд.

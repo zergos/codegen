@@ -1,0 +1,20 @@
+[Main]
+Choice
+Name=AskDialog
+Title=Диалог вопроса
+Group=Управление
+
+[Property]
+Text=s
+
+[Output]
+yes=c
+
+[Code]
+<lines>
+  if (MessageBox("$Text", "Вопрос", MB_YESNO|MB_ICONQUESTION|MB_TOPMOST)==IDYES)
+  {
+$yes.lines
+  }
+  
+

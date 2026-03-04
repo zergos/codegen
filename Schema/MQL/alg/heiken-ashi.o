@@ -1,0 +1,52 @@
+[Main]
+Name=HeikenAshi
+Title=Heiken Ashi
+Group=Алгоритмы
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+
+[Output]
+hopen=row,@hopen
+hclose=row,@hclose
+hhigh=row,@hhigh
+hlow=row,@hlow
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @hopen[];
+double @hclose[];
+double @hhigh[];
+double @hlow[];
+
+<lines>
+  ArrayInit(@hopen, $Size);
+  ArrayInit(@hclose, $Size);
+  ArrayInit(@hhigh, $Size);
+  ArrayInit(@hlow, $Size);
+  CheckShift(@hopen);
+  CheckShift(@hclose);
+  CheckShift(@hhigh);
+  CheckShift(@hlow);
+  
+  for (int i=$Start; i<$Size; i++)
+  {
+    double haClose =($open[i]+$high[i]+$low[i]+$close[i])/4;
+    double haOpen = i==0?haClose:(@hopen[i-1]+@hclose[i-1])/2;
+    double haHigh = MathMax($high[i], MathMax(haOpen, haClose));
+    double haLow = MathMin($low[i], MathMin(haOpen, haClose));
+    @hhigh[i]=haHigh;
+    @hlow[i]=haLow;
+    @hopen[i]=haOpen;
+    @hclose[i]=haClose;
+  }
+  
+[Help]
+Хейкен Аши

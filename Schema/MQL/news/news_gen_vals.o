@@ -1,0 +1,47 @@
+[Main]
+Name=NewsGenVals
+Title=Генератор коэф.
+Group=Новости
+
+[Property]
+NSize=n,100,предел новостей
+Symbol=s,,если не указан\, используется текущий
+Importance=fxim,0,фильтр важности
+
+[Input]
+time=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+int @Times[$NSize];
+int @NIds[$NSize];
+double @Vals[$NSize];
+double $out[$Size];
+int @no_im[1] = {-1};
+
+<lines>
+  <?Symbol>
+    NewsList($time[$Size-1], "$Symbol", $Importance, $NSize, @Times, @NIds);
+  <~>
+    NewsList($time[$Size-1], Symbol(), $Importance, $NSize, @Times, @NIds);
+  </>
+  //for (int @aa=0; @aa<$NSize; @aa++) Print(@NIds[@aa]);
+
+  ArrayInitialize(@Vals, 0);
+  NewsValues($NSize, @NIds, @Vals, @no_im);
+
+  ArrayInitialize($out, 0);
+  for (int @n=0; @n<$NSize; @n++)
+    for (int @i=1; @i<$Size; @i++)
+      if ($time[@i-1]<@Times[@n] && @Times[@n]<=$time[@i])
+      {
+      //Print(TimeToStr(@Times[@n],TIME_DATE)," ",TimeToStr(@Times[@n],TIME_MINUTES)," to ",TimeToStr($time[@i],TIME_DATE)," ",TimeToStr($time[@i],TIME_MINUTES)," value ",@Vals[@n]);
+      $out[@i] += @Vals[@n];
+      }
+  

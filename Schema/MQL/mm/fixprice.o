@@ -1,0 +1,35 @@
+[Main]
+Name=FixPrice
+Title=Фикс. цены
+Group=Сделки
+
+[Property]
+Value=n,,пользовательское значение\, если указано
+Mode=n,0,0 - Bid\, 1 - предыдущий  Close
+
+[Output]
+fix=n
+
+[Code]
+<gvars>
+double $fix;
+
+<lines>
+  <?Value>
+  $fix = $Value;
+  <~>
+  <?Mode=0>
+  $fix = Bid;
+  </>
+  <?Mode=1>
+  $fix = Close[1];
+  </>
+  </>
+  <?debug>Print("fixed by "+$fix);</>
+
+<sync>
+  sync("$name", $fix);
+      
+[Help]
+Сохраняет текущую цену для дальнейшей проверки.
+

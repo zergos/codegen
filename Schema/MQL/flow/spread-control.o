@@ -1,0 +1,220 @@
+[Main]
+Name=SpreadControl
+Title=Спред
+Group=Лента
+
+[Property]
+TimeShift=n,0,сдвиг системного времени относительно терминала
+CountBidAsk=t,1,считать тиковые объёмы
+TickSize=n,10,зармер шага для бара
+RequestNewTicks=t,1,запрашивать новые тики здесь же 
+Tester=t,,режим запуска для тестера (выборка тиков по виртуальное время)
+HostTicks=t,,брать тики с активного счёта
+
+[Input]
+time=row
+
+[Output]
+tick=row,@tick
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=@flowStart
+Size=@flowSize
+bar=@bar
+
+[Map]
+flow_init=new
+flow_bar=new
+flow_tick=new
+flow_deinit=new
+
+[Global]
+<gvars>
+struct forex_bar
+{
+  datetime time;
+<?CountBidAsk>
+  double prices[];
+  int spread[];
+  int volume[];
+  int high[];
+  int idx;
+</>
+};
+
+struct forex_tick
+{
+  forexReq req;
+  double fwd;
+  datetime rawtime, time;
+  double fulltime;
+  double ask, bid;
+  int spread;
+  int sid;
+  int last_id;
+  int idx;
+  double size;
+};
+
+[Code]
+<gvars>
+int @flowStart = 0;
+int @flowSize;
+forex_tick @tick;
+forex_bar @bar;
+bool @tickChecked;
+<?Tester>
+forex_tick @last_tick;
+</>
+
+<init>
+  @tick.sid = FlowSymbolID(Symbol(), @tick.fwd);
+  if (@tick.sid==-1)
+  {
+    Alert("по символу "+Symbol()+" лента не пишется");
+    return (1);
+  }
+  @tick.fwd *= Point;
+  @tick.size = $TickSize*Point;
+  
+<lines>
+  if ($Start==0)
+  {
+    @tick.idx = 0;
+    @bar.time = 0;
+    <?CountBidAsk>
+    ArrayResize(@bar.prices, 0);
+    </>
+    
+    ForexRequestTicks(@tick.sid, $time[0]+$TimeShift, @tick.req);
+    <?Tester>
+    @tickChecked = false;
+    </>
+  }
+  else
+  {
+    <?RequestNewTicks>
+      <?Tester>
+      if (!@tickChecked)
+        ForexRequestTicksByID(@tick.sid, @tick.last_id, @tick.req);
+      <~>
+      <?HostTicks>
+      @tick.bid = Bid;
+      @tick.ask = Ask;
+      <~>
+      ForexRequestTicksByID(@tick.sid, @tick.last_id, @tick.req);
+      </>
+      </>
+    </>
+    if (Shifted) @tick.idx -= $Size-$Start-1;
+  }
+  
+  @flowStart = $Start;
+  @flowSize = $Size;
+    
+$flow_init
+    
+  <?!Tester>
+    <?HostTicks>
+    if ($Start==0)
+      @tickChecked = ForexReadTick(@tick.req, @tick.rawtime, @tick.ask, @tick.bid, @tick.last_id, @tick.fulltime);
+    else
+      @tickChecked = true;
+    <~>
+    @tickChecked = ForexReadTick(@tick.req, @tick.rawtime, @tick.ask, @tick.bid, @tick.last_id, @tick.fulltime);
+    </>
+  while (@tickChecked)
+  <~>
+  if (!@tickChecked) @tickChecked = ForexReadTick(@tick.req, @tick.rawtime, @tick.ask, @tick.bid, @tick.last_id, @tick.fulltime);
+  while (@tickChecked && @tick.rawtime-$TimeShift <= CurTime())
+  </>
+  {
+    @tick.rawtime -= $TimeShift;
+    @tick.ask += @tick.fwd;
+    @tick.bid += @tick.fwd;
+    @tick.spread = (@tick.ask-@tick.bid)/Point;
+    
+    // find bar
+    //for ( ; @tick.idx<$Size-1; @tick.idx++)
+    //  if ($time[@tick.idx]<=@tick.time && @tick.time<$time[@tick.idx+1]) break;
+    for ( ; @tick.idx>0 && @tick.rawtime<$time[@tick.idx]; @tick.idx--);
+    for ( ; @tick.idx<$Size-2; @tick.idx++)
+      if ($time[@tick.idx]<=@tick.rawtime && @tick.rawtime<$time[@tick.idx+1]) break;
+    if (_Period!=2 && @tick.idx<$Size-1 && @tick.rawtime>=$time[@tick.idx]+PeriodSeconds()) @tick.idx++;
+    
+    @tick.time = $time[@tick.idx];
+      
+    if (@flowStart<0) @flowStart = MathMin($Start, @tick.idx); // fix first changed bar
+    
+    <?CountBidAsk>
+    @tick.bid = floor(@tick.bid/@tick.size)*@tick.size;
+    if (@bar.time==@tick.time)
+    {
+      bool @found = false;
+      for (@bar.idx=0; @bar.idx<ArraySize(@bar.prices); @bar.idx++)
+        if (@bar.prices[@bar.idx] == @tick.bid)
+        {
+          @found = true;
+          break;
+        }
+      if (!@found)
+      {
+        @bar.idx = ArraySize(@bar.prices);
+        ArrayResize(@bar.prices, @bar.idx+1);
+        ArrayResize(@bar.spread, @bar.idx+1);
+        ArrayResize(@bar.volume, @bar.idx+1);
+        ArrayResize(@bar.high, @bar.idx+1);
+        @bar.prices[@bar.idx] = @tick.bid;
+        @bar.spread[@bar.idx] = 0;
+        @bar.volume[@bar.idx] = 0;
+        @bar.high[@bar.idx] = 0;
+      }
+    }
+    else
+    {
+    
+$flow_bar
+      @bar.idx = 0;
+      ArrayResize(@bar.prices, 1);
+      ArrayResize(@bar.spread, 1);
+      ArrayResize(@bar.volume, 1);
+      @bar.prices[0] = @tick.bid;
+      @bar.spread[0] = 0;
+      @bar.volume[0] = 0;
+      @bar.high[0] = 0;
+    }
+    
+    @bar.spread[@bar.idx] += @tick.spread;
+    @bar.volume[@bar.idx]++;
+    if (@tick.spread>@bar.high[@bar.idx]) @bar.high[@bar.idx] = @tick.spread;
+    <~>
+    if (@bar.time!=@tick.time)
+    {
+$flow_bar
+    }
+    </>
+    @bar.time = @tick.time;
+
+$flow_tick
+    <?Tester>
+    @tickChecked = ForexReadTick(@tick.req, @tick.rawtime, @tick.ask, @tick.bid, @tick.last_id, @tick.fulltime);
+    <~>
+    <?HostTicks>
+    if ($Start==0) @tickChecked = false;
+    else
+    </>
+      @tickChecked = ForexReadTick(@tick.req, @tick.rawtime, @tick.ask, @tick.bid, @tick.last_id, @tick.fulltime);
+    </>
+  }
+  
+$flow_deinit
+
+  @flowSize = $Size;
+  
+[Help]
+Оболочка для обработки потока котировок.
+

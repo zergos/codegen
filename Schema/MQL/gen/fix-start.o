@@ -1,0 +1,22 @@
+[Main]
+Name=FixStart
+Title=Фикс. начального бара
+Group=Генераторы
+
+[Property]
+ParamName=s,,имя параметра для сохранения
+Shift=n,1,сдвиг от последнего бара
+
+[InputPars]
+Size
+Trace
+
+[Code]
+<gvars>
+<?!ParamName>datetime $name;</>
+
+<lines>
+  <?ParamName>$ParamName<~>$name</> = Time[$Shift<?Trace>+trace_index</>];
+
+[Help]
+Сохраняет номер бара для частичной выборки.

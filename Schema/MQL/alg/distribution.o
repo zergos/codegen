@@ -1,0 +1,39 @@
+[Main]
+Group=Алгоритмы
+Name=Distrib
+Title=Распределение
+
+[Property]
+Count=n,1024
+
+[Input]
+in=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[OutputPars]
+Size=$Count
+
+[Code]
+<gvars>
+double $out[$Count];
+
+<lines>
+  double @min = $in[ArrayMinimum($in)];
+  double @max = $in[ArrayMaximum($in)];
+  double @step = (@max-@min)/$Count;
+  ArrayInitialize($out, 0);
+  double @shift = 0;
+  for (int @k=0; @k<$Count; @k++)
+  {
+    for (int @i=0; @i<$Size; @i++)
+      if ($in[@i]>=@min+@shift && $in[@i]<@min+@shift+@step) $out[@k] += 1.0;
+    @shift += @step;
+  }
+
+[Help]
+Рассчитывает массив распределений входящих значений как случайных величин по **Count** отрезкам.

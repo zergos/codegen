@@ -1,0 +1,133 @@
+[Main]
+Name=Trend
+Title=Тренд
+Group=Алгоритмы
+
+[Property]
+Mode=trend,ZERO_TICK,режим построения тренда
+AutoTail=trend_auto,NO,режим автоматической подстройки отрезка тренда
+Tail=n,30
+Limit=f,,ограничение показателя автоматической подстройки
+SetBack=t,,при подстройке опираться на старые тики (если не указан - на новые)
+
+[Input]
+in=row
+
+[Output]
+b1=row,@coefs
+b0=row,@shift
+out=row,@tr
+v=row,@var
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @coefs[];
+double @shift[];
+
+<?v>double @var[];</>
+<?out>double @tr[];</>
+
+<lines>
+  ArrayInit(@coefs, $Size);
+  ArrayInit(@shift, $Size);
+  <?v>ArrayInit(@var, $Size);</>
+  <?out>ArrayInit(@tr, $Size);</>
+
+  int @i;
+
+  if (CheckShift(@coefs))
+  {
+    CheckShift(@shift);
+    <?v>CheckShift(@var);</>
+    for (@i=0; @i<$Start; @i++)
+      @shift[@i] += @coefs[@i];
+  }
+
+  int @lim=MathMax($Start,$Tail);
+  for (int @n=@lim; @n<$Size; @n++)
+  {
+    int @CurTail = $Tail;
+    double @cb1 = 0;
+    double @cb0 = 0;
+    double @thres = 0;
+    int @pos = @n;
+
+    <?!AutoTail=NO><?Limit>
+    @thres = $Limit+1;
+    @CurTail++;
+    <?SetBack>@pos++;</>
+    while (@thres>$Limit && @CurTail>2) {
+    @CurTail--;
+    <?SetBack>@pos--;</>
+    </></>
+
+    <?AutoTail=VARIANCE>
+    double @mx=0, @m2x=0;
+    for (@i=@pos; @i>@pos-@CurTail; @i--)
+    {
+      @mx += $in[@i];
+      @m2x += $in[@i]*$in[@i];
+    }
+    @thres = MathSqrt(@m2x/@CurTail - @mx*@mx/@CurTail/@CurTail)/Point;
+      <?Limit>
+      if (@thres>$Limit) continue;
+      </>
+    </>
+
+    <?Mode=ZERO_TICK>
+    double @sum_f = 0;
+    double @sum_i = 1;
+    for (@i=0; @i<@CurTail; @i++)
+    {
+      @sum_f += $in[@pos-@i]-$in[@pos];
+      @sum_i += @i;
+    }
+    @cb1 = -@sum_f/@sum_i;
+    @cb0 = $in[@pos]-@pos*@cb1;
+    </>
+
+    <?Mode=REGRESSION>
+    double @ya=0, @x=0, @yx=0, @xa=0;
+    for (@i=@pos; @i>@pos-@CurTail; @i--)
+    {
+      @ya += $in[@i];
+      @x  += @i;
+      @yx += $in[@i]*@i;
+      @xa += @i*@i;
+    }
+    @cb1 = (@ya*@x-@CurTail*@yx)/(@x*@x-@CurTail*@xa);
+    @cb0 = (@ya - @cb1*@x)/@CurTail;
+    </>
+
+    <?AutoTail=SQR>
+    double @m2x = 0;
+    for (@i=@pos; @i>@pos-@CurTail; @i--)
+      @m2x += MathPow($in[@i]-@pos*@cb1-@cb0, 2);
+    @thres = MathSqrt(@m2x/@CurTail)/2/Point;
+    </>
+
+    <?!AutoTail=NO><?Limit>}</></>
+
+    @coefs[@n] = @cb1;
+    @shift[@n] = @cb0;
+    <?v>@var[@n] = @thres;</>
+    <?out>@tr[@n] = @cb0+@cb1*@n;</>
+  }
+
+  if ($Start==0)
+    for (@n=0; @n<@lim; @n++)
+    {
+      @shift[@n] = @shift[@lim];
+      @coefs[@n] = @coefs[@lim];
+      <?v>@var[@n] = @var[@lim];</>
+      <?out>@tr[@n] = @tr[@lim];</>
+    }
+
+[Help]
+Генератор серии трендов в виде коэффициентов лучей.\\
+При расчёте дисперсии учитывается разброс самого временного ряда. А при расчёте среднеквадратичного отклонения - учитывается разброс от предполагаемого тренда.\\
+При среднеквадратичном отклонении и дисперсии средний разброс на 10 тиках укладывается в среднем в 3 пункта

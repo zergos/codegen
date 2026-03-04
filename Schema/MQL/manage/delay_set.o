@@ -1,0 +1,21 @@
+[Main]
+Name=DelaySet
+Title=Уст. задержки
+Group=Управление
+
+[Property]
+Seconds=n,3600,секунд для задержки
+
+[Output]
+Delay=n,@delayFinish
+
+[Code]
+<gvars>
+double @delayFinish;
+
+<lines>
+  @delayFinish = TimeCurrent()+$Seconds;
+  
+[Help]
+Установка значения задежрки в секундах.
+

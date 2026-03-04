@@ -1,0 +1,372 @@
+[Main]
+Modular
+Group=Программы
+Title=Советник
+Name=Expert
+
+[Uses]
+sync
+
+[Property]
+MAGIC=n,1,волшебное число
+MinBufferSize=n,128,мин. размер буфера
+MaxBufferSize=n,1024,макс. размер буфера
+Traceback=n,,запуск советника по истории
+# BufferSize=n,128,размер буфера
+WaitNewBar=t,,выполнять эксперт только на каждом новом баре
+FullRecount=t,1,полный пересчёт серий на каждом тике
+SaveState=t,,сохранять состояние советника
+StateID=n,,локальный код состояния
+LinkingTF=t,,привязка к начальному тайм-фрейму
+CheckTradeAllowed=t,1,проверять возможность торговать
+Copyright=s,,название компании-производителя
+Version=s,1.0
+description=s,,описание
+description_eng=s,,описание по англ.
+link=s,,ссылка на сайт компании-производителя
+icon=s,,название файла с иконкой
+stacksize=n,,размер стека для рекурсивных вызовов
+show_confirm=t,,выводить окно подтверждения перед запуском скрипта
+show_inputs=t,,выводить окно со свойствами перед запуском скрипта и запретить вывод окна подтверждения
+strict=t,1,новый компилятор
+
+[Output]
+Trace=c
+Events=c
+
+[OutputPars]
+Size=GlobalSize
+Start=GlobalStart
+Trace=$Traceback
+Sync=$SaveState
+
+[Code]
+<top0>
+//+------------------------------------------------------------------+
+//| $name                                                            
+//| $copyright                                                       
+//| $link
+//+------------------------------------------------------------------+
+
+#property version "$Version"
+<?Copyright>#property copyright "$Copyright"</>
+<?!english>
+<?description>#property description "$description"</>
+<~>
+<?description_eng>#property description "$description_eng"</>
+</>
+<?link>#property link "$link"</>
+<?icon>#property icon "$icon"</>
+
+<?stacksize>#property stacksize $stacksize</>
+<?show_confirm>#property show_confirm</>
+<?show_inputs>#property show_inputs</>
+<?strict>#property strict</>
+
+<gvars>
+int GlobalSize, GlobalStart;
+int @LastSize;
+datetime @LastTime;
+bool Shifted;
+bool newbar;
+
+bool FirstRun = true;
+bool Work;
+
+<?Traceback>
+int trace_index;
+</>
+
+<?LinkingTF>
+int InitialTF;
+bool TFWarningSend;
+</>
+
+<?SaveState>
+void syncAll()
+{
+  sync("Work", Work);
+  sync("LastSize", @LastSize);
+  sync("LastTime", @LastTime);
+  <?LinkingTF>
+  sync("InitialTF", InitialTF);
+  sync("TFWarning", TFWarningSend);
+  </>
+  <?Traceback>sync("Traceback", trace_index);</>
+$sync
+}
+</>
+
+<procs>
+template <typename T>
+void CheckShift(T& a[])
+{
+  if (Shifted)
+    for (int i=0; i<ArraySize(a)-1; i++) a[i] = a[i+1];
+}
+
+template <typename T>
+void ArrayInit(T &a[], int NewSize=0)
+{
+  if (NewSize==0) NewSize = GlobalSize;
+  if (ArraySize(a)<NewSize)
+  {
+    int size = ArraySize(a);
+    ArrayResize(a, NewSize);
+    for (int n=size; n<NewSize; n++)
+      a[n] = 0;
+  }
+  if (GlobalStart==0) ArrayInitialize(a, 0);
+}
+
+double Bid()
+{
+  <?!Traceback>return Bid;
+  <~>
+  if (trace_index>0)
+    return Close[trace_index];
+  else
+    return Bid;
+  </>
+}
+
+double Ask()
+{
+  <?!Traceback>return Ask;
+  <~>
+  if (trace_index>0)
+    return Close[trace_index]+(Ask-Bid);
+  else
+    return Ask;
+  </>
+}
+
+double High()
+{
+  <?!Traceback>return Bid;
+  <~>
+  if (trace_index>0)
+    return High[trace_index];
+  else
+    return Bid;
+  </>
+}
+
+double Low()
+{
+  <?!Traceback>return Bid;
+  <~>
+  if (trace_index>0)
+    return Low[trace_index];
+  else
+    return Bid;
+  </>
+}
+
+double Open()
+{
+  <?!Traceback>return Open[0];
+  <~>return Open[trace_index];
+  </>
+}
+
+datetime CurTimeTrace()
+{
+  <?!Traceback>return iTime(NULL,0,0);
+  <~>
+    return iTime(NULL,0,trace_index);
+  </>
+}
+
+<?Events>
+void OnChartEvent(const int event_id, const long& lparam, const double& dparam, const string& sparam)
+{
+$Events.lines
+}
+</>
+
+<init>
+  if (FirstRun)
+  {
+    <?LinkingTF>InitialTF = Period();</>
+    FirstRun = false;
+    Work = true;
+  }
+  else
+  {
+    <?LinkingTF>
+    if (InitialTF!=Period())
+    {
+      if (!TFWarningSend)
+      {
+        Alert("Торговля приостановлена. Верните тайм-фрейм "+InitialTF);
+        TFWarningSend = true;
+      }
+      Work = false;
+    }
+    else Work = true;
+    </>
+    return 0;
+  }
+  
+  <?CheckTradeAllowed>
+  if (!IsTradeAllowed())
+  {
+    Alert("Разрешите советнику торговать :(");
+    return -1;
+  }
+  </>
+  <?MaxBufferSize>GlobalSize = $MaxBufferSize;<~>GlobalSize = 0;</>
+  <?Traceback>trace_index = $Traceback;</>
+  
+<lines>
+  if (!Work) return (0);
+
+<?MinBufferSize>
+  if (Bars<$MinBufferSize)
+<~>
+  if (Bars==0)
+</>
+    return(0);
+
+<?MaxBufferSize>
+  <?!Traceback>
+    GlobalSize = MathMin($MaxBufferSize, Bars);
+  <~>
+    GlobalSize = MathMin($MaxBufferSize+trace_index, Bars);
+  </>
+<~>
+  GlobalSize = Bars;
+</>
+<?FullRecount>
+  GlobalStart = 0;
+  Shifted = false;
+  // calc newbar
+  datetime @curTime = iTime(NULL,0,0);
+  newbar = false;
+  if (@LastTime==0 || @curTime>@LastTime)
+  {
+    newbar = true;
+    @LastTime = @curTime;
+  }
+  <?WaitNewBar>
+  if (!newbar) return (0);
+  </>
+<~>
+  <?Traceback>
+  if (trace_index>0)
+  {
+    GlobalStart = 0;
+    Shifted = false;
+    @LastBars = 0;
+    @LastSize = 0;
+  }
+  else
+  {
+  </>
+  // calc newbar
+  datetime @curTime = iTime(NULL,0,0);
+  double @newbar = false;
+  if (@LastTime==0 || @curTime>@LastTime)
+  {
+    @newbar = true;
+    @LastTime = @curTime;
+  }
+  
+  if (@LastSize==0)
+  {
+    GlobalStart = 0;
+    Shifted = false;
+  }
+  else
+  {
+    Shifted = @LastSize<GlobalSize?false:@newbar;
+    GlobalStart = GlobalSize-1-(int)@newbar;
+  }
+  @LastSize = GlobalSize;
+
+  <?WaitNewBar>
+  if (!@newbar) return (0);
+  </>
+  <?Traceback>
+  }
+  </>
+  
+  <?debug>
+  Print("bars: ",Bars);
+  Print("start: ", GlobalStart, " size: ", GlobalSize," shifted: ",Shifted?"true":"false");
+  </>
+</>
+$CTRL.lines
+
+  <?Traceback>
+  <?debug>if (trace_index>0) Print("trace index is "+trace_index);</>
+  int @globalsize = GlobalSize;
+  for ( ; trace_index>=0; trace_index--)
+  {
+    <?debug>if (trace_index>0) Print("trace step "+trace_index);</>
+    GlobalSize = @globalsize - trace_index;
+    
+$Trace.lines
+  }
+  trace_index = 0;
+  </>
+
+<deinit>
+  switch (_UninitReason)
+  {
+    case REASON_CHARTCHANGE:
+      <?LinkingTF>
+      TFWarningSend = false;
+      </>
+    case REASON_TEMPLATE:
+    case REASON_PARAMETERS:
+    case REASON_RECOMPILE:
+      return 0;
+  }
+  
+[Template]
+$top0
+$top
+
+//---- parameters
+$gvars
+
+//---- functions
+$procs
+
+//+------------------------------------------------------------------+
+//| Expert initialization function                            |
+//+------------------------------------------------------------------+
+int init()
+{
+$init
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Expert deinitialization function                          |
+//+------------------------------------------------------------------+
+int deinit()
+{
+$deinit
+
+  return(0);
+}
+
+//+------------------------------------------------------------------+
+//| Custom indicator iteration function                              |
+//+------------------------------------------------------------------+
+int start()
+{
+
+$lines
+$endlines
+  return(0);
+}
+
+$attach
+
+[Help]
+Объект можно использовать один раз в одной схеме.\\
+**FullRecount - рекомендуется для рабочего советника, поскольку при внезапном переподключении к серверу брокера информация об уже загруженных барах теряется (!).**

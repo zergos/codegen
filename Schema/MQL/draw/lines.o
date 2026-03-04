@@ -1,0 +1,10 @@
+[Main]
+Usable
+Name=Lines
+Title=Линии
+Group=Графика
+
+[Code]
+<top>
+#include <ChartObjects\ChartObjectsLines.mqh>
+

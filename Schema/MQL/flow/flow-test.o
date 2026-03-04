@@ -1,0 +1,379 @@
+[Main]
+Name=FlowTest
+Title=Тест
+Group=Лента
+
+[Property]
+TimeShift=n,3600,сдвиг системного времени относительно терминала
+#Forward=n,50,сдвиг в пунктах спота относительно фьючерсов
+Draw=t,1,рисовать кластеры
+Color1=color,LightGreen
+Color2=color,Pink
+ColorGray=color,LightGray
+ColorX1=color,DarkGreen
+ColorX2=color,Brown
+ColorX=color,White
+Mode=n,1,режим работы (1 - Ask x Bid\, 2 - Ask-Bid\, 3 - Volume)
+Threshold=n,100,барьер отображения цвета
+PntSize=n,10,размер пункта
+SessionStart=n,15,час начала сессии для отработки горизонтальных объёмов
+SessionEnd=n,21
+HrMode=n,1,режим считывания горизонтальных объёмов (1 - сумма\, 2 - замещение)
+XDraw=t,,режим рисования отрезков по барьерным кластерам (значение - коэффициент ширины)
+
+[Input]
+time=row
+
+[Output]
+delta=row,@cum
+vol=row,@acc
+V=row
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=@flowStart
+
+[Global]
+<procs>
+<?XDraw>
+void ClearXLines(string &xn[])
+{
+  for (int xi=0; xi<ArraySize(xn); xi++)
+    ObjectDelete(xn[xi]);
+  ArrayResize(xn, 0);
+}
+</>
+
+[Code]
+<gvars>
+int @flowStart = 0;
+int @sid;
+int @last_id = 0;
+string @names[];
+double @bar_prices[];
+int @bar_ask[];
+int @bar_bid[];
+datetime @bar_time;
+bool @inverse;
+double @ticksize;
+<?delta>
+  double @cum[];
+</>
+<?vol>
+  double @acc[];
+</>
+<?V>
+  int plus$V[], minus$V[];
+  int start$V=0;
+  int size$V;
+  datetime time$V[];
+</>
+<?XDraw>
+  datetime @xt[];
+  double @xp[];
+  string @xn[];
+</>
+
+<init>
+  double @fwd;
+  @sid = FlowSymbolID(Symbol(), @inverse, @fwd, @ticksize);
+  if (@sid==-1)
+  {
+    Alert("по символу "+Symbol()+" лента не пишется");
+    return (1);
+  }
+  @ticksize *= $PntSize*Point;
+  
+<lines>
+<?delta>
+  ArrayInit(@cum, $Size);
+  CheckShift(@cum);
+</>
+<?vol>
+  ArrayInit(@acc, $Size);
+  CheckShift(@acc);
+</>
+
+  if ($Start==0)
+  {
+    @bar_time = 0;
+    ArrayResize(@bar_prices, 0);
+
+    <?Draw>
+    for (int @ii=0; @ii<ArraySize(@names); @ii++)
+    {
+      ObjectDelete(@names[@ii]);
+      ObjectDelete(@names[@ii]+"x");
+    }
+    </>
+    <?delta>ArrayInitialize(@cum, 0);</>
+    <?vol>ArrayInitialize(@acc, 0);</>
+    <?V>
+      start$V=0;
+      size$V=0;
+    </>
+    <?XDraw>
+      ClearXLines(@xn);
+      ArrayResize(@xp, 0);
+    </>
+    
+    FlowRequestTicksFast(@sid, $time[0]+$TimeShift, _Period);
+  }
+  else
+    FlowRequestTicksByID(@sid, @last_id);
+ 
+  datetime @ticktime;
+  int @shift, @volume, @mode;
+  double @price;
+<?debug>
+  int @trace=100;
+</>
+<?V>
+  int @hidx = 0;
+</>
+  @flowStart = -1;
+
+  double @fwd;
+  
+  while (FlowReadTick(@ticktime, @price, @shift, @volume, @mode, @last_id, @fwd) <?debug>&& --trace>0</>)
+  {
+    @ticktime -= $TimeShift;
+    @price -= @fwd*@ticksize;
+    if (@inverse) @price = NormalizeDouble(1/@price, Digits);
+    
+    // find bar
+    for (int @i=0; @i<$Size-1; @i++)
+      if ($time[@i]<=@ticktime && ticktime<$time[@i+1]) break;
+      
+    if (@flowStart<0) @flowStart = MathMin($Start, @i); // fix first changed bar
+    
+<?debug>
+    if ($time[@i] >= D'2015.02.17 17:21:00' && $time[@i] < D'2015.02.17 17:22:00' && @price==1.1388)
+      Print(""+TimeToStr(@ticktime)+" shift "+@shift+" volume "+@volume+" mode "+@mode);
+</>      
+    
+    int @idx;
+    if (@bar_time==$time[@i])
+    {
+      bool @found = false;
+      for (@idx=0; @idx<ArraySize(@bar_prices); @idx++)
+        if (@bar_prices[@idx] == @price)
+        {
+          @found = true;
+          break;
+        }
+      if (!@found)
+      {
+        @idx = ArraySize(@bar_prices);
+        ArrayResize(@bar_prices, @idx+1);
+        ArrayResize(@bar_ask, @idx+1);
+        ArrayResize(@bar_bid, @idx+1);
+        @bar_prices[@idx] = @price;
+        @bar_ask[@idx] = 0;
+        @bar_bid[@idx] = 0;
+      }
+    }
+    else
+    {
+      <?V><?Threshold>
+      if (@idx>=0)
+      <?SessionStart>
+      if ((TimeHour(bar_time)<$SessionStart && TimeHour($time[@i])==$SessionStart) || (TimeHour(bar_time)>0 && TimeHour($time[@i])==0 && $SessionStart==0))
+        start$V = 0;
+      else
+      </>
+        for (int @m=0; @m<ArraySize(@bar_prices); @m++)
+        {
+          int @dlt = MathAbs(@bar_ask[@m]-@bar_bid[@m]);
+          @hidx = HrIndex(plus$V, minus$V, start$V, size$V, @bar_prices[@m]+$PntSize*Point);
+          if (@dlt>=$Threshold)
+          {
+            
+            if (@bar_ask[@m]>@bar_bid[@m])
+            {
+              <?HrMode=1>
+              plus$V[@hidx] += @dlt;
+              </>
+              <?HrMode=2>
+              plus$V[@hidx] = @dlt;
+              minus$V[@hidx] = 0;
+              </>
+            }
+            else
+            {
+              <?HrMode=1>
+              minus$V[@hidx] += @dlt;
+              </>
+              <?HrMode=2>
+              plus$V[@hidx] = 0;
+              minus$V[@hidx] = @dlt;
+              </>
+            }
+          }
+        }
+      <~>
+      <?SessionStart>
+      if ((TimeHour(bar_time)<$SessionStart && TimeHour($time[@i])==$SessionStart) || (TimeHour(bar_time)>0 && TimeHour($time[@i])==0 && $SessionStart==0))
+        start$V = 0;
+      </>
+      </></>
+      
+      <?XDraw>
+      if (@idx>=0)
+      <?SessionStart>
+      if ((TimeHour(bar_time)<$SessionStart && TimeHour($time[@i])==$SessionStart) || (TimeHour(bar_time)>0 && TimeHour($time[@i])==0 && $SessionStart==0))
+      {
+        for (int @l=0; @l<ArraySize(@xp); @l++)
+        {
+          string @llname = "x$name"+@xt[@l]+"_"+@xp[@l];
+          ObjectSet(@llname, OBJPROP_TIME2, $time[@i]);
+          ObjectSet(@llname, OBJPROP_RAY, false);
+        }
+        ArrayResize(@xp, 0);
+      }
+      else
+      </>
+      {
+        for (int @m=0; @m<ArraySize(@bar_prices); @m++)
+        {
+          int @dlt = MathAbs(@bar_ask[@m]-@bar_bid[@m]);
+          if (@dlt>=$Threshold)
+          {
+            // get saved price
+            @found = false;
+            for (int @x=0; @x<ArraySize(@xp); @x++)
+              if (@xp[@x]==@bar_prices[@m])
+              {
+                @found = true;
+                break;
+              }
+            if (@found)
+            {
+              string @lname = "x$name"+@xt[@x]+"_"+@xp[@x];
+              ObjectSet(@lname, OBJPROP_TIME2, @bar_time);
+              ObjectSet(@lname, OBJPROP_RAY, false);
+            }
+            else
+            {
+              @x = ArraySize(@xp);
+              ArrayResize(@xp, @x+1);
+              ArrayResize(@xt, @x+1);
+              @xp[@x] = @bar_prices[@m];
+            }
+            @xt[@x] = $time[@i];
+            @lname = "x$name"+@xt[@x]+"_"+@xp[@x];
+            ArrayResize(@xn, ArraySize(@xn)+1);
+            @xn[ArraySize(@xn)-1] = @lname;
+            if (@bar_ask[@m]>@bar_bid[@m])
+            {
+              ObjectCreate(@lname, OBJ_TREND, 0, $time[@i], @xp[@x], $time[@i]+PeriodSeconds()*2, @xp[@x]);
+              ObjectSet(@lname, OBJPROP_COLOR, $ColorX1);
+            }
+            else
+            {
+              ObjectCreate(@lname, OBJ_TREND, 0, $time[@i], @xp[@x]+$PntSize*Point, $time[@i]+PeriodSeconds()*2, @xp[@x]+$PntSize*Point);
+              ObjectSet(@lname, OBJPROP_COLOR, $ColorX2);
+            }
+            ObjectSet(@lname, OBJPROP_WIDTH, @dlt/$Threshold);
+          }
+        }
+        
+        //for (@x=0; @x<ArraySize(@xp); @x++)
+        //  ObjectSet("x$name"+@xt[@x]+"_"+@xp[@x], OBJPROP_TIME2, $time[@i]+PeriodSeconds());
+      }
+      </>
+      
+      @idx = 0;
+      ArrayResize(@bar_prices, 1);
+      ArrayResize(@bar_ask, 1);
+      ArrayResize(@bar_bid, 1);
+      @bar_prices[0] = @price;
+      @bar_ask[0] = 0;
+      @bar_bid[0] = 0;
+      <?delta>@cum[@i] = 0;</>
+      <?vol>@acc[@i] = 0;</>
+    }
+    <?V><?!Threshold>@hidx = HrIndex(plus$V, minus$V, start$V, size$V, @price);</></>
+    @bar_time = $time[@i];
+    
+    if ((@mode==1 && !@inverse) || (@mode==2 && @inverse))
+    {
+      @bar_ask[@idx] += @volume;
+      <?delta>@cum[@i] += @volume;</>
+      <?V><?!Threshold>plus$V[@hidx] += @volume;</></>
+    }
+    else
+    {
+      @bar_bid[@idx] += @volume;
+      <?delta>@cum[@i] -= @volume;</>
+      <?V><?!Threshold>minus$V[@hidx] += @volume;</></>
+    }
+    <?vol>@acc[@i] += @volume;</>
+      
+  <?Draw>
+    string @name = "$name"+@bar_time+"_"+@idx;
+    if (ObjectFind(@name)==-1)
+    {
+      double @right;
+      if (@i<$Size-1) @right = $time[@i+1];
+      else @right = @bar_time+PeriodSeconds();
+      
+      //ObjectCreate(@name+"x", OBJ_RECTANGLE, 0, $time[@i], @price-@fwd*Point, @right, @price+($PntSize-@fwd)*Point);
+      //ObjectCreate(@name, OBJ_TEXT, 0, @right, @price+($PntSize-@fwd)*Point);
+      ObjectCreate(@name+"x", OBJ_RECTANGLE, 0, @bar_time, @price, @right, @price+@ticksize);
+      ObjectCreate(@name, OBJ_TEXT, 0, @right, @price+@ticksize);
+      
+      ObjectSet(@name, OBJPROP_COLOR, Black);
+      ObjectSet(@name, OBJPROP_ANCHOR, ANCHOR_RIGHT_UPPER);
+      
+      ArrayResize(@names, ArraySize(@names)+1);
+      @names[ArraySize(@names)-1] = @name;
+    }
+    
+    <?Mode=1>
+    ObjectSetText(@name, ""+@bar_ask[@idx]+"x"+@bar_bid[@idx], 6);
+    </>
+    <?Mode=2>
+    ObjectSetText(@name, ""+(@bar_ask[@idx]-@bar_bid[@idx])+" ", 6);
+    </>
+    <?Mode=3>
+    ObjectSetText(@name, ""+(@bar_ask[@idx]+@bar_bid[@idx])+" ", 6);
+    </>
+    <?Threshold>
+    if (MathAbs(@bar_bid[@idx]-@bar_ask[@idx])>=$Threshold)
+    {
+      if (@bar_bid[@idx]<=@bar_ask[@idx])
+        ObjectSet(@name+"x", OBJPROP_COLOR, $Color1);
+      else
+        ObjectSet(@name+"x", OBJPROP_COLOR, $Color2);
+      ObjectSet(@name, OBJPROP_COLOR, $ColorX);
+    }
+    else
+    </>
+    {
+        ObjectSet(@name+"x", OBJPROP_COLOR, $ColorGray);
+        if (@bar_bid[@idx]<=@bar_ask[@idx])
+          ObjectSet(@name, OBJPROP_COLOR, $ColorX1);
+        else
+          ObjectSet(@name, OBJPROP_COLOR, $ColorX2);
+    }
+  </>
+  }
+  
+<deinit>
+<?Draw>
+  for (int @i=0; @i<ArraySize(@names); @i++)
+  {
+    ObjectDelete(@names[@i]);
+    ObjectDelete(@names[@i]+"x");
+  }
+</>
+<?XDraw>
+  ClearXLines(@xn);
+</>
+    
+[Help]
+Проба ленты в деле.

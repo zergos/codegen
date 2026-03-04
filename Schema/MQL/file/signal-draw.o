@@ -1,0 +1,151 @@
+[Main]
+Name=SignalDraw
+Title=Вывод сигнала
+Group=Файлы
+
+[Property]
+Prefix=s,"",префикс файла
+Draw=t,1,рисовать сделки по текущему символу
+HideBalance=bool,,прятать линии работы с балансом
+
+[Input]
+time=row
+
+[Output]
+equity=row,@equity
+free=row,@freemargin
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?Draw>
+int @tr_count;
+</>
+datetime @stimes[];
+double @equity[], @sequity[];
+double @freemargin[], @sfreemargin[];
+
+<init>
+  int @file;
+  <?Draw>
+  @file = FileOpen($Prefix+".trades.csv", FILE_READ|FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_COMMON, ";");
+  @tr_count = FileReadNumber(@file);
+  for (int i=1; i<=@tr_count; i++)
+  {
+    string symbol = FileReadString(@file);
+    if (symbol!=Symbol() && symbol!="BALANCE")
+    {
+      for (int k=0; k<6; k++)
+        FileReadString(@file);
+      continue;
+    }
+    datetime t1 = FileReadDatetime(@file);
+    datetime t2 = FileReadDatetime(@file);
+    double p1 = FileReadNumber(@file);
+    double p2 = FileReadNumber(@file);
+    int mode = FileReadNumber(@file);
+    string log = FileReadString(@file);
+    
+    string name = "trade_"+i;
+    if (mode==1 || mode==-1)
+    {
+      ObjectCreate(name, OBJ_TREND, 0, t1, p1, t2, p2);
+      ObjectSet(name, OBJPROP_RAY, false);
+      if (mode>0)
+        ObjectSet(name, OBJPROP_COLOR, Yellow);
+      else
+        ObjectSet(name, OBJPROP_COLOR, OrangeRed);
+      //ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet(name, OBJPROP_WIDTH, 2);
+      ObjectSetString(0,name, OBJPROP_TEXT, log);
+    }
+    else <?HideBalance>if (!$HideBalance)</>
+    {
+      ObjectCreate(name, OBJ_VLINE, 0, t1, 0);
+      if (p1>0)
+        ObjectSet(name, OBJPROP_COLOR, Yellow);
+      else
+        ObjectSet(name, OBJPROP_COLOR, OrangeRed);
+      //ObjectSet(name, OBJPROP_STYLE, STYLE_DOT);
+      ObjectSet(name, OBJPROP_WIDTH, 2);
+      ObjectSetString(0,name, OBJPROP_TEXT, log);
+    }
+  }
+  FileClose(@file);
+  </>
+  @file = FileOpen($Prefix+".reveal.csv", FILE_READ|FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_COMMON, ";");
+  int @count = FileReadNumber(@file);
+  ArrayResize(@stimes, @count);
+  ArrayResize(@sequity, @count);
+  ArrayResize(@sfreemargin, @count);
+  for (int i=0; i<@count; i++)
+  {
+    @stimes[i] = FileReadDatetime(@file);
+    @sequity[i] = FileReadNumber(@file);
+    @sfreemargin[i] = FileReadNumber(@file);
+  }
+  FileClose(@file);
+
+<lines>
+  ArrayInit(@equity, $Size);
+  ArrayInit(@freemargin, $Size);
+  CheckShift(@equity);
+  CheckShift(@freemargin);
+  
+  if ($Start==0)
+  {
+    int idx = 0;
+    for (int i=0; i<$Size; i++)
+    {
+      if (i==0)
+      {
+        @equity[i] = 0;
+        @freemargin[i] = 0;
+      }
+      else
+      {
+        @equity[i] = @equity[i-1];
+        @freemargin[i] = @freemargin[i-1];
+      }
+      if (idx==ArraySize(@stimes) || $time[i]<@stimes[idx]) continue;
+      
+      //while (idx<ArraySize(@stimes) && $time[i]>@stimes[idx]) idx++;
+      //if (idx==ArraySize(@stimes)) continue;
+      
+      double maxequity = 0;
+      double minmargin = 0;
+      bool exist = false;
+      while (idx<ArraySize(@stimes) && $time[i]/PeriodSeconds()>=@stimes[idx]/PeriodSeconds())
+      {
+        //if (@sequity[idx]>maxequity) maxequity = @sequity[idx];
+        //if (minmargin==0 || @sfreemargin[idx]<minmargin) minmargin = @sfreemargin[idx];
+        maxequity = @sequity[idx];
+        minmargin = @sfreemargin[idx];
+        exist = true;
+        idx++;
+      }
+      if (exist)
+      {
+        @equity[i] = maxequity;
+        @freemargin[i] = minmargin;
+      }
+    }
+  }
+  else if (Shifted)
+  {
+    @equity[$Size-1] = @equity[$Size-2];
+    @freemargin[$Size-1] = @freemargin[$Size-2];
+  }
+  
+<deinit>
+  <?Draw>
+  for (int i=1; i<=@tr_count; i++)
+    ObjectDelete("trade_"+i);
+  </>
+    
+[Help]
+Рисует сделки по анализу истории сигнала.
+

@@ -1,0 +1,50 @@
+[Main]
+Choice
+Name=FixMaxPrice
+Title=Фикс. макс цены
+Group=Сделки
+
+[Property]
+Activate=t,,всегда срабатывать первый раз
+Reverse=t,,считать минимальную вместо максимальной
+
+[Input]
+fix=n
+
+[Output]
+True=c
+False=c
+
+[Code]
+<gvars>
+<?Activate>bool act$name;</>
+
+<init>
+<?Activate>act$name = false;</> 
+
+<lines>
+  bool @f = false;
+  if (<?Reverse>-</>trend>0)
+  {
+    if ($fix<=Bid)
+    { $fix = Bid; @f = true; }
+  }
+  else
+    if ($fix>=Bid)
+    { $fix = Bid; @f = true; }
+  if (@f<?Activate> || !act$name</>)
+  {
+    <?Activate>act$name = true;</>
+    <?debug>Print("new max price is ",$fix);</>
+$True.lines
+  }
+  else
+  {
+$False.lines
+  }
+
+<sync>
+  <?Activate>sync("$name", act$name);</>
+  
+[Help]
+Фиксирует максимальное/минимальное значение цены.

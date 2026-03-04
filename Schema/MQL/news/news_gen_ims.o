@@ -1,0 +1,53 @@
+[Main]
+Name=NewsGenIms
+Title=Генератор важности
+Group=Новости
+
+[Property]
+NSize=n,100,предел новостей
+Symbol=s,,если не указан\, используется текущий
+Importance=fxim,0,фильтр важности
+
+[Input]
+time=row
+
+[Output]
+out=row
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+datetime @Times[$NSize];
+int @NIds[$NSize];
+int @Ims[$NSize];
+double $out[];
+double @no_values[1] = {-1000};
+
+<lines>
+  <?Symbol>
+    NewsList($time[$Size-1], "$Symbol", $Importance, $NSize, @Times, @NIds);
+  <~>
+    NewsList($time[$Size-1], Symbol(), $Importance, $NSize, @Times, @NIds);
+  </>
+  //for (int @aa=0; @aa<$NSize; @aa++) Print(@NIds[@aa]);
+
+  ArrayInitialize(@Ims, 0);
+  NewsValues($NSize, @NIds, @no_values, @Ims);
+
+  ArrayInit($out, $Size);
+  ArrayInitialize($out, 0);
+  for (int @n=0; @n<$NSize; @n++)
+    for (int @i=1; @i<$Size; @i++)
+      if ($time[@i-1]<@Times[@n] && @Times[@n]<=$time[@i])
+      {
+      //Print(TimeToStr(@Times[@n],TIME_DATE)," ",TimeToStr(@Times[@n],TIME_MINUTES)," to ",TimeToStr($time[@i],TIME_DATE)," ",TimeToStr($time[@i],TIME_MINUTES)," value ",@Vals[@n]);
+      $out[@i] = MathMax($out[@i], @Ims[@n]);
+      }
+      
+[Help]
+Извлекает важность новостей (1..3).
+Отображает максимальную важность на каждый бар.
+
+

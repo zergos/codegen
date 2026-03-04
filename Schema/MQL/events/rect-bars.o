@@ -1,0 +1,68 @@
+[Main]
+Choice
+Name=RectBars
+Title=Событие "рамка"
+Group=События
+
+[Output]
+run=c
+open=row,@open
+close=row,@close
+high=row,@high
+low=row,@low
+time=row,@time
+top=n,@top
+bottom=n,@bottom
+
+[InputPars]
+Size
+
+[OutputPars]
+Start=0
+Size=@size
+BoxStart=@box_start
+
+[Code]
+<gvars>
+int @size;
+int @box_start;
+<?open>double @open[];</>
+<?close>double @close[];</>
+<?high>double @high[];</>
+<?low>double @low[];</>
+<?time>int @time[];</>
+<?top>double @top;</>
+<?bottom>double @bottom;</>
+
+<lines>
+  if (ObjectGetInteger(0, sparam, OBJPROP_TYPE) == OBJ_RECTANGLE)
+  {
+    datetime @ta = ObjectGetInteger(0, sparam, OBJPROP_TIME1);
+    datetime @tb = ObjectGetInteger(0, sparam, OBJPROP_TIME2);
+    int @a = iBarShift(NULL, 0, MathMin(@ta, @tb));
+    int @b = iBarShift(NULL, 0, MathMax(@ta, @tb));
+    @size = @a-@b+1;
+  
+    <?open>ArrayInit(@open, @size);</>
+    <?close>ArrayInit(@close, @size);</>
+    <?high>ArrayInit(@high, @size);</>
+    <?low>ArrayInit(@low, @size);</>
+    <?time>ArrayInit(@time, @size);</>
+  
+    for (int i=0; i<@size; i++)
+    {
+      <?open>@open[i] = Open[@b+@size-i-1];</>
+      <?close>@close[i] = Close[@b+@size-i-1];</>
+      <?high>@high[i] = High[@b+@size-i-1];</>
+      <?low>@low[i] = Low[@b+@size-i-1];</>
+      <?time>@time[i] = Time[@b+@size-i-1];</>
+    }
+  
+    <?top>@top = MathMax(ObjectGet(sparam, OBJPROP_PRICE1), ObjectGet(sparam, OBJPROP_PRICE2));</>
+    <?bottom>@bottom = MathMin(ObjectGet(sparam, OBJPROP_PRICE1), ObjectGet(sparam, OBJPROP_PRICE2));</>
+    @box_start = $Size-1-@a;
+$run.lines
+  }
+  
+[Help]
+Обрабатывает события создания новой или изменения старой рамки.

@@ -1,0 +1,27 @@
+[Main]
+Choice
+Group=Управление
+Title=Условие
+Name=Ask
+Size=4
+
+[Property]
+Expression=s,true,содержание условия
+
+[Output]
+True=c
+False=c
+
+[Code]
+<lines>
+  if ($Expression)
+  {
+  <?debug>Print("$name pass ","$Expression");</>
+$True.lines
+  }
+<?False>
+  else
+  {
+$False.lines
+  }
+</>

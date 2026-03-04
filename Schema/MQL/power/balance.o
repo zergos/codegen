@@ -1,0 +1,87 @@
+[Main]
+Name=Balance
+Title=Балансировка
+Group=Алгоритмы
+
+[Property]
+Coef=n,72.0,коэффициент усиления продолжительности эффекта
+
+[Input]
+open=row
+close=row
+high=row
+low=row
+
+[Output]
+ohigh=row,@out_high
+olow=row,@out_low
+d=row,@power
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @out_high[];
+double @out_low[];
+double @arrow[];
+double @power[];
+double @step[];
+extern double @PowerCoef = $Coef;
+
+<lines>
+  ArrayInit(@out_high, $Size);
+  ArrayInit(@out_low, $Size);
+  ArrayInit(@arrow, $Size);
+  ArrayInit(@power, $Size);
+  ArrayInit(@step, $Size);
+
+  bool @shifted = CheckShift(@out_high);
+  CheckShift(@out_low);
+  CheckShift(@arrow);
+  CheckShift(@power);
+  CheckShift(@step);
+
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    @arrow[@i] = ($high[@i]+$low[@i])/2.0;
+    @power[@i] = ($close[@i]-$open[@i])/Point;//MathSign($close[@i]-$open[@i])/Point/Point*($close[@i]-$open[@i])*($close[@i]-$open[@i]);
+    @power[@i] *= @power[@i];
+    if ($close[@i]<$open[@i]) @power[@i] = -@power[@i];
+    if ($high[@i]==$low[@i]) @step[@i] = 0;
+    else @step[@i] = @power[@i]/(@PowerCoef*($high[@i]-$low[@i])/Point);
+
+    double @curl = 0, @powl = 0, @curh = 0, @powh = 0;
+    for (int @k=0; @k<@i-1; @k++)
+    {
+      if (@power[@k]>0)
+      {
+        @curh = @curh + @arrow[@k]*@power[@k];
+        @powh = @powh + @power[@k];
+        if ($Start == 0 || @shifted)
+        {
+          @power[@k] -= @step[@k];
+          if (@power[@k]<0) @power[@k] = 0;
+        }
+      }
+      else if (@power[@k]<0)
+      {
+        @curl = @curl + @arrow[@k]*@power[@k];
+        @powl = @powl + @power[@k];
+        if ($Start == 0 || @shifted)
+        {
+          @power[@k] -= @step[@k];
+          if (@power[@k]>0) @power[@k] = 0;
+        }
+      }
+    }																																																													
+    if (@powh==0) @out_high[@i] = @arrow[@i];
+    else @out_high[@i] = @curh/@powh;
+    if (@powl==0) @out_low[@i] = @arrow[@i];
+    else @out_low[@i] = @curl/@powl;
+  }
+
+[Help]
+Выявление тренда по принципу влияния мощных свечей
+

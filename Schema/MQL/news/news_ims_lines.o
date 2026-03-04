@@ -1,0 +1,60 @@
+[Main]
+Name=ImsLines
+Title=Границы новостей
+Group=Новости
+
+[Property]
+Color1=color,Green
+Color2=color,Yellow
+Color3=color,Red
+
+[Input]
+ims=row
+time=row
+
+[InputPars]
+Start
+Size
+
+[Global]
+<procs>
+void ImsClearLines(string name, int &lines)
+{
+  for (int i=0; i<lines; i++)
+  {
+    string oname = name+i;
+    if (ObjectFind(oname)>=0) ObjectDelete(oname);
+  }
+  lines = 0;
+}
+
+[Code]
+<gvars>
+int @lines;
+
+<init>
+  @lines = 0;
+
+<lines>
+  if ($Start==0) ImsClearLines("$name", @lines);
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    if ($ims[@i]==0) continue;
+    string @name = "$name"+@lines;
+    ObjectCreate(@name, OBJ_VLINE, 0, $time[@i], 0);
+    int @im = $ims[@i];
+    switch (@im)
+    {
+      case 1: ObjectSet(@name, OBJPROP_COLOR, $Color1); break;
+      case 2: ObjectSet(@name, OBJPROP_COLOR, $Color2); break;
+      case 3: ObjectSet(@name, OBJPROP_COLOR, $Color3); break;
+    }
+    @lines++;
+  }  
+
+<deinit>
+  ImsClearLines("$name", @lines);
+  
+  
+[Help]
+Выводит вертикальные линии по барам новостей.

@@ -1,0 +1,76 @@
+[Main]
+Deprecated
+Unit
+Name=Trailing
+Title=Трейлинг
+Group=Советник
+
+[Property]
+StopLoss=n,5
+Level=n,10
+SoftMove=t,,плавное перемещение
+
+[Code]
+<gvars>
+input double @TrailStop = $StopLoss;
+input double @TrailLevel = $Level;
+
+<endlines>
+  double @sl;
+  bool @f;
+  for (int @i=0; @i<OrdersTotal(); @i++)
+  {
+    if (!OrderSelect(@i, SELECT_BY_POS, MODE_TRADES)) continue;
+    if (OrderType()==OP_BUY)
+    {
+      <?!SoftMove>
+      if (Bid - OrderStopLoss() > (@TrailStop+@TrailLevel)*Point)
+        {
+          @sl = OrderStopLoss()+@TrailLevel*Point;
+          @f = true;
+        }
+      else @f = false;
+      <~>
+      if (Bid - OrderStopLoss() > @TrailStop*Point)
+      {
+        @sl = Bid-@TrailStop*Point;
+        @f = true;
+      }
+      else @f = false;
+      </>
+      if (@f)
+      {
+        OrderModify(OrderTicket(), OrderOpenPrice(), @sl, 0, 0);
+        <?debug>Print("Ордер "+OrderTicket()+" продвинулся по трейлингу на "+@sl);</>
+      }
+    }
+    else if (OrderType()==OP_SELL)
+    {
+      <?!SoftMove>
+      if (OrderStopLoss() - Ask > (@TrailLevel+@TrailStop)*Point)
+      {
+        @sl = OrderStopLoss()-@TrailLevel*Point;
+        @f = true;
+      }
+      else @f = false;
+      <~>
+      if (OrderStopLoss() - Ask > @TrailStop*Point)
+      {
+        @sl = Ask+@TrailStop*Point;
+        @f = true;
+      }
+      else @f = false;
+      </>
+      if (@f)
+      {
+        OrderModify(OrderTicket(), OrderOpenPrice(), @sl, 0, 0);
+        <?debug>Print("Ордер "+OrderTicket()+" продвинулся по трейлингу на "+@sl);</>
+      }
+    }
+  }
+
+[Help]
+Срабатывает в конце всех блоков. Сопровождает закрытие всех активных ордеров.\\
+Закрытие осуществляется только по стоп-лоссу, однако граница стопа перемещается в зону профита по мере достижения очередных уровней по принципу:
+  - **Обычный**: при перемещении текущей цены от уровня **Level** относительно стопа - стоп сдвигается выше или ниже на **Level** пунктов.
+  - **Плавный**: стоп постоянно прижимается по уровню увеличения профита, но держится на расстоянии **StopLoss**.

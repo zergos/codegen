@@ -1,0 +1,41 @@
+[Main]
+Group=‘ильтры
+Title=—игнал 2x
+Name=Signal2x
+
+[Input]
+Up=row
+Down=row
+
+[Output]
+S=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $S[];
+
+<lines>
+  ArrayInit($S, $Size);
+  CheckShift($S);
+
+  for (int i=$Start; i<$Size; i++)
+  {
+    int res = 0;
+    if ($Up[i]!=0 && $Up[i]!=EMPTY_VALUE) res++;
+    if ($Down[i]!=0 && $Down[i]!=EMPTY_VALUE) res--;
+    $S[i] = res;
+  }
+
+[Help]
+—оздание из двух индикаторов одного управл€ющего сигнала
+<code>
+Sig1 = | 0, Up = 0
+       | +1
+Sig2 = | 0, Down = 0
+       | -1
+Sig = Sig1 + Sig2
+</code>

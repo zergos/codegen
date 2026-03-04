@@ -1,0 +1,47 @@
+[Main]
+Name=TAReadCSV
+Title=CSV Чтение из CSV
+Group=ТА
+
+[Property]
+PlanFilter=s,m60,фильтр плана (если указан)
+
+[Input]
+csv=n
+
+[Code]
+<lines>
+  ArrayResize(models, 0);
+  $csv.SkipLine();
+  $csv.SkipLine();
+  $csv.SkipLine();
+  $csv.SkipLine();
+  while (!$csv.IsEnding())
+  {
+    int idx = ArraySize(models);
+    ArrayResize(models, idx+1);
+    models[idx].id = $csv.GetInt(1);
+    <?PlanFilter>
+    if ($csv.GetString(2)!="$PlanFilter")
+    {
+      ArrayResize(models, idx);
+      continue;
+    }
+    </>
+    models[idx].trend = $csv.GetString(6)=="Up"?1:-1;
+    models[idx].start = $csv.GetDatetime(7);
+    /*models[idx].price1 = $csv.GetDouble(9);
+    models[idx].price3 = $csv.GetDouble(11);
+    models[idx].price4 = $csv.GetDouble(12);
+    models[idx].price6 = $csv.GetDouble(15);*/
+    models[idx].bar2 = $csv.GetInt(101);
+    models[idx].bar2p = $csv.GetInt(102);
+    models[idx].bar3 = $csv.GetInt(103);
+    models[idx].bar4 = $csv.GetInt(105);
+    models[idx].bar5 = $csv.GetInt(106);
+  }
+  <?debug>Print("models: ",ArraySize(models));</>
+  
+[Help]
+Считывает формы ТА из CSV файла.
+ 

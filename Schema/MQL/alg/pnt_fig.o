@@ -1,0 +1,144 @@
+[Main]
+Name=PointFigure
+Title=Пункто-цифровой график
+Group=Алгоритмы
+
+[Property]
+BlockSize=n,100,размер клетки в пунктах
+ReverseCount=n,1,количество клеток для разворота
+ColorUp=color,Green
+ColorDown=color,Red
+Draw=t,1,рисовать график
+Shift=n,0,сдвиг графика влево на х клеток
+Width=n,5,ширина клетки
+Scale=n,5,уменьшение масштаба
+
+[Input]
+in=row
+
+[Output]
+high=row,@highs
+low=row,@lows
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=0
+Size=@BoxCount
+
+[Code]
+<gvars>
+input int @Block = $BlockSize;
+input int @Reverse = $ReverseCount;
+int @BoxCount = 0;
+int @trend;
+double @cur_high, @cur_low;
+double @highs[], @lows[];
+int @trends[];
+
+<init>
+  ObjectCreate("$name", OBJ_RECTANGLE, 0, 0, 0, 0, 0);
+
+<lines>
+if ($Start==0)
+{
+  ArrayInit(@highs, $Size);
+  ArrayInit(@lows, $Size);
+  ArrayInitI(@trends, $Size);
+
+  for (int @n=0; @n<@BoxCount; @n++)
+    ObjectDelete("$name"+@n);
+  @BoxCount = 0; 
+  @trend = 0;
+  @cur_high = ceil($in[0]/Point/@Block)*@Block;
+  @cur_low = floor($in[0]/Point/@Block)*@Block;
+}
+
+bool @last_count = @BoxCount;
+
+for (@n=$Start; @n<$Size; @n++)
+{
+  double @cost = $in[@n]/Point;
+  if (@trend >= 0)
+    if (@cost>@cur_high)
+    {
+      while (@cost>@cur_high) @cur_high += @Block;
+      @trend = 1;
+    }
+    else if (@cost<@cur_high-@Reverse*@Block)
+    {
+      @highs[@BoxCount] = @cur_high*Point;
+      @lows[@BoxCount] = @cur_low*Point;
+      @trends[@BoxCount] = @trend;
+      @BoxCount++;
+      
+      @cur_high = @cur_high-@Block;
+      @cur_low = @cur_high-@Block*@Reverse;
+      @trend = -1;
+      continue;
+    }
+  if (@trend <= 0)
+    if (@cost<@cur_low)
+    {
+      while (@cost<@cur_low) @cur_low -= @Block;
+      @trend = -1;
+    }
+    else if (@cost>@cur_low+@Reverse*@Block)
+    {
+      @highs[@BoxCount] = @cur_high*Point;
+      @lows[@BoxCount] = @cur_low*Point;
+      @trends[@BoxCount] = @trend;
+      @BoxCount++;
+      
+      @cur_low = @cur_low + @Block;
+      @cur_high = @cur_low + @Block*@Reverse;
+      @trend = 1;
+    }
+}
+
+<?Draw>
+if (@last_count!=@BoxCount)
+{
+  double @last = @lows[@BoxCount-1];
+  double @last_in = $in[$Size-1];
+  for (@n=@last_count; @n<@BoxCount; @n++)
+  {
+    //ObjectCreate("$name"+@n, OBJ_RECTANGLE, 0, Time[0]-PeriodSeconds(_Period)*$Width*($Shift+@BoxCount-@n)/$Scale, (@lows[@n]-@last)/$Scale+@last_in, Time[0]-PeriodSeconds(_Period)*$Width*($Shift+@BoxCount-@n-1)/$Scale, (@highs[@n]-@last)/$Scale+@last_in);
+    //ObjectCreate("$name"+@n, OBJ_RECTANGLE, 0, Time[0]-PeriodSeconds(_Period)*$Width*($Shift+@BoxCount-@n)/$Scale, @lows[@n], Time[0]-PeriodSeconds(_Period)*$Width*($Shift+@BoxCount-@n-1)/$Scale, @highs[@n]);
+    ObjectCreate("$name"+@n, OBJ_RECTANGLE, 0, Time[$Width*($Shift+@BoxCount-@n+1)/$Scale], @lows[@n], Time[$Width*($Shift+@BoxCount-@n)/$Scale], @highs[@n]);
+    if (@trends[@n]==1)
+      ObjectSet("$name"+@n, OBJPROP_COLOR, $ColorUp);
+    else if (@trends[@n]==-1)
+      ObjectSet("$name"+@n, OBJPROP_COLOR, $ColorDown);
+    else
+      ObjectSet("$name"+@n, OBJPROP_COLOR, Black);
+  }
+  
+  ObjectSet("$name", OBJPROP_TIME1, Time[$Width*($Shift+1)/$Scale]);
+  ObjectSet("$name", OBJPROP_TIME2, Time[$Width*($Shift)/$Scale]);
+  ObjectSet("$name", OBJPROP_PRICE1, @cur_low*Point);
+  ObjectSet("$name", OBJPROP_PRICE2, @cur_high*Point);
+  if (@trend==1)
+    ObjectSet("$name", OBJPROP_COLOR, $ColorUp);
+  else
+    ObjectSet("$name", OBJPROP_COLOR, $ColorDown);
+  
+  if (Shifted)
+    for (@n=0; @n<@BoxCount; @n++)
+    {
+      //ObjectSet("$name"+@n, OBJPROP_TIME, Time[0]-PeriodSeconds(_Period)*$Width*($Shift+@BoxCount-@n)/$Scale);
+      ObjectSet("$name"+@n, OBJPROP_TIME1, Time[$Width*($Shift+@BoxCount-@n+1)/$Scale]);
+      ObjectSet("$name"+@n, OBJPROP_TIME2, Time[$Width*($Shift+@BoxCount-@n)/$Scale]);
+    }
+}
+</>
+
+<deinit>
+  for (int @n=0; @n<@BoxCount; @n++)
+    ObjectDelete("$name"+@n);
+  ObjectDelete("$name");
+
+[Help]
+Рисует пункто-цифровой график (вместо крестиков-ноликов квадратики разных цветов)

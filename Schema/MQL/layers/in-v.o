@@ -1,0 +1,12 @@
+[Main]
+BlockIn
+Name=IV
+Title=Вход (значение)
+Group=Слои
+Size=3
+
+[Output]
+in=n
+
+[Help]
+Служебный блок для построения слоя.

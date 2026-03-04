@@ -1,0 +1,245 @@
+[Main]
+Name=TAModels
+Title=EA Отработка моделей
+Group=ТА
+
+[Input]
+up=n
+down=n
+
+[InputPars]
+Size
+
+[Code]
+<top>
+#include "ta-models.mqh"
+
+<attach>
+=ta-models.mqh
+
+input int taMinChanSize = 200; // MinChanSize: мин. ширина канала в пунктах
+input int taMinProfit = 200; // MinProfit: мин. профит в пп. для входа
+input int taMaxLoss = 1000; // MaxLoss: макс. убыток в пп. для входа
+input int taBreakPoints = 50; // BreakPoints: мин. кол. пп для пробития линии
+input bool taTrendSlide = true; // TrendSlide: сдвигать 1-ю цель при повторной пробе тренда
+input double taMaxLossCoef = 0.8; // MaxLossCoef: коэф. мин. соотнош. профита к лоссу
+
+enum TAState
+{
+  TA_Pending,
+  TA_TRCrossed,
+  TA_5Crossed,
+  TA_HPUp,
+  TA_TRUp,
+  TA_Revert,
+  TA_Cancel
+};
+
+<?debug>
+string taStateNames[] = {"-","TR","5","HP","TR","Rev","Off"};
+</>
+
+class TAScript : public TABaseScript
+{
+  public:
+  double PT;
+  int thread_index;
+  
+  TAScript(TABaseModel &m, int by_trend, int _code, double _price, double _tp, double _sl) : 
+    TABaseScript(GetPointer(m), by_trend, _code, _price, _tp, _sl) {}
+  // 10 - 100% ГТ
+  // 15 - 100% 6(4)
+  // 20 - МР - от 5 до трендовой
+  // 30 - трендовая до 1-й цели
+  // 40 - тоже, но с перспективой на разворот от трендовой
+  // 50 - от трендовой до ГТ
+  virtual void Advise()
+  {  
+    switch (code)
+    {
+      case 30:
+      case 40:
+        if (HasRef(M.F))
+        {
+          // проверка на возможность расширения цели
+          if (M.F.trend>0 && M.F.Q.H[M.X()]>sl && M.CX()<sl) tp = fmin(tp, 2*PT-M.P6-(M.F.Q.H[M.X()]-sl));
+          else
+          if (M.F.trend<0 && M.F.Q.L[M.X()]<sl && M.CX()>sl) tp = fmax(tp, 2*PT-M.P6+(sl-M.F.Q.L[M.X()]));
+        
+          if (taTrendSlide)
+            if (M.F.trend>0 && M.LX()<M.PT-taBreakPoints*Point && M.H(M.X()-1)>M.PT-M.KT+taBreakPoints*Point || M.F.trend<0 && M.HX()>M.PT+taBreakPoints*Point && M.L(M.X()-1)<M.PT-M.KT-taBreakPoints*Point)
+            {
+              // проба тренда
+              <?debug>M.Log("проба тренда "+M.PT);</>
+              tp = M.PT + PT - M.P6;
+              ((TAModel*)M).PT1 = tp;
+            }
+        }
+        break;
+        
+      case 20:
+        tp = M.PT;
+        break;
+        
+    }
+  }
+};
+
+class TAModel : public TABaseModel
+{
+  public:
+  TAState state;
+  bool Hchecked;
+  bool tarOut;
+  double PT3, PH1;
+  double T1reached;
+  
+  virtual bool Filter()
+  {
+    if (!TABaseModel::Filter()) return false;
+    
+    // проверка ширины канала
+    if (F.MAX-F.MIN<taMinChanSize*Point) return false;
+    //if (type != M_ATTR && fabs(PR-PT)<taMinChanSize*Point) return false;
+    
+    state = TA_Pending;
+    Hchecked = false;
+    tarOut = false;
+    
+    return true;
+  }
+  
+  virtual void Trade()
+  {
+    switch (type)
+    {
+      case M_EXP:
+        if (!tarOut && breakout(HX()>=PR, LX()<=PR)) // пробитие целевой
+        {
+          tarOut = true;
+          if (!isH) PH1 = 2*P6-P1;
+        }
+        if (isH && !Hchecked && breakout(F.Q.H[X()]>=PH, F.Q.L[X()]<=PH)) // достижение НР
+        {
+          Hchecked = true;
+          PH1 = 2*PH-P1;
+        }
+        if (isH && state!=TA_HPUp && state!=TA_TRUp && breakout(HX()>PH+taBreakPoints*Point, LX()<PH-taBreakPoints*Point)) // пробитие НР
+        {
+          if (!trOut)
+            TAScript *s = new TAScript(this, F.trend, 10, 0, PH1, LL(B5));
+          else
+            TAScript *s = new TAScript(this, F.trend, 10, 0, PH1, LL(BT));
+            
+          state = TA_HPUp;
+        }
+        if (isH && Hchecked && !trOut && state!=TA_5Crossed && state!=TA_TRCrossed && breakout(LX()<P5-taBreakPoints*Point, HX()>P5+taBreakPoints*Point)) // пробитие т.5
+        {
+          TAScript *s = new TAScript(this, -F.trend, 20, 0, PT, P6);
+          state = TA_5Crossed;
+        }
+        if (state!=TA_TRCrossed && !T1reached && breakout(LX()<PT-taBreakPoints*Point, HX()>PT+taBreakPoints*Point)) // пробитие трендовой
+        {
+          if (state==TA_HPUp && breakout(PT>P5, PT<P5))
+          {
+            active = false;
+            stop = true;
+            break;
+          }
+          PT3 = 2*P1-P4;
+          TAScript *s;
+          if (!tarOut)
+            s = new TAScript(this, -F.trend, 30, 0, PT1, HH(B6));
+          else
+            s = new TAScript(this, -F.trend, 40, 0, PT1, HH(B6));
+          s.PT = PT;
+          state = TA_TRCrossed;
+        }
+        if (state==TA_TRCrossed && !T1reached && breakout(F.Q.L[X()]<=PT1, F.Q.H[X()]>=PT1)) // достижение 1-й цели
+        {
+          T1reached = true;
+        }
+        if (state!=TA_TRUp && T1reached && breakout(HX()>PT+taBreakPoints*Point, LX()<PT-taBreakPoints*Point)) // пробитие трендовой обратно
+          if (is5)
+          {
+            TAScript *s = new TAScript(this, F.trend, 50, 0, 2*P6-P1, LL(BT));
+            state = TA_TRUp;
+          }
+        if (state!=TA_HPUp && trOut && (!isH || !Hchecked) && breakout(HX()>P6, LX()<P6)) // возрат к 6 (или 4) после пробития трендовой
+        {
+          PH1 = 2*P6-P1;
+          TAScript *s = new TAScript(this, F.trend, 15, 0, PH1, LL(BT));
+          state = TA_HPUp;
+        }
+        if (state==TA_HPUp && breakout(F.Q.H[X()]>=PH1, F.Q.L[X()]<=PH1)) // выход за границы 100%
+        {
+          active = false;
+          stop = true;
+        }
+        if (state==TA_TRCrossed && !is5 && breakout(F.Q.L[X()]<=PT1, F.Q.H[X()]>=PT1)) // достижение 1-й цели 4=6
+        {
+          active = false;
+          stop = true;
+        }
+        if (state==TA_TRCrossed && tarOut && breakout(PT>=(isH&&Hchecked?PH:P6), PT<=(isH&&Hchecked?PH:P6))) // трендовая доросла до HP
+        {
+          active = false;
+          stop = true;
+        }
+        if (state==TA_TRCrossed && breakout(LX()<PT3, HX()>PT3)) // пробита 2-я цель
+        {
+          active = false;
+          stop = true;
+        }
+        break;
+        
+      case M_DB:
+        stop = true;
+        break;
+        
+      case M_ATTR:
+        stop = true;
+        break;
+    }
+    
+    //if (state!=TA_Pending && mRef==1) stop = true;
+  }
+  
+  virtual int EstimatePlan()
+  {
+    return fmin(fmin(B2,B3-B2),B4-B3)/4;
+  }
+};
+
+class TAField : public TABaseField
+{
+  public:
+  
+  TAField(TACheckMode _mode, int _trend, int _step = 1) : TABaseField(_mode, _trend, _step) {}
+  
+  virtual TABaseField *new_field() { return new TAField(mode, trend, step+1); }
+  virtual TABaseModel *new_model() { return new TAModel(); }
+};
+
+<lines>
+  if ($up>0)
+  {
+    TAField *f = new TAField(ModeC, -1);
+    f.Activate();
+    for (int i=$up; i>1; i--)
+      f.Process(Close[i], Open[i], High[i], Low[i], Time[i]);
+  }
+  if ($down>0)
+  {
+    TAField *f = new TAField(ModeC, 1);
+    f.Activate();
+    for (int i=$down; i>1; i--)
+      f.Process(Close[i], Open[i], High[i], Low[i], Time[i]);
+  }
+    
+  TABaseField::ProcessAll(Close[1], Open[1], High[1], Low[1], Time[1]);
+  TACorrector::CorrectAll();
+  
+[Help]
+Формирует сценарии для сделок.
+

@@ -1,0 +1,56 @@
+[Main]
+Name=LFilter
+Title=Фильтр уровня
+Group=Фильтры
+Size=5
+
+[Property]
+Enabled=t,1
+UseComplex=t
+Level=f,0.1
+Mode=siglevel,>,режим сравнения
+UseAbs=t,1
+
+[Input]
+in=row
+
+[Output]
+out=row,<?Enabled>$name<~>$in</>
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+<?Enabled>
+double $out[];
+</>
+
+<lines>
+<?Enabled>
+  ArrayInit($out, $Size);
+  <?!UseComplex>
+  CheckShift($out);
+  for (int n=$Start; n<$Size; n++)
+    if (<?UseAbs>MathAbs</>($in[n])$Mode$Level) $out[n] = $in[n];
+    else $out[n] = 0;
+  <~>
+  for (int n=0; n<$Size; n+=2)
+    if (<?UseAbs>MathAbs</>($in[n])$Mode$Level && <?UseAbs>MathAbs</>($in[n+1])$Mode$Level)
+    {
+      $out[n] = $in[n];
+      $out[n+1] = $in[n+1];
+    }
+    else
+    {
+      $out[n] = 0;
+      $out[n+1] = 0;
+    }
+  </>
+</>
+
+[Help]
+Оставляет только значения, удовлетворяющие условию:
+<code>Abs(x) <условие> **Level**</code>
+Остальные обнуляет.

@@ -1,0 +1,56 @@
+[Main]
+Title=Дни недели
+Name=DayOfWeek
+Group=Фигуры
+
+[Property]
+FontSize=n,12,размер шрифта
+Color=color,White
+
+[Input]
+time=row
+in=row
+
+[InputPars]
+Size
+
+[Global]
+<gvars>
+string dow[7] = {"ВС","ПН","ВТ","СР","ЧТ","ПТ","СБ"};
+
+[Code]
+<gvars>
+int @counter;
+
+<lines>
+  int @last = -1, @start;
+  double @min, @max;
+  @counter = 1;
+  for (int @i=0; @i<=$Size; @i++)
+  {
+    int @cur;
+    if (@i<$Size) @cur = TimeDayOfWeek($time[@i]);
+    else @cur = MathMod(@last + 1, 7);
+    if (@cur!=@last)
+    {
+      if (@last>=0)
+      {
+        ObjectDelete("$name"+@counter);
+        ObjectCreate("$name"+@counter, OBJ_TEXT, 0, $time[(@i+@start)/2], (@min+@max)/2);
+        ObjectSetText("$name"+@counter, dow[@last], $FontSize, "Arial Black", $Color);
+        @counter++;
+      }
+      @start = @i;
+      @min = $in[@i]; @max = $in[@i];
+      @last = @cur;
+    }
+    else
+    {
+      @min = MathMin(@min, $in[@i]);
+      @max = MathMax(@max, $in[@i]);
+    }
+  }
+
+
+<deinit>
+  for (int @i=1; @i<=@counter; @i++) ObjectDelete("$name"+@i);

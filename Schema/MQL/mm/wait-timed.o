@@ -1,0 +1,39 @@
+[Main]
+Choice
+Name=WaitTimed
+Title=ќжидание времени
+Group=”правление
+
+[Property]
+Hour=n,0,ждать наступление часа
+
+[Output]
+Timed=c
+
+[Code]
+<gvars>
+datetime @nexttime;
+
+<init>
+  <?!Hour=0>
+  @nexttime= Time[1];
+  if (TimeHour(@nexttime)>=$Hour)
+    @nexttime= (@nexttime/86400+1)*86400+$Hour*3600;
+  <~>
+  @nexttime= (CurTimeTrace()/86400+1)*86400;
+  </>
+  
+<lines>
+  datetime @curtime = Time[1];
+  if (@curtime>=@nexttime)
+  {
+    <?debug>Print("$name ",TimeToStr(@curtime)," >= ",TimeToStr(@nexttime));</>
+$Timed.lines
+    @nexttime += 86400;
+  }
+
+<sync>
+  sync(@nextbar);
+  
+[Help]
+ќжидает наступление указанного часа.

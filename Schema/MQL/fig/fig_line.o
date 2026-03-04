@@ -1,0 +1,49 @@
+[Main]
+Name=LineFigure
+Title=Линейная
+Group=Фигуры
+
+[Property]
+TailBack=n,30,длина фигуры (назад)
+TailFwd=n,30,длина фигуры (вперёд)
+Type=fig_line,OBJ_TREND,вид фигуры
+Color=color,Red,цвет фигуры (не обязательно)
+ColIndex=fig_col,1,индекс цветового градиента (не обязательно)
+Limit=n,,количество линий (если не указано\, то используется Size)
+Ray=bool,false,выводить тренд как луч
+
+[Input]
+b1=row
+b0=row
+time=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+int @counter=0;
+
+<lines>
+  for (int @n=MathMax($Start,$TailBack); @n<$Size; @n++)
+  {
+    if ($Start==0 || ($Size-$Start>1 && @n>$Start))
+    {
+      @counter++;
+      if (@counter><?Limit>$Limit<~>$Size</>) @counter=1;
+    }
+    if ($b1[@n]==0 && $b0[@n]==0) continue;
+    ObjectDelete("$name"+@counter);
+    double @timestep = Period()*60;
+    <?debug>if (@timestep>3600) Print(@timestep);</>
+    ObjectCreate("$name"+@counter, $Type, 0, $time[@n-$TailBack], $b1[@n]*(@n-$TailBack)+$b0[@n], $time[@n]+$TailFwd*@timestep, $b1[@n]*(@n+$TailFwd)+$b0[@n]);
+    <?ColIndex>ObjectSet("$name"+@counter,  OBJPROP_COLOR, ((@n-$TailBack)*230/($Size-$TailBack)+20)*$ColIndex);<~>
+      <?Color>ObjectSet("$name"+@counter,  OBJPROP_COLOR, $Color);</>
+    </>
+    <?Ray>ObjectSet("$name"+@counter, OBJPROP_RAY, $Ray);</>
+  }
+
+<deinit>
+  for (int @i=0; @i<<?Limit>$Limit<~>$Size</>; @i++)
+    ObjectDelete("$name"+(@i+1));

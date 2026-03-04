@@ -1,0 +1,30 @@
+[Main]
+Name=Plus
+Title=Сложение
+Group=Арифметика
+Size=4
+
+[Input]
+in1=row
+in2=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  for (int @i=$Start; @i<$Size; @i++)
+    $out[@i] = $in1[@i]+$in2[@i];
+
+[Help]
+Последовательное сложение элементов массивов
+<code>out = in1 + in2</code>

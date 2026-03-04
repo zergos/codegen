@@ -1,0 +1,21 @@
+[Main]
+Name=SetTrend
+Title=Уст. тренд
+Group=Сделки
+Size=4
+
+[Property]
+Index=n,,номер бара\,если серия
+Value=n,1
+
+[Input]
+sig=n
+
+[Code]
+<lines>
+  trend = <?Value>$Value<~>$sig<?Index>[$Index]</></>;
+  <?debug>Print("trend: ",trend);</>
+
+[Help]
+Устанавливает тренд потока по сигналу.
+

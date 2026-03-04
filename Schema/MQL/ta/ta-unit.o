@@ -1,0 +1,44 @@
+[Main]
+Unit
+Name=TAUnit
+Title=CSV Модуль
+Group=ТА
+
+[Code]
+<top>
+#include "ta.mqh"
+
+<attach>
+=ta.mqh
+enum TAState
+{
+  TA_NEW,
+  TA_DETECTED,
+  TA_WORK,
+  TA_ORDER,
+  TA_TRADE,
+  TA_CANCEL
+};
+
+struct TAModel
+{
+  // характеристики формы
+  int id;
+  int trend;
+  datetime start;
+  double price1, price2p, price3, price4, price5, price6, price6stop, price5stop, price3stop;
+  int bar2, bar2p, bar3, bar4, bar5;
+  int bar_cp, bar_end;
+  
+  // торговые состояния
+  TAState state;
+  int curbar;
+  double trendprice, trenddelta;
+  double targetprice, targetdelta;
+};
+
+TAModel models[];
+
+[Help]
+Модуль для Тактики Адверза.
+

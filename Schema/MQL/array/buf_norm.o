@@ -1,0 +1,81 @@
+[Main]
+Name=ArrayNorm
+Title=Нормализация
+Group=Массивы
+
+[Property]
+Enabled=t,1
+FixCenter=t
+
+[Input]
+buf=row,,d
+
+[Output]
+out=row,$buf
+
+[InputPars]
+Start
+
+[Code]
+<gvars>
+double @min[], @max[], @K[], @Y[];
+
+<lines>
+<?Enabled>
+  int @i, @n;
+  int @count = wpos$buf/dim$buf;
+  double @cur;
+  if ($Start==0)
+  {
+    if (ArrayResize(@min, dim$buf)==-1) return (-1);
+    if (ArrayResize(@max, dim$buf)==-1) return (-1);
+    if (ArrayResize(@K, dim$buf)==-1) return (-1);
+    if (ArrayResize(@Y, dim$buf)==-1) return (-1);
+
+    for (@n=0; @n<dim$buf; @n++)
+    {
+      @min[@n] = $buf[@n*@count];
+      @max[@n] = @min[@n];
+      for (@i=0; @i<@count; @i++)
+      {
+        @cur = $buf[@n*@count+@i];
+        @min[@n] = MathMin(@min[@n], @cur);
+	@max[@n] = MathMax(@max[@n], @cur);
+      }
+<?!FixCenter>
+      @Y[@n] = (@max[@n]+@min[@n])/2;
+      @K[@n] = (@max[@n]-@min[@n])/2;
+<~>
+      @Y[@n] = 0;
+      @K[@n] = MathMax(MathAbs(@max[@n]),MathAbs(@min[@n]));
+</>
+    }
+  }
+  else
+  {
+    for (@n=0; @n<dim$buf; @n++)
+    {
+      for (@i=0; @i<@count; @i++)
+      {
+        @cur = $buf[@n*@count+@i];
+        @min[@n] = MathMin(@min[@n], @cur);
+	@max[@n] = MathMax(@max[@n], @cur);
+      }
+<?!FixCenter>
+      @Y[@n] = (@max[@n]+@min[@n])/2;
+      @K[@n] = (@max[@n]-@min[@n])/2;
+<~>
+      @Y[@n] = 0;
+      @K[@n] = MathMax(MathAbs(@max[@n]),MathAbs(@min[@n]));
+</>
+    }
+  }
+  
+  int @p;
+  for (@n=0; @n<dim$buf; @n++)
+    for (@i=0; @i<@count; @i++)
+    {
+      @p = @n*@count + @i;
+      $out[@p] = ($out[@p]-@Y[@n])/@K[@n];
+    }
+</>

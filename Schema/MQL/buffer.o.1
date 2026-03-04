@@ -1,0 +1,65 @@
+[Main]
+Custom
+Title=Буфер
+Group=Индикатор
+Name=ExtMapBuffer
+
+[Property]
+Color=color,,Цвет
+Type=buf_type,,тип индикатора
+Style=buf_style,EMPTY,стиль линии
+Width=n,EMPTY,ширина линии
+EmptyValue=f,,пустое значение (подавляет отображение)
+Arrow=arrow,,значок для линии индикатора\, имеющей стиль DRAW_ARROW
+DrawBegin=n,,порядковый номер бара от начала данных\, с которого должна начинаться отрисовка указанной линии индикатора
+Label=s,,имя линии индикатора для отображения информации в окне DataWindow и всплывающей подсказке
+Shift=n,,смещене линии индикатора относительно начала графика
+ShiftPrice=n,,смещение цены в пп
+Compact=compact,NO,выполнить нормализацию к [-1..1]
+
+[Input]
+CTRL=c
+in=row
+
+[InputPars]
+Start
+Size
+TimeShift
+
+[Code]
+<gvars>
+double $name[];
+
+<init>
+  SetIndexBuffer($index, $name);
+<?Style>  SetIndexStyle($index, $Type, $Style, $Width, $Color);</>
+<?EmptyValue>  SetIndexEmptyValue($index,$EmptyValue);</>
+<?Arrow>  SetIndexArrow($index, $Arrow);</>
+<?DrawBegin>  SetIndexDrawBegin($index, $DrawBegin);</>
+<?Label>  SetIndexLabel($index, $Label);</>
+<?Shift>  SetIndexShift($index, $Shift);</>
+  ArrayInitialize($name, 0);
+
+<lines>
+<?!Compact=NO>
+  double @min, @max;
+  @min = $in[ArrayMinimum($in)];
+  @max = $in[ArrayMaximum($in)];
+<?Compact=CENTER>
+  double @Y = 0;
+  double @K = MathMax(MathAbs(@max),MathAbs(@min));
+<~>
+  double @Y = (@max+@min)/2;
+  double @K = (@max-@min)/2;
+</>
+  if (@K==0) @K=1;
+  for (int i=0; i<$Size; i++)
+    $name[$Size-1-i<?TimeShift>+$TimeShift</>] = ($in[i]-@Y)/@K;
+<~>
+  for (int i=0; i<$Size; i++)
+    $name[$Size-1-i<?TimeShift>+$TimeShift</>] = <?ShiftPrice>$ShiftPrice*Point+</>$in[i];
+</>
+
+[Help]
+Буфер индикатора\\
+Проверить, чтобы значение индикатора **indicator_buffers** соответствовало количеству буферов

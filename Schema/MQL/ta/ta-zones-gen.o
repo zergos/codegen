@@ -1,0 +1,394 @@
+[Main]
+Name=TAZonesGen
+Title=EA Генератор зон HL
+Group=ТА
+
+[Uses]
+ta-common\ta-zones
+
+[Input]
+up=n
+down=n
+
+[InputPars]
+Size
+
+[Code]
+<top>
+#include "ta-zones-gen.mqh"
+
+<attach>
+=ta-zones-gen.mqh
+
+input int taMinChanSize = 200; // MinChanSize: мин. ширина канала в пунктах
+input int taMaxChanSize = 2000; // MaxChanSize:
+input int taMinProfit = 200; // MinProfit: мин. профит в пп. для входа
+input int taMaxLoss = 1000; // MaxLoss: макс. убыток в пп. для входа
+input bool taTrendSlide = true; // TrendSlide: сдвигать 1-ю цель при повторной пробе тренда
+input double taMaxLossCoef = 0.8; // MaxLossCoef: коэф. мин. соотнош. профита к лоссу
+input double taTPPercent = 0.95; // TPPercent: процент достижения TP
+
+enum TAState
+{
+  TA_Pending,
+  TA_TRDown,
+  TA_5Down,
+  TA_MDown,
+  TA_6Up,
+  TA_TRUp,
+  TA_Revert,
+  TA_Cancel
+};
+
+<?debug>
+string taStateNames[] = {"-","TRv","5v","vv","6^","TR^","Rev","Off"};
+</>
+
+class TAScript : public TABaseScript
+{
+  public:
+  int thread_index;
+  bool trFix; // цена оторвалась от ЛТ
+    
+  TAScript(TABaseModel &m, int trend, int _code, double _price, double _tp, double _sl) : 
+    TABaseScript(GetPointer(m), trend, _code, _price, _tp, _sl) {}
+    
+  // МР:
+  // 10 - 100% 6
+  // 12 - тоже, но переворот
+  // 15 - 100% HP
+  // 20 - от 5 до трендовой
+  // 30 - трендовая до 1-й цели (1-я сделка)
+  // 35 - трендовая до 1-й цели (переворот от т.6)
+  // 37 - т.5 до 2-й цели (переворот от т.6)
+  // -40 - тоже, но с перспективой на разворот от трендовой
+  // 50 - от трендовой до ГТ
+  // 60 - от т.1 до ц.3 (переворот)
+  // МДР:
+  // 100 - трендовая до 1-й цели
+  // 110 - переворот на 100%
+  // МП:
+  // 200 - трендовая до 1-й цели
+  virtual void Advise()
+  {  
+    switch (code)
+    {
+      case 10:
+      case 15:
+        if (taCases.check(35))
+          if (M.F.trend>0 && M.PT<M.P5 || M.F.trend<0 && M.PT>M.P5)
+            sl = M.PT;
+          else if (taCases.check(37))
+            sl = M.P5;
+          else
+            sl = M.P1;
+        break;
+    
+      case 20:
+        if (M.F.trend>0 && M.PT>=M.P5 || M.F.trend<0 && M.PT<=M.P5)
+          tp = 2*M.PT-M.P6;
+        else
+          tp = M.PT;
+        break;
+      
+      case 30:
+      case 35:
+      case 40:
+      case 100:
+      case 200:
+        if (taTrendSlide && !trFix)
+        {
+          if (HasRef(M) && HasRef(M.F) && (M.F.trend>0 && M.H(M.X())>M.PT || M.F.trend<0 && M.L(M.X())<M.PT))
+            tp = M.PT-(M.P6-M.PTX);
+          else
+            trFix = true;
+        }
+        break;
+    }
+  }
+};
+
+class TAModel : public TABaseModel
+{
+  public:
+  TAState state;
+  bool tarOut;
+  double PH1;
+  double T1reached;
+  bool P5Trended;
+  double lots;
+  
+  virtual bool Filter()
+  {
+    if (!TABaseModel::Filter()) return false;
+    
+    // проверка ширины канала
+    //if (F.MAX-F.MIN<taMinChanSize*Point) return false;
+    //if (type != M_ATTR && fabs(PR-PT)<taMinChanSize*Point) return false;
+    if (F.MAX-F.MIN>taMaxChanSize*Point)
+    {
+      Log("ширина модели превышает риск");
+      return false;
+    }
+    
+    state = TA_Pending;
+    
+    return true;
+  }
+  
+  virtual void Trade()
+  {
+    switch (type)
+    {
+      case M_EXP:
+         // пробитие целевой
+        if (!tarOut && breakout(HX()>=PR, LX()<=PR))
+        {
+          tarOut = true;
+          if (!isH) PH1 = 2*P4-P1;
+        }
+        
+        // пробитие ГТ в рамках модели
+        if (taCases.check(15))
+        if (isH && !trOut && !tarOut && state!=TA_6Up && breakout(HX()>PH+BP,LX()<PH-BP))
+        {
+          PH1 = 2*PH-P1;
+          TAZone::Process(this, F.trend, 15, PH1, P1);
+          state = TA_6Up;
+        }
+        
+        // пробитие т.6 до 100%, если зафикс. т.6 и не было входа ранее от трендовой
+        if (is6 && state!=TA_6Up && state!=TA_TRUp && state!=TA_MDown && breakout(HX()>P6+BP, LX()<P6-BP))
+        {
+          PH1 = 2*P6-P1;
+          TAZone::Process(this, F.trend, trOut?12:10, PH1, P1);
+          state = TA_6Up;
+        }
+        
+        // пробитие т.5 до трендовой (или 1-й цели)
+        if (taCases.check(20))
+        if (isH && hypOut && !trOut && state!=TA_5Down && state!=TA_TRDown && breakout(LX()<P5-BP, HX()>P5+BP))
+        {
+          TAZone::Process(this, -F.trend, 20, 2*PT-P6, P6);
+          state = TA_5Down;
+        }
+        
+        // признак достижения т.5 трендовой
+        if (!P5Trended && is5 && breakout(PT>P5, PT<P5))
+        {
+          P5Trended = true;
+        }
+        
+         // пробитие трендовой до 1-й цели (1-я сделка)
+        if ((!taTrendRecheck || B6>B4) && state==TA_Pending && breakout(LX()<PT-BP, HX()>PT+BP))
+        {
+          if (X()==B6)
+          {
+            Log("патч - пробитие баром после т.6 создаёт риск");
+            active = false;
+            stop = true;
+            break;
+          }
+        
+          state = TA_TRDown;
+          if (!P5Trended)
+            TAZone::Process(this, -F.trend, 30, PT1, HH(B6));
+        }
+
+        // пробитие трендовой переворотом
+        if (taCases.check(35))
+        if (!P5Trended && state == TA_6Up && !T1reached && breakout(LX()<PT-BP, HX()>PT+BP))
+        {
+          PT1 = 2*PT-P6;
+          state = TA_TRDown;
+          TAZone::Process(this, -F.trend, 35, PT1, HH(B6));
+        }
+        
+        // пробитие т.5 переворотом
+        if (taCases.check(37))
+        {
+          if (P5Trended && state==TA_6Up && !T1reached && breakout(LX()<P5-BP, HX()>P5+BP))
+          {
+            PT1 = P1;
+            state = TA_TRDown;
+            TAZone::Process(this, -F.trend, 37, PT1, HH(B6));
+          }
+        }
+        
+        // пробитие т.1 переворотом
+        if (taCases.check(60))
+        if (state!=TA_TRDown && state!=TA_MDown && breakout(LX()<P7-BP, HX()>P7+BP))
+        {
+          state = TA_MDown;
+          TAZone::Process(this, -F.trend, 60, 2*P1-P6, P8);
+        }
+        
+        // достижение 1-й цели
+        if (state==TA_TRDown && !T1reached && breakout(F.Q.L[X()]<=PT1, F.Q.H[X()]>=PT1))
+        {
+          T1reached = true;
+        }
+        
+        // пробитие трендовой обратно
+        if (taCases.check(50))
+        if (state!=TA_TRUp && T1reached && breakout(HX()>PT+BP, LX()<PT-BP))
+          if (breakout(PT1>P1, PT1<P1)) // первая цель выше второй
+          {
+            TAZone::Process(this, F.trend, 50, 2*P6-P1, P7);//LL(BT));
+            state = TA_TRUp;
+          }
+        
+        // признаки остановки
+        
+        // трендовая вышла за т.5 (т.4) до сигнала
+        if (state == TA_Pending && (is6 && breakout(PT>P5,PT<P5) || !is6 && breakout(PT>P4,PT<P4)))
+        {
+          active = false;
+          stop = true;
+        }
+        
+        // выход за границы цели 100%
+        if (PH1!=0 && breakout(HX()>=PH1, LX()<=PH1))
+        {
+          active = false;
+          stop = true;
+        }
+        
+        // достижение 1-й цели 4=6 или профитной сделкой
+        if (!taCases.check(60))
+        if (trOut && breakout(F.Q.L[X()]<=PT1, F.Q.H[X()]>=PT1)) 
+        {
+          if (!is5 || state == TA_TRDown)
+          {
+            active = false;
+            stop = true;
+          }
+        }
+        
+        // пробита 3-я цель
+        if (is5 && trOut && breakout(LX()<fmin(PT1,PT3), HX()>fmax(PT1,PT3)))
+        {
+          active = false;
+          stop = true;
+        }
+        break;
+        
+      case M_DB:
+         // пробитие целевой
+        if (!tarOut && breakout(HX()>=PR, LX()<=PR))
+        {
+          tarOut = true;
+          if (!isH) PH1 = 2*P4-P1;
+        }
+        
+        // пробитие т.6 до 100%, если зафикс. т.6 и была пробита трендовая
+        if (trOut && state!=TA_6Up && state!=TA_TRUp && breakout(HX()>P6+BP, LX()<P6-BP))
+        {
+          PH1 = 2*P6-P1;
+          TAZone::Process(this, F.trend, 110, PH1, P7);
+            
+          state = TA_6Up;
+        }
+        
+         // пробитие трендовой
+        if (state!=TA_6Up && state!=TA_TRDown && !T1reached && breakout(LX()<PT-BP, HX()>PT+BP))
+        {
+          state = TA_TRDown;
+          PT3 = 2*P1-P4;
+          TAZone::Process(this, -F.trend, 100, PT1, HH(B6));
+        }
+
+        // выход за границы 100%
+        if (PH1!=0 && breakout(HX()>=PH1, LX()<=PH1))
+        {
+          active = false;
+          stop = true;
+        }
+        
+        // достижение 1-й цели
+        if (trOut && breakout(F.Q.L[X()]<=PT1, F.Q.H[X()]>=PT1)) 
+        {
+          active = false;
+          stop = true;
+        }
+        break;
+        
+      case M_ATTR:
+        /*if (!taCases.check(200))
+        {
+          stop = true;
+          active = false;
+          break;
+        }*/
+      
+         // пробитие целевой
+        if (!tarOut && breakout(HX()>=PR, LX()<=PR))
+        {
+          tarOut = true;
+          if (!isH) PH1 = 2*P4-P1;
+        }
+        
+         // пробитие трендовой
+        if (state!=TA_TRDown && breakout(LX()<PT-BP, HX()>PT+BP))
+        {
+          state = TA_TRDown;
+          TAZone::Process(this, -F.trend, 200, PT1, HH(B6));
+        }
+
+        // выход за границы 100%
+        if (PH1!=0 && breakout(HX()>=PH1, LX()<=PH1))
+        {
+          active = false;
+          stop = true;
+        }
+        
+        // достижение 1-й цели
+        if (trOut && breakout(F.Q.L[X()]<=PT1, F.Q.H[X()]>=PT1)) 
+        {
+          active = false;
+          stop = true;
+        }
+        break;
+    }
+    
+    //if (state!=TA_Pending && mRef==1) stop = true;
+  }
+  
+  virtual int EstimatePlan()
+  {
+    return fmin(fmin(B2,B3-B2),B4-B3)/4;
+  }
+};
+
+class TAField : public TABaseField
+{
+  public:
+  
+  TAField(TACheckMode _mode, int _trend, int _step = 1) : TABaseField(_mode, _trend, _step) {}
+  
+  virtual TABaseField *new_field() { return new TAField(mode, trend, step+1); }
+  virtual TABaseModel *new_model() { return new TAModel(); }
+};
+
+<lines>
+  if ($up>0)
+  {
+    TAField *f = new TAField(ModeHL, -1);
+    f.Activate();
+    for (int i=$up; i>1; i--)
+      f.Process(Close[i], Open[i], High[i], Low[i], Time[i]);
+  }
+  if ($down>0)
+  {
+    TAField *f = new TAField(ModeHL, 1);
+    f.Activate();
+    for (int i=$down; i>1; i--)
+      f.Process(Close[i], Open[i], High[i], Low[i], Time[i]);
+  }
+    
+  TABaseField::ProcessAll(Close[1], Open[1], High[1], Low[1], Time[1]);
+  TACorrector::CorrectAll();
+  
+[Help]
+Формирует сценарии для сделок.
+

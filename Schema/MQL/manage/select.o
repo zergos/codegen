@@ -1,0 +1,42 @@
+[Main]
+Name=SelectRow
+Title=Выбор серии
+Group=Управление
+Size=4
+
+[Property]
+Condition=s,,условие выбора
+
+[Input]
+true=row
+false=row
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out, $Size);
+  CheckShift($out);
+  
+  if ($Condition)
+  {
+    for (int i=$Start; i<$Size; i++)
+      $out[i] = $true[i];
+  }
+  else
+  {
+    for (int i=$Start; i<$Size; i++)
+      $out[i] = $false[i];
+  }
+
+[Help]
+Выбирает одну из заданных серий и формирует по условию новую.
+  

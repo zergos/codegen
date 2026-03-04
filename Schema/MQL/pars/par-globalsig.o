@@ -1,0 +1,31 @@
+[Main]
+Choice
+Name=CheckGlobalSig
+Title=Проверка глоб. сигнала
+Group=Параметры
+
+[Property]
+ParName=s,Parameter
+Cmp=s,==
+Value=f,1.0
+
+[Output]
+true=c
+false=c
+
+[Code]
+<lines>
+  if (GlobalVariableGet("$ParName")$Cmp$Value)
+  {
+    <?debug>Print("$ParName checked");</>
+$true.lines
+  }
+  <?false>
+  else
+  {
+$false.lines
+  }
+  </>
+  
+[Help]
+Проверяет значение глобальной переменной.

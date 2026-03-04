@@ -1,0 +1,27 @@
+[Main]
+Choice
+Name=Procedure
+Title=Процедура
+Group=Программы
+Size=4
+
+[Property]
+Name=Procedure
+
+[Output]
+code=c
+
+[Global]
+<procs>
+void $Name()
+{
+$code.lines
+}
+
+[Code]
+<lines>
+  $Name();
+  
+[Help]
+Группировка блоков в отдельную процедуру.
+

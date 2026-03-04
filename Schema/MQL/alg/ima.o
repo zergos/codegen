@@ -1,0 +1,47 @@
+[Main]
+Title=iMA
+Group=Алгоритмы (тех)
+Name=iMA
+
+[Property]
+Period=n,15,период усреднения для вычисления скользящего среднего
+Method=ima,MODE_SMA,метод усреднения
+Shift=n,0,cдвиг индикатора относительно ценового графика
+
+[Input]
+In=row
+
+[Output]
+Out=row,@iMAbuffer
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double @iMAbuffer[];
+
+<lines>
+  ArrayInit(@iMAbuffer, $Size);
+  CheckShift(@iMAbuffer);
+  for (int i=$Start; i<$Size; i++)
+  {
+    <?!Method=MODE_SMA>// встроенная фукция может не работать - вопросы к MetaQuotes
+    @iMAbuffer[i] = iMAOnArray($In, 0, $Period, $Shift, $Method, $Size-1-i);
+    <~>
+    double @sum = 0;
+    for (int k=i-$Period+$Shift+1; k<=i+$Shift; k++)
+      if (k>=0) @sum += $In[k];
+    $Out[i] = @sum/$Period;
+    </>
+  }
+  if ($Start==0)
+  {
+    for (int i=0; i<$Period+$Shift-1; i++)
+      @iMAbuffer[i] = @iMAbuffer[$Period+$Shift-1];
+  }
+
+[Help]
+Скользящее среднее.\\
+Стандартный технический алгоритм.

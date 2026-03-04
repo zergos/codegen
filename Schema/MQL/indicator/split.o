@@ -1,0 +1,43 @@
+[Main]
+Name=BufSplit
+Title=Разбить буфер
+Group=Индикатор
+
+[Property]
+expr=s,>0,выражение для разбития
+filter=s,,простое выражение для фильтрации
+add_one=t
+
+[Input]
+in=row
+
+[Output]
+true=row,B$name
+false=row,A$name
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double A$name[], B$name[];
+  
+<lines>
+  ArrayInit(A$name, $Size);
+  CheckShift(A$name);
+  ArrayInit(B$name, $Size);
+  CheckShift(B$name);
+  for (int i=$Start; i<$Size; i++)
+    if ($in[i]$expr)
+    {
+      <?add_one>
+      if (i>0) B$name[i-1] = $in[i-1];
+      </>
+      B$name[i] = $in[i];
+    }
+    else
+      A$name[i] = $in[i];
+    
+[Help]
+Выделяет из буфера значения по заданному условию в отдельный буфер.

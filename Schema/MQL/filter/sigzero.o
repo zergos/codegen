@@ -1,0 +1,48 @@
+[Main]
+Name=SigZero
+Title=Сигнал (ноль)
+Group=Фильтры
+Size=4
+
+[Property]
+Reverse=t,,ревесивная логика
+
+[Input]
+in=row
+
+[Output]
+S=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $S[];
+
+<lines>
+  ArrayInit($S, $Size);
+  CheckShift($S);
+  double @last;
+  if ($Start==0) @last = 0;
+  for (int @i=$Start; @i<$Size; @i++)
+  {
+    $S[@i] = <?!Reverse>0<~>1</>;
+    if (@last>0 && $in[@i]>0) continue;
+    else
+    if (@last<0 && $in[@i]<0) continue;
+    else
+    if ($in[@i]!=0)
+    {
+      $S[@i] = <?!Reverse>1<~>0</>;
+      if ($Size-@i>1) @last = $in[@i];
+    }
+  }
+
+[Help]
+Сигнал срабатывает при пересечении или касании нуля.
+<code>
+Sig = | 1, **in[i]** и **in[i-1]** имеют разные знаки
+      | 0
+</code>

@@ -1,0 +1,44 @@
+[Main]
+Unit
+Name=TABaseUnit
+Title=Базовый модуль
+Group=ТА
+
+[Uses]
+common\ref-object
+common\chain
+ta-common\ta-cases
+ta-common\ta-corrector
+ta-common\ta-scripts
+ta-common\ta-models
+ta-common\ta-fields
+
+[Code]
+<procs>
+void TAReset()
+{
+  <?expert>
+  if (RefObject::HasRef(TACorrector::first))
+    TACorrector::first.clear();
+  if (RefObject::HasRef(TABaseScript::first))
+    TABaseScript::first.clear();
+  </>
+  if (RefObject::HasRef(TABaseField::first))
+    TABaseField::first.clear();
+  TABaseField::counter = 0;
+  
+  for (int i=0; i<ArraySize(taModels); i++)
+    if (RefObject::HasRef(taModels[i]))
+    {
+      <?indicator>taModels[i].F.Release();</>
+      taModels[i].Release();
+    }
+  ArrayResize(taModels, 0);
+  TABaseModel::counter = 0;
+}
+
+<deinit>
+  TAReset();
+    
+[Help]
+Базовый модуль. Задаёт базовые классы для анализа по ТА. Содержит параметры поиска реперных точек и определения моделей.

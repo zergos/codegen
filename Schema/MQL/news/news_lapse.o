@@ -1,0 +1,19 @@
+[Main]
+Name=NewsLapse
+Title=¬рем€ до новости
+Group=Ќовости
+
+[Property]
+TimeShift=n,3600,сдвиг текущего времени от времени терминала
+Importance=n,0,фильтр важности новостей (0-3)
+
+[Output]
+Sec=n
+
+[Code]
+<lines>
+  int $Sec = NewsTimeLapse(TimeCurrent()+$TimeShift, Symbol(), $Importance);
+  
+[Help]
+ѕолучает количество секунд до следующей новости.
+

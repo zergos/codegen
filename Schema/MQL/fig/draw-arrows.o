@@ -1,0 +1,60 @@
+[Main]
+Name=Arrows
+Title=Стрелки
+Group=Фигуры
+
+[Uses]
+common\obj-counter
+
+[Property]
+type=arrows,OBJ_ARROW_UP
+anchor=arrow_anchor,ANCHOR_TOP
+size=n,2
+color=color,Violet
+symbol=n
+shift=n,20
+trace_in=n
+Index=n
+
+[Input]
+in=row
+time=row
+
+[InputPars]
+Start
+Size
+Trace
+
+[Code]
+<gvars>
+ObjCounter *$name;
+
+<init>
+  $name = new ObjCounter("$name");
+
+<lines>
+  <?!trace_in>
+  if ($Start==0) $name.Clear();
+  for (int i=$Start; i<$Size-1; i++)
+    if ($in[i]!=0)
+    {
+      string name = $name.NextName();
+      ObjectCreate(name, $type, 0, Time[i], $shift*Point+$in[i]);
+  <~>
+    {
+      int i = $Index;
+      string name = $name.NextName();
+      ObjectCreate(name, $type, 0, Time[i], $shift*Point+$trace_in);
+  </>
+  	<?symbol>ObjectSet(name, OBJPROP_ARROWCODE, $symbol);</>
+      ObjectSet(name, OBJPROP_COLOR, $color);
+      ObjectSet(name, OBJPROP_WIDTH, $size);
+      ObjectSet(name, OBJPROP_ANCHOR, $anchor);
+    }
+
+<deinit>
+  delete $name;
+    
+[Help]
+Рисует объекты стрелок по входящей серии (вместо индикатора).
+

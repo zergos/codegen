@@ -1,0 +1,49 @@
+[Main]
+Name=Timer
+Title=Таймер
+Group=Управление
+
+[Property]
+MilliSeconds=n,1,время повтора
+ForceResetTick=t,1,принудительный учёт тиков
+
+[InputPars]
+Start
+Size
+
+[OutputPars]
+Start=<?ForceResetTick>@TimerStart<~>$Start</>
+
+[Code]
+<gvars>
+<?ForceResetTick>
+int @TimerStart;
+</>
+
+<procs*>
+void OnTimer()
+{
+$CTRL.lines
+  <?ForceResetTick>
+  if (@TimerStart==0 || $Start==0)
+    @TimerStart = $Size-1;
+  else
+    @TimerStart = $Start;
+  </>
+}
+
+<init*>
+<?ForceResetTick>
+  @TimerStart = 0;
+</>
+  EventSetMillisecondTimer($MilliSeconds);
+
+<lines>
+  <?ForceResetTick>
+  if ($Start==0) @TimerStart = 0;
+  </>
+  if (IsTesting()) OnTimer();
+  
+[Help]
+Добавляет в индикатор или эксперт конструкцию срабатывания по таймеру.
+

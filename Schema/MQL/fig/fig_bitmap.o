@@ -1,0 +1,28 @@
+[Main]
+Name=Bitmap
+Title=Картинка
+Group=Фигуры
+
+[Property]
+Path=s
+X=n
+Y=n
+Width=n,240
+Height=n,190
+Corner=n,3
+Back=t
+
+[Code]
+<init>
+  string name = "$name";
+  ObjectCreate(name, OBJ_BITMAP_LABEL, ChartWindowFind(), 0, 0);
+  ObjectSetString(0, name, OBJPROP_BMPFILE, "$Path");
+  ObjectSet(name, OBJPROP_XDISTANCE, $X);
+  ObjectSet(name, OBJPROP_YDISTANCE, $Corner==0||$Corner==1?$Y:$Height-$Y);
+  ObjectSet(name, OBJPROP_CORNER, $Corner);
+  ObjectSet(name, OBJPROP_HIDDEN, true);
+  <?Back>ObjectSet(name, OBJPROP_BACK, true);</>
+
+<deinit>
+  ObjectDelete("$name");
+  

@@ -1,0 +1,39 @@
+[Main]
+Choice
+Name=CheckCross
+Title=Проверка пересечения
+Group=Уровни
+
+[Input]
+lvl=n
+
+[Output]
+cross=c
+
+[Code]
+<gvars>
+int @fix_up,@fix_down;
+
+<init>
+  @fix_up = 0;
+  @fix_down = 0;
+
+<lines>
+  if (@fix_up==0)
+  {
+    @fix_up = Bid()>=up$lvl?1:-1;
+    @fix_down = Bid()>=down$lvl?1:-1;
+  }
+
+  if (@fix_up==1 && Bid()<=up$lvl || @fix_up==-1 && Bid()>=up$lvl || @fix_down==1 && Bid()<=down$lvl || @fix_down==-1 && Bid()>=down$lvl)
+  {
+$cross.lines
+  }
+
+<sync>
+  syncTitle("$name");
+  sync("up", @fix_up);
+  sync("down", @fix_down);
+  
+[Help]
+Проверка пересечения любого из уровней (up, down).

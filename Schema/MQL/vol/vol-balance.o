@@ -1,0 +1,61 @@
+[Main]
+Name=HrBalance
+Title=Центр масс
+Group=Объёмы
+
+[Property]
+ColorPlus=color,Green
+ColorMinus=color,Red
+SetWidth=n,,присваивать значение ширине линии (параметр - коэффициент уменьшения)
+
+[Input]
+V=row
+
+[InputPars]
+Start
+
+[Global]
+<procs>
+int @LevelsMass(int &v[], int start, int size)
+{
+  double sum = 0, cnt = 0;
+  for (int i=0; i<ArraySize(v); i++)
+    if (v[i]>0) { sum += (i+1)*v[i]; cnt += v[i]; }
+  if (cnt>0) return sum/cnt-1;
+  else return -1;
+}
+
+[Code]
+<lines>
+  if ($Start==0)
+  {
+    int shift = HrVolStep*Point/2;
+    string name = "$name+";
+    int i = @LevelsMass(plus$V, start$V, size$V);
+    if (i>=0)
+    {
+      ObjectCreate(name, OBJ_HLINE, 0, 0, 0);
+      ObjectSet(name, OBJPROP_PRICE1, (start$V-i)*HrVolStep*Point-shift);
+      ObjectSet(name, OBJPROP_COLOR, $ColorPlus);
+    }
+    ObjectSet(name, OBJPROP_BACK, true);
+    name = "$name-";
+    i = @LevelsMass(minus$V, start$V, size$V);
+    if (i>=0)
+    {
+      ObjectCreate(name, OBJ_HLINE, 0, 0, 0);
+      ObjectSet(name, OBJPROP_PRICE1, (start$V-i)*HrVolStep*Point-shift);
+      ObjectSet(name, OBJPROP_COLOR, $ColorMinus);
+    }
+    ObjectSet(name, OBJPROP_BACK, true);
+        
+    <?SetWidth>ObjectSet(name, OBJPROP_WIDTH, MathMax(1,(plus$V[@i]+minus$V[@i])/$SetWidth));</>
+  }
+
+<deinit>
+  ObjectDelete("$name+");
+  ObjectDelete("$name-");
+  
+[Help]
+Выявление уровней на основании данных горизонтальных объёмов.
+

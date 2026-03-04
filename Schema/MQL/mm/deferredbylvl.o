@@ -1,0 +1,98 @@
+[Main]
+Choice
+Name=DeferredByLvl
+Title=Отложенник по уровням
+Group=Сделки
+
+[Property]
+Lot=f,0.1
+ByMarket=bool,true,пересчёт лота в средства баланса
+Type=cmdtype,PT_STOP
+Reverse=t,,обратная логика
+Signal=t,,уст. тренд потока при открытии
+Expire=n,0,срок истечения в минутах
+SL=n
+TP=n
+Comment=s,,комментарий к сделке
+CheckLot=t,,перевыставлять отложенник при изменении лота
+Magic=n
+
+[Input]
+lvl=n
+sl=n
+tp=n
+pin=n
+
+[Output]
+CTRL=c
+Fail=c
+
+[Code]
+<lines>
+  CHubOrder *@state;
+  <?Magic>MAGIC = $Magic;</>
+  <?!pin>
+  if (<?Reverse>-</>trend>0)
+    @state = OrderPending(up$lvl, $Type, $Lot, <?sl>down$sl<~><?SL>$SL<~>0.0f</></>, <?tp>up$tp<~><?TP>$TP<~>0.0f</></>, $Expire, HUB_INITIAL, $ByMarket<?Comment>, $Comment</>);
+  else
+    @state = OrderPending(down$lvl, $Type, $Lot, <?sl>up$sl<~><?SL>$SL<~>0.0f</></>, <?tp>down$tp<~><?TP>$TP<~>0.0f</></>, $Expire, HUB_INITIAL, $ByMarket<?Comment>, $Comment</>);
+  <~>
+  if (HasRef($pin) && (
+  <?Type=PT_STOP>opLIMIT($pin.cmd)</>
+  <?Type=PT_LIMIT>opSTOP($pin.cmd)</>
+  <?CheckLot>|| $pin.lots!=$Lot</>
+  )) $pin.ForceClose();
+  
+  if (!HasRef($pin) || $pin.state == HUB_CLOSED)
+  {
+  if (<?Reverse>-</>trend>0)
+    $pin = OrderPending(up$lvl, $Type, $Lot, <?sl>down$sl<~><?SL>$SL<~>0.0f</></>, <?tp>up$tp<~><?TP>$TP<~>0.0f</></>, $Expire, HUB_INITIAL, $ByMarket<?Comment>, $Comment</>);
+  else
+    $pin = OrderPending(down$lvl, $Type, $Lot, <?sl>up$sl<~><?SL>$SL<~>0.0f</></>, <?tp>down$tp<~><?TP>$TP<~>0.0f</></>, $Expire, HUB_INITIAL, $ByMarket<?Comment>, $Comment</>);
+    @state = $pin;
+  }
+  else
+  {
+    <?debug>Print("$name ", "проверка отложки на обновление");</>
+    @state = $pin;
+    if (<?Reverse>-</>trend>0)
+    {
+      $pin.price = norm(up$lvl);
+      <?sl>$pin.fsl = down$sl;<~><?SL>$pin.fsl = $SL==0?0:up$lvl-$SL*Point;</></>
+      <?tp>$pin.ftp = up$tp;<~><?TP>$pin.ftp = $TP==0?0:up$lvl+$TP*Point;</></>
+    }
+    else
+    {
+      $pin.price = norm(down$lvl);
+      <?sl>$pin.fsl = up$sl;<~><?SL>$pin.fsl = $SL==0?0:down$lvl+$SL*Point;</></>
+      <?tp>$pin.ftp = down$tp;<~><?TP>$pin.ftp = $TP==0?0:down$lvl-$TP*Point;</></>
+    }
+    $pin.Update();
+  }
+  </>
+  if (@state.state!=HUB_CLOSED)
+  {
+    <?Signal>@state.signal = true;</>
+$CTRL.lines
+  }
+<?Fail>
+  else
+  {
+$Fail.lines
+  }
+</>
+
+<sync>
+<?pin>
+  if (save)
+    syncWrite("$name", $pin.index());
+  else
+  {
+    int i;
+    syncRead("$name", i);
+    $pin = firstOrder.byIndex(i);
+  }
+</>
+    
+[Help]
+Открывает отложенник по входящим уровням.

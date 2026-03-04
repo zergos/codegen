@@ -1,0 +1,18 @@
+[Main]
+Name=TAUnClick
+Title=Ind Обработка "отпускания"
+Group=ТА
+
+[Input]
+code=s
+
+[Code]
+<lines>
+  if ($code!="")
+  { 
+    TABaseModel::ShowFiltered();
+    
+    $code = "";
+    
+    TAClearMarks();
+  }

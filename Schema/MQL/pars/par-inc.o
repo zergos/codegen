@@ -1,0 +1,17 @@
+[Main]
+Name=ParInc
+Title=Увеличение
+Group=Параметры
+Size=4
+
+[Property]
+ParName=s,Param
+IncValue=n,1,на сколько увеличивать
+
+[Code]
+<lines>
+  $ParName += $IncValue;
+  <?debug>Print("$name $ParName by ",$IncValue," res=", $ParName);</>
+
+[Help]
+Увеличивает параметр на произвольное число.

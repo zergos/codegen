@@ -1,0 +1,39 @@
+[Main]
+Name=CmeRead
+Title=„итатель
+Group=CME
+
+[Property]
+SplitDays=n,3,количество дней до сли€ни€ мес€чных экспираций
+Section=s,39,код информационной секции
+Option=s,EURO FX CALL,наименование опциона
+MaxSize=n,100,максимальное количество страйков дл€ считывани€
+SetDate=s,TimeCurrent(),дата считывани€ иформации
+Mode=n,0,режим: 0 - наколенный объЄм\, 1 - дельта
+Multiplex=n,100,коэффициент отличи€ цены страйка от цены форекса
+Side=plusminus,plus,выбор стороны вертикального объЄма дл€ присвоени€
+
+[Output]
+V=row
+
+[Code]
+<gvars>
+int plus$V[], minus$V[];
+int start$V, size$V;
+
+<init>
+  ArrayResize(minus$V, $MaxSize);
+  ArrayResize(plus$V, $MaxSize);
+  
+<lines>
+  if (!CMEReadStrikes($SetDate, "$Section", "$Option", $SplitDays, $Mode, $Side$V, start$V, size$V))
+  {
+    Print("no CME data");
+    return (0);
+  }
+  //Print("start: "+start$V+", size: "+size$V);
+  start$V = start$V*$Multiplex/HrVolStep;
+  
+[Help]
+—читывает данные CME дл€ функционала вертикальных объЄмов.
+

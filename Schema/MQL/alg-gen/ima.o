@@ -1,0 +1,30 @@
+[Main]
+Name=IMA
+Title=Moving Average
+Group=Алгоритмы (ген)
+
+[Property]
+Period=n,12
+Method=ima,MODE_SMA
+Price=applied_price,PRICE_CLOSE
+
+[Output]
+out=row
+
+[InputPars]
+Start
+Size
+
+[Code]
+<gvars>
+double $out[];
+
+<lines>
+  ArrayInit($out);
+  CheckShift($out);
+  for (int i=$Start; i<$Size; i++)
+    $out[i] = iMA(NULL, 0, $Period, 0, $Method, $Price, $Size-1-i);
+    
+[Help]
+Генератор линий скользящей средней.
+

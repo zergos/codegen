@@ -1,0 +1,48 @@
+[Main]
+Name=FixPrice
+Title=Фикс. от цены
+Group=Уровни
+
+[Property]
+Delta=n,100,расстояние между ценами
+Index=n,,индекс цены в серии
+Reverse=t
+BothSides=t
+
+[Input]
+price=row
+
+[Output]
+lvl=n,$name
+
+[Code]
+<gvars>
+double up$name;
+double down$name;
+
+<lines>
+  <?BothSides>
+  up$name = <?!price><?Reverse>Bid()<~>Ask()</><~>$price<?Index>[$Index]</></>+$Delta*Point;
+  down$name = <?!price><?Reverse>Ask()<~>Bid()</><~>$price<?Index>[$Index]</></>-$Delta*Point;
+  <?debug>Print("$name up: ",up$name," down: ",down$name);</>
+  <~>
+  if (<?Reverse>-</>trend>0)
+  {
+    up$name = <?!price><?Reverse>Bid()<~>Ask()</><~>$price<?Index>[$Index]</></>+$Delta*Point;
+    down$name = <?!price><?Reverse>Ask()<~>Bid()</><~>$price</>;
+    <?debug>Print("$name up: ",up$name," down: ",down$name);</>
+  }
+  else
+  {
+    up$name = <?!price><?Reverse>Bid()<~>Ask()</><~>$price</>;
+    down$name = <?!price><?Reverse>Ask()<~>Bid()</><~>$price<?Index>[$Index]</></>-$Delta*Point;
+    <?debug>Print("$name up: ",up$name," down: ",down$name);</>
+  }
+  </>
+
+<sync>
+  sync(up$name);
+  sync(down$name);
+
+[Help]
+Фиксация уровней от цены: вверх или вниз на **Delta** пунктов. 

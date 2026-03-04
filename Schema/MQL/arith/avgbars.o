@@ -1,0 +1,35 @@
+[Main]
+Name=AvgBars
+Title=Усреднение баров
+Group=Арифметика
+
+[Property]
+Count=n,3,кол-во баров для усреднения
+LastBar=n,1,последний бар рассчёта (0-последний, 1-предыдущий)
+
+[Input]
+in=row
+
+[Output]
+avg=n
+
+[InputPars]
+Size
+
+[Code]
+<gvars>
+double $avg;
+
+<lines>
+  $avg = 0;
+  int @cnt = 0;
+  for (int i=1; i<=$Count; i++)
+    if ($Size-$LastBar-i>=0)
+    {
+      $avg += $in[$Size-$LastBar-i];
+      @cnt++;
+    }
+  $avg /= @cnt;
+
+[Help]
+Рассчитывает среднее значение последних **Count** баров.
